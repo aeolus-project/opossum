@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2012, Arnaud Malapert and Mohamed Rezgui         	       #
+# Copyright (c) 2012, Arnaud Malapert and Mohamed Rezgui         	           #
 # All rights reserved.                                                         #
 # Redistribution and use in source and binary forms, with or without           #
 # modification, are permitted provided that the following conditions are met:  #
@@ -9,7 +9,7 @@
 #     * Redistributions in binary form must reproduce the above copyright      #
 #       notice, this list of conditions and the following disclaimer in the    #
 #       documentation and/or other materials provided with the distribution.   #
-#     * Neither the name of Arnaud Malapert nor the			       #
+#     * Neither the name of Arnaud Malapert nor the			                   #
 #       names of its contributors may be used to endorse or promote products   #
 #       derived from this software without specific prior written permission.  #
 #                                                                              #
@@ -44,7 +44,7 @@
   * Cross-platform Make (CMake) v2.6.2+
   * GNU Make or equivalent.
   * GCC or an alternative, reasonably conformant C++ compiler.
-  * CPLEX [HEADERS and LIBRARIES] (32 bits)
+  * CPLEX [HEADERS and LIBRARIES] with licence (32 bits)
   * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES] (32 bits)
   * GEXF Library v0.1.2 (32 bits)
   * XML2 Library v2.0+ (32 bits)
@@ -65,9 +65,11 @@
 
 == 4. EXECUTING ==
 
- Once the project has been installed (see "INSTALLING"), execute "bin/Release/opossum".
+ Once the project has been installed (see "INSTALLING"), 
+ export the environment path ILOG_LICENSE_FILE and set on the path your CPLEX Licence
+ and execute "bin/Release/opossum".
 
-== 5. DOCUMENTATION
+== 5. DOCUMENTATION ==
  
  Look for the most up-to-date documentation on the oPoSSuM web site, under the Documentation menu
  
