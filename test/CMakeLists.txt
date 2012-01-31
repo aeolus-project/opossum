@@ -3,7 +3,7 @@ SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/Test")
 
 FILE (GLOB_RECURSE test_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
 SET (test_LIBS boost_unit_test_framework boost_random gexf xml2)
-SET (test_BIN ${PROJECT_NAME}-boost-unit-tests)
+SET (test_BIN ${PROJECT_NAME}-tests)
 
 ADD_EXECUTABLE(${test_BIN} ${test_SRCS})
 TARGET_LINK_LIBRARIES(${test_BIN} ${test_LIBS})
