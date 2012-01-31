@@ -12,7 +12,7 @@ Thumbs.db
 *~
 
 # lib
-*.so*
+#*.so*
 *.lib
 *.a
 *.la
