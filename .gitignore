@@ -1,0 +1,13 @@
+#Eclipse
+.project
+.classpath
+.settings
+target
+
+# Random OS stuff
+.DS_Store
+Thumbs.db
+*.bak
+*.log
+*~
+
