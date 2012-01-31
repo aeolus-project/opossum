@@ -1,0 +1,68 @@
+#include <stdlib.h>
+#include <libgexf/libgexf.h>
+#include <iostream>
+
+#include "header.h"
+
+using namespace std;
+
+void create();
+
+int main(int argc, char* argv[])
+{
+    cout << "Hello World" << endl;
+    //create();
+    //test_uniform();
+    test_quiz();
+
+    return 1;
+}
+
+void create() {
+
+    libgexf::GEXF *gexf = new libgexf::GEXF();
+
+    libgexf::DirectedGraph& graph = gexf->getDirectedGraph();
+
+    // nodes
+    graph.addNode("0");
+    graph.addNode("1");
+    graph.addNode("2");
+    graph.addNode("3");
+    graph.addNode("4");
+    graph.addNode("5");
+
+    // edges
+    graph.addEdge("0", "0", "1");
+    graph.addEdge("1", "1", "2");
+    graph.addEdge("2", "2", "3");
+    graph.addEdge("3", "3", "4");
+    graph.addEdge("4", "4", "5");
+    graph.addEdge("5", "5", "0");
+
+    // node labels
+    libgexf::Data& data = gexf->getData();
+    data.setNodeLabel("0", "Server0");
+    data.setNodeLabel("1", "Server1");
+    data.setNodeLabel("2", "Server2");
+    data.setNodeLabel("3", "Server3");
+    data.setNodeLabel("4", "Server4");
+    data.setNodeLabel("5", "Server5");
+
+    // attributes
+    data.addNodeAttributeColumn("0", "foo", "true");
+    data.setNodeAttributeDefault("0", "false");
+    //data.setNodeValue("1", "0", "true");
+
+    // meta data
+    libgexf::MetaData& meta = gexf->getMetaData();
+    meta.setCreator("The Hitchhiker's Guide to the Galaxy");
+    meta.setDescription("The answer is 42.");
+
+    // write gexf file
+    libgexf::FileWriter *writer = new libgexf::FileWriter();
+    writer->init("test.gexf", gexf);
+    writer->write();
+
+}
+

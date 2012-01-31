@@ -1,0 +1,5 @@
+
+
+extern int test_uniform();
+extern int test_quiz();
+

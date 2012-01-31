@@ -11,3 +11,9 @@ Thumbs.db
 *.log
 *~
 
+# lib
+*.so*
+*.lib
+*.a
+*.la
+
