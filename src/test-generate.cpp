@@ -1,34 +1,38 @@
 /**
-*  Copyright (c) 2011, Arnaud Malapert and Mohamed Rezgui
-*  All rights reserved.
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions are met:
-*
-*      * Redistributions of source code must retain the above copyright
-*        notice, this list of conditions and the following disclaimer.
-*      * Redistributions in binary form must reproduce the above copyright
-*        notice, this list of conditions and the following disclaimer in the
-*        documentation and/or other materials provided with the distribution.
-*      * Neither the name of the Arnaud Malapert nor the
-*        names of its contributors may be used to endorse or promote products
-*        derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
-*  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-*  DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
-*  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-*  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-*  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-*  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  Copyright (c) 2011, Arnaud Malapert and Mohamed Rezgui
+ *  All rights reserved.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of the Arnaud Malapert nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #include "./network.hpp"
+#include <string>
+#include <sstream>
+#include <vector>
+#include <iterator>
+#include <iostream>
+#include <algorithm>
 
 using namespace std;
-
-
 void print(FacilityNode* o, FacilityNode* d) {
 	cout << *o << " -> " << *d << endl;
 }
@@ -36,34 +40,85 @@ void print(FacilityNode* o, FacilityNode* d) {
 
 int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
-	vector<FacilityType*> ftypes;
-	//ROOT
-	unsigned int s[] = {5,5};
-	double b[] = {1, 0, 0, 0};
-	ftypes.push_back(new FacilityType(0,10,s,1,1, b,1));
-	//REGIONS
-	unsigned int s1[] = {2,3};
-	double b1[] = {0.6, 0.2,0.15,0.05};
-	ftypes.push_back(new FacilityType(1,200,s1,5, 0.5, b1,0.6));
-	unsigned int s2[] = {3,1};
-	double b2[] = {0.7, 0.15,0.1,0.05};
-	ftypes.push_back(new FacilityType(1,300,s2,8, 0.6, b2,0.8));
-	//FINALS
-	unsigned int s3[] = {1,1};
-	double b3[] = {0.3, 0.3,0.2,0.2};
-	ftypes.push_back(new FacilityType(2,50,s3,3, 0.5, b3,0.5));
-	unsigned int s4[] = {0,1};
-	double b4[] = {0.2, 0.3,0.3,0.2};
-	ftypes.push_back(new FacilityType(2,20,s4,4, 0.6, b4,0.5));
-	cout << *ftypes.front() << endl;
-	for ( size_t i = 0; i < ftypes.size(); ++i ) {
-		cout << *ftypes[i] << endl;
-	}
+//ROOT
+//	unsigned int s[] = {5,5};
+//	double b[] = {1, 0, 0, 0};
+//	ftypes.push_back(new FacilityType(0,10,s,1,1, b,1));
+//	//REGIONS
+//	unsigned int s1[] = {2,3};
+//	double b1[] = {0.6, 0.2,0.15,0.05};
+//	ftypes.push_back(new FacilityType(1,200,s1,5, 0.5, b1,0.6));
+//	unsigned int s2[] = {3,1};
+//	double b2[] = {0.7, 0.15,0.1,0.05};
+//	ftypes.push_back(new FacilityType(1,300,s2,8, 0.6, b2,0.8));
+//	//FINALS
+//	unsigned int s3[] = {1,1};
+//	double b3[] = {0.3, 0.3,0.2,0.2};
+//	ftypes.push_back(new FacilityType(2,50,s3,3, 0.5, b3,0.5));
+//	unsigned int s4[] = {0,1};
+//	double b4[] = {0.2, 0.3,0.3,0.2};
+//	ftypes.push_back(new FacilityType(2,20,s4,4, 0.6, b4,0.5));
+//	cout << *ftypes.front() << endl;
+//	for ( size_t i = 0; i < ftypes.size(); ++i ) {
+//		cout << *ftypes[i] << endl;
+//	}
 
-	FacilityNode* root = generateSubtree(new FacilityNode(ftypes[0]), ftypes);
-	root->printSubtree();
-	root->toChild(0)->getDestination()->toChild(0)->forEachPath();
-	root->toChild(0)->forEachPath(print);
+	//	FacilityNode* root = generateSubtree(new FacilityNode(ftypes[0]), ftypes);
+	//	root->printSubtree();
+	//	root->toChild(0)->getDestination()->toChild(0)->forEachPath();
+	//	root->toChild(0)->forEachPath(print);
+	//
+//	string str = "Hello   How Are  You  Today";
+//	vector<string> v;
+//	istringstream buf(str);
+//	for(std::string token; getline(buf, token, ' '); ) {
+//		if(! token.empty()) v.push_back(token);
+//	}
+//
+//	copy(v.begin(), v.end(), std::ostream_iterator<std::string>(std::cout, "."));
+//	std::cout << '\n';
+
+	int sum = 0;
+	int x;
+	ifstream in;
+
+	in.open("benchmarks/instances/sample-server.dat");
+	if (!in) {
+		cout << "Unable to open file";
+		exit(1); // terminate with error
+	}
+	in >> *problem;
+	//	int n;
+//	in >> n;
+//	for (int i = 0; i < n; ++i) {
+//		int bandwidth;
+//		in >> bandwidth;
+//		problem.bandwidths.push_back( bandwidth);
+//		//cout << bandwidth <<endl;
+//	}
+//	in >> n;
+//	for (int i = 0; i < n; ++i) {
+//		ServerType* stype = new ServerType();
+//		in >> *stype;
+//		problem.servers.push_back(stype);
+//		//cout << *stype <<endl;
+//	}
+//	in >> n;
+//	for (int i = 0; i < n; ++i) {
+//		FacilityType* ftype = new FacilityType();
+//		ftype->read(in, problem);
+//		problem.facilities.push_back(ftype);
+//		//cout << *ftype <<endl;
+//	}
+	while (in >> x) {
+		cout << x << endl;
+		sum = sum + x;
+	}
+//
+	in.close();
+	cout << "Sum = " << sum << endl;
+	cout << *problem;
+	return 0;
 	//ofstream myfile;
 	//	myfile.open ("/tmp/pserver.dot");
 	//	myfile << "digraph G {\n";

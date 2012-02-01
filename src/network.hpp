@@ -1,28 +1,28 @@
 /**
-*  Copyright (c) 2011, Arnaud Malapert and Mohamed Rezgui
-*  All rights reserved.
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions are met:
-*
-*      * Redistributions of source code must retain the above copyright
-*        notice, this list of conditions and the following disclaimer.
-*      * Redistributions in binary form must reproduce the above copyright
-*        notice, this list of conditions and the following disclaimer in the
-*        documentation and/or other materials provided with the distribution.
-*      * Neither the name of the Arnaud Malapert nor the
-*        names of its contributors may be used to endorse or promote products
-*        derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
-*  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-*  DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
-*  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-*  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-*  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-*  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2011, Arnaud Malapert and Mohamed Rezgui
+ *  All rights reserved.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of the Arnaud Malapert nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef NETWORK_HPP_
 #define NETWORK_HPP_
@@ -30,6 +30,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <iterator>
+#include <algorithm>
 #include <vector>
 
 using namespace std;
@@ -37,32 +39,25 @@ using namespace std;
 class ServerType
 {
 public:
-	ServerType(unsigned int capacity, unsigned int cost) {
-		this->capacity = capacity;
-		this->cost = cost;
+	ServerType() : capacity(0), cost(0) {
 	}
-
+	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {
+	}
 	virtual ~ServerType() {};
 	inline unsigned int getCost() const { return cost; }
 	inline unsigned int getMaxConnections() const { return capacity; }
+
+	friend istream& operator>>(istream& in, ServerType& f);
 protected:
 private:
-	unsigned int cost;
 	unsigned int capacity;
+	unsigned int cost;
+
 };
 
 
-static const unsigned int nbServerTypes = 2;
-static const ServerType* serverTypes[] = { new ServerType(500,5), new ServerType(100,2) };
 
-static const unsigned int nbBandwidths=4;
-static const unsigned int bandwidths[] = {1000,100,20,2};
-
-//static const unsigned int nbColors =9;
-//static const string colors[] ={"firebrick", "forestgreen", "goldenrod", "navyblue",
-//		"darkviolet", "brown", "darkorange","cyan", "lightblue"};
-
-
+class PSLProblem;
 
 class FacilityType
 {
@@ -74,27 +69,19 @@ public:
 	virtual ~FacilityType() { delete [] serverCapacities; delete [] bandwidthProbabilities; }
 	inline unsigned int getLevel() const { return level; }
 	inline unsigned int getDemand() const { return demand; }
-	inline unsigned int getServerCapacity(const unsigned int stype) const {
-		return stype < nbServerTypes ? serverCapacities[stype] : 0;
+	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
 	}
-	inline unsigned int getConnexionCapacity() const {
-		unsigned int tot = 0;
-		for (unsigned int i = 0; i < nbServerTypes; ++i) {
-			tot+= serverCapacities[i] * serverTypes[i]->getMaxConnections();
-		}
-		return tot;
-	}
+	unsigned int getConnexionCapacity() const;
 	//string toGEXF();
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidth();
 	unsigned int genRandomBandwidth(unsigned int maxBandwidth);
 	bool genRandomReliability();
 
+	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
-	inline double getBandwitdhProbability(const unsigned int stype) const {
-		return stype < nbBandwidths? bandwidthProbabilities[stype] : 0;
-	}
+	inline double getBandwitdhProbability(const unsigned int stype) const { return bandwidthProbabilities[stype];}
 	inline double getReliabilityProbability() const { return reliabilityProbability; }
 
 private:
@@ -108,6 +95,41 @@ private:
 
 };
 
+class PSLProblem {
+
+public:
+	PSLProblem() {
+		//TODO ctor
+	}
+	~PSLProblem() {
+		//TODO dtor
+	}
+	vector<unsigned int> bandwidths;
+	vector<ServerType*> servers;
+	vector<FacilityType*> facilities;
+
+	//FIXME probleme de copie
+//	inline vector< unsigned int> getBandwidths() {
+//		return bandwidths;
+//	}
+//	inline vector<FacilityType*> getFacilities() const {
+//		return facilities;
+//	}
+//	inline vector<ServerType*> getServers() const {
+//		return servers;
+//	}
+
+	//TODO déclarer deux fois les méthodes amies ?
+	friend istream& operator>>(istream& in, PSLProblem& problem);
+protected:
+private:
+
+
+
+};
+
+static const PSLProblem* problem;
+
 class NetworkLink;
 
 
@@ -120,7 +142,7 @@ public:
 	FacilityNode(FacilityType* type) : id(NEXT_ID++), type(type), father(NULL) {
 	}
 	~FacilityNode() {
-		// delete children; ??
+		//TODO dtor;
 	}
 	inline unsigned int getID() const { return id; }
 	inline FacilityType* getType() const { return type; }
@@ -159,8 +181,6 @@ public:
 	{
 		father->children.push_back(this);
 		child->father=this;
-
-		//Is the link from the grandfather to the father reliable ?
 		if( father->isRoot() ) {
 			bandwidth = child->getType()->genRandomBandwidth();
 			reliable = child->getType()->genRandomReliability();
@@ -197,9 +217,19 @@ inline double randd();
 //unsigned int randi(int min, int max);
 unsigned int binornd(const int n, const double p);
 
+template <typename T>
+T& dereference(T* ptr) { return *ptr; }
+
+ostream& operator<<(ostream& out, const PSLProblem& f);
+istream& operator>>(istream& in, PSLProblem& s);
 
 ostream& operator<<(ostream& out, const ServerType& s);
+istream& operator>>(istream& in, ServerType& s);
+
 ostream& operator<<(ostream& out, const FacilityType& f);
+//istream& operator>>(istream& in, FacilityType& f);
+
+
 ostream& operator<<(ostream& out, const FacilityNode& n);
 ostream& operator<<(ostream& out, const NetworkLink& l);
 
