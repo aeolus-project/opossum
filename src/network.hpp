@@ -33,6 +33,7 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
+#include <assert.h>
 
 using namespace std;
 
@@ -62,35 +63,35 @@ class PSLProblem;
 class FacilityType
 {
 public:
-	FacilityType() : level(0), demand(0), serverCapacities(NULL), binoN(1), binoP(1), bandwidthProbabilities(NULL), reliabilityProbability(1)
+	FacilityType() : level(0), demand(0), binoN(1), binoP(1), reliabilityProbability(1)
 	{}
-	FacilityType(unsigned int level, unsigned int demand, unsigned int serverCapacities[], unsigned int binoN, double binoP, double bandwidthProbabilities[],double reliabilityProbability) : level(level), demand(demand), serverCapacities(serverCapacities), binoN(binoN), binoP(binoP), bandwidthProbabilities(bandwidthProbabilities), reliabilityProbability(reliabilityProbability)
-	{}
-	virtual ~FacilityType() { delete [] serverCapacities; delete [] bandwidthProbabilities; }
+	virtual ~FacilityType() {
+		//FIXME delete [] serverCapacities; delete [] bandwidthProbabilities;
+	}
 	inline unsigned int getLevel() const { return level; }
 	inline unsigned int getDemand() const { return demand; }
 	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
 	}
-	unsigned int getConnexionCapacity() const;
+	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
 	//string toGEXF();
 	unsigned int genRandomFacilities();
-	unsigned int genRandomBandwidth();
-	unsigned int genRandomBandwidth(unsigned int maxBandwidth);
+	unsigned int genRandomBandwidthIndex();
+	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);
 	bool genRandomReliability();
 
 	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
-	inline double getBandwitdhProbability(const unsigned int stype) const { return bandwidthProbabilities[stype];}
-	inline double getReliabilityProbability() const { return reliabilityProbability; }
+	//inline double getBandwitdhProbability(const unsigned int stype) const { return bandwidthProbabilities[stype];}
+	//inline double getReliabilityProbability() const { return reliabilityProbability; }
 
 private:
 	unsigned int level;
 	unsigned int demand;
-	unsigned int* serverCapacities;
+	vector<unsigned int> serverCapacities;
 	unsigned int binoN;
 	double binoP;
-	double* bandwidthProbabilities;
+	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 
 };
@@ -109,15 +110,15 @@ public:
 	vector<FacilityType*> facilities;
 
 	//FIXME probleme de copie
-//	inline vector< unsigned int> getBandwidths() {
-//		return bandwidths;
-//	}
-//	inline vector<FacilityType*> getFacilities() const {
-//		return facilities;
-//	}
-//	inline vector<ServerType*> getServers() const {
-//		return servers;
-//	}
+	//	inline vector< unsigned int> getBandwidths() {
+	//		return bandwidths;
+	//	}
+	//	inline vector<FacilityType*> getFacilities() const {
+	//		return facilities;
+	//	}
+	//	inline vector<ServerType*> getServers() const {
+	//		return servers;
+	//	}
 
 	//TODO déclarer deux fois les méthodes amies ?
 	friend istream& operator>>(istream& in, PSLProblem& problem);
@@ -127,8 +128,6 @@ private:
 
 
 };
-
-static const PSLProblem* problem;
 
 class NetworkLink;
 
@@ -158,7 +157,7 @@ public:
 	inline bool isLeaf() const {
 		return children.empty();
 	}
-	unsigned int getMinIncomingConnections();
+	unsigned int getMinIncomingConnections(vector<ServerType*>* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
 	void printSubtree();
@@ -177,41 +176,52 @@ private:
 class NetworkLink {
 
 public:
-	NetworkLink(FacilityNode* father, FacilityNode* child) : origin(father), destination(child), bandwidth(0),reliable(0)
+	NetworkLink(FacilityNode* father, FacilityNode* child, vector<int>* bandwidths) : origin(father), destination(child), bandwidth(0),reliable(0)
 	{
 		father->children.push_back(this);
 		child->father=this;
-		if( father->isRoot() ) {
-			bandwidth = child->getType()->genRandomBandwidth();
+		bandwidth = (*bandwidths)[child->getType()->genRandomBandwidthIndex()];
+		reliable = child->getType()->genRandomReliability();
+	}
+
+	NetworkLink(FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool ignoreHierarchy) : origin(father), destination(child), bandwidth(0),reliable(0)
+	{
+		father->children.push_back(this);
+		child->father=this;
+		if( father->isRoot() || ignoreHierarchy) {
+			bandwidth = problem.bandwidths[child->getType()->genRandomBandwidthIndex()];
 			reliable = child->getType()->genRandomReliability();
 		} else {
-			bandwidth = child->getType()->genRandomBandwidth(father->toFather()->getBandwidth());
+			unsigned int fbandw = father->toFather()->getBandwidth();
+			int maxIndex = problem.bandwidths.size()-1;
+			while( maxIndex >= 0 && problem.bandwidths[maxIndex] > fbandw) {maxIndex--;}
+			bandwidth = problem.bandwidths[child->getType()->genRandomBandwidthIndex(maxIndex)];
 			reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
 		}
+	}
 
-	}
-	~NetworkLink() {
-	}
-	inline FacilityNode* getOrigin() const { return origin; }
-	inline FacilityNode* getDestination() const { return destination; }
-	inline bool isReliable() const { return reliable; }
-	inline unsigned int getBandwidth() const { return bandwidth; }
-	void forEachPath() const;
-	void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
-	ostream& toDotty(ostream& out);
-	ostream& toGEXF(ostream& out);
-	//string* toGEXF();
+~NetworkLink() {
+}
+inline FacilityNode* getOrigin() const { return origin; }
+inline FacilityNode* getDestination() const { return destination; }
+inline bool isReliable() const { return reliable; }
+inline unsigned int getBandwidth() const { return bandwidth; }
+void forEachPath() const;
+void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+ostream& toDotty(ostream& out);
+ostream& toGEXF(ostream& out);
+//string* toGEXF();
 protected:
 private:
-	FacilityNode *origin;
-	FacilityNode *destination;
-	unsigned int bandwidth;
-	bool reliable;
+FacilityNode *origin;
+FacilityNode *destination;
+unsigned int bandwidth;
+bool reliable;
 };
 
 
 //FacilityNode* generateSubtree(vector<FacilityType*> ftypes, unsigned int idx);
-FacilityNode *generateSubtree(FacilityNode* root, const vector<FacilityType*> ftypes);
+FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem);
 
 inline double randd();
 //unsigned int randi(int min, int max);

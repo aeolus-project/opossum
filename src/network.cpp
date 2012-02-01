@@ -48,38 +48,33 @@ unsigned int FacilityType::genRandomFacilities()
 }
 
 
-unsigned int FacilityType::genRandomBandwidth()
+unsigned int FacilityType::genRandomBandwidthIndex()
 {
 	double cum = 0;
 	const double p = randd();
-	for (unsigned int i = 0; i < problem->bandwidths.size(); ++i) {
-		cum+=getBandwitdhProbability(i);
-		if(p <= cum) {return problem->bandwidths[i];}
+	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
+		cum+= bandwidthProbabilities[i];
+		if(p <= cum) {return i;}
 	}
-	return -1;
+	assert(cum == 1);
+	exit (1);
 }
 
-unsigned int FacilityType::genRandomBandwidth(unsigned int maxBandwidth) {
-	unsigned int idx = 0;
-	unsigned int n = problem->bandwidths.size();
-	//find index
-	while(idx < n &&
-			problem->bandwidths[idx] > maxBandwidth) {
-		idx++;
-	}
+unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	double tot = 0;
 	//compute total probability
-	for (unsigned int i = idx; i < n; ++i) {
-		tot += getBandwitdhProbability(i);
+	for (unsigned int i = 0; i <= maxIndex; ++i) {
+		tot += bandwidthProbabilities[i];
 	}
 	//compute random values using normalized probabilities
 	double cum = 0;
 	const double p = randd();
-	for (unsigned int i = idx; i < n; ++i) {
-		cum+= getBandwitdhProbability(i)/tot;
-		if(p <= cum) {return problem->bandwidths[i];}
+	for (unsigned int i = 0; i <= maxIndex; ++i) {
+		cum+= bandwidthProbabilities[i]/tot;
+		if(p <= cum) { return i;}
 	}
-	return -1;
+	assert(cum == 1);
+	exit (1);
 }
 
 bool FacilityType::genRandomReliability()
@@ -106,28 +101,29 @@ unsigned int FacilityNode::NEXT_ID=0;
 //	return root;
 //}
 
-FacilityNode *generateSubtree(FacilityNode* root, const vector<FacilityType*> ftypes)
+FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem)
 {
 	unsigned int idx = 0;
 	const unsigned int level = root->getType()->getLevel();
-	while(idx  < ftypes.size() && ftypes[idx]->getLevel() <= level) {idx++;}
-	while(idx  < ftypes.size() && ftypes[idx]->getLevel() == level + 1) {
-		const unsigned int nbc = ftypes[idx]->genRandomFacilities();
+	const unsigned int n = problem.facilities.size();
+	while(idx  < n && problem.facilities[idx]->getLevel() <= level) {idx++;}
+	while(idx  < n && problem.facilities[idx]->getLevel() == level + 1) {
+		const unsigned int nbc = problem.facilities[idx]->genRandomFacilities();
 		for (unsigned int i = 0; i < nbc; ++i) {
-			FacilityNode* child = new FacilityNode(ftypes[idx]);
-			new NetworkLink(root, child);
-			generateSubtree(child, ftypes);
+			FacilityNode* child = new FacilityNode(problem.facilities[idx]);
+			new NetworkLink(root, child, problem, false);
+			generateSubtree(child, problem);
 		}
 		idx++;
 	}
 	return root;
 }
 
-unsigned int FacilityNode::getMinIncomingConnections() {
-	unsigned int res = type->getDemand() >  type->getConnexionCapacity() ? type->getDemand() -  type->getConnexionCapacity() : 0 ;
-	//cout << res<<endl;
+unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* servers) {
+	const unsigned int capa = type->getConnexionCapacity(servers);
+	unsigned int res = type->getDemand() >  capa ? type->getDemand() -  capa : 0 ;
 	for ( size_t i = 0; i < children.size(); ++i ) {
-		res+= children[i]->getDestination()->getMinIncomingConnections();
+		res+= children[i]->getDestination()->getMinIncomingConnections(servers);
 	}
 	return res;
 }
@@ -181,43 +177,39 @@ void FacilityNode::printSubtree() {
 istream & FacilityType::read(istream & in, const PSLProblem& problem)
 {
 	in >> level >> demand;
-	int n = problem.servers.size();
-	serverCapacities = new unsigned int[n];
-	for (int i = 0; i < n; ++i) {
-		in >> serverCapacities[i];
+	unsigned int n = problem.servers.size();
+	int tmp;
+	while(serverCapacities.size() < n) {
+		in >> tmp;
+		serverCapacities.push_back(tmp);
 	}
 	in >> binoN >> binoP;
 	n = problem.bandwidths.size();
-	bandwidthProbabilities = new double[n];
-	for (int i = 0; i < n; ++i) {
-		in >> bandwidthProbabilities[i];
+	double d;
+	while(bandwidthProbabilities.size() < n) {
+		in >> d;
+		bandwidthProbabilities.push_back(d);
 	}
 	in >> reliabilityProbability;
 	return in;
 }
 
-unsigned int FacilityType::getConnexionCapacity() const
+unsigned int FacilityType::getConnexionCapacity(const vector<ServerType*>* servers) const
 {
-		unsigned int tot = 0;
-		for (unsigned int i = 0; i < problem->servers.size(); ++i) {
-			tot+= serverCapacities[i] * problem->servers[i]->getMaxConnections();
-		}
-		return tot;
+	unsigned int tot = 0;
+	for (unsigned int i = 0; i < servers->size(); ++i) {
+		tot+= serverCapacities[i] *  (*servers)[i]->getMaxConnections();
 	}
+	return tot;
+}
 
 ostream& operator<<(ostream& out, const FacilityType& f) {
 
-	out << "Level:" << f.getLevel() << "\tDemand:" << f.getDemand() << "\tCapacities:";
-	for (unsigned int i = 0; i < problem->servers.size(); ++i) {
-		//FIXME retrieve array size issue
-		cout << f.getServerCapacity(i) << " ";
-	}
-	out << endl << "Probabilities -> Facilities:B(" << f.binoN << "," << f.binoP <<")\tBandwidths:";
-	for (unsigned int i = 0; i < problem->bandwidths.size(); ++i) {
-		//FIXME retrieve array size issue
-		cout << f.getBandwitdhProbability(i) << " ";
-	}
-	out << "\tReliability:" << f.getReliabilityProbability();
+	out << "Level:" << f.getLevel() << "\tDemand:" << f.getDemand() << "\tCapacities:{ ";
+	copy(f.serverCapacities.begin(), f.serverCapacities.end(), ostream_iterator<int>(out, " "));
+	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binoN << "," << f.binoP <<")\tBandwidths:{ ";
+	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(), ostream_iterator<double>(out, " "));
+	out << "}\tReliability:" << f.reliabilityProbability;
 	return out;
 
 }
@@ -247,28 +239,25 @@ ostream & operator <<(ostream & out, const PSLProblem & f)
 istream & operator >>(istream & in, PSLProblem & problem)
 {
 	int n;
-		in >> n;
-		for (int i = 0; i < n; ++i) {
-			int bandwidth;
-			in >> bandwidth;
-			problem.bandwidths.push_back( bandwidth);
-			//cout << bandwidth <<endl;
-		}
-		in >> n;
-		for (int i = 0; i < n; ++i) {
-			ServerType* stype = new ServerType();
-			in >> *stype;
-			problem.servers.push_back(stype);
-			//cout << *stype <<endl;
-		}
-		in >> n;
-		for (int i = 0; i < n; ++i) {
-			FacilityType* ftype = new FacilityType();
-			ftype->read(in, problem);
-			problem.facilities.push_back(ftype);
-			//cout << *ftype <<endl;
-		}
-return in;
+	in >> n;
+	for (int i = 0; i < n; ++i) {
+		int bandwidth;
+		in >> bandwidth;
+		problem.bandwidths.push_back( bandwidth);
+	}
+	in >> n;
+	for (int i = 0; i < n; ++i) {
+		ServerType* stype = new ServerType();
+		in >> *stype;
+		problem.servers.push_back(stype);
+	}
+	in >> n;
+	for (int i = 0; i < n; ++i) {
+		FacilityType* ftype = new FacilityType();
+		ftype->read(in, problem);
+		problem.facilities.push_back(ftype);
+	}
+	return in;
 }
 
 ostream & operator <<(ostream& out, const NetworkLink& l)

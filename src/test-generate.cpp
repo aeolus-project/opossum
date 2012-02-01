@@ -33,6 +33,7 @@
 #include <algorithm>
 
 using namespace std;
+
 void print(FacilityNode* o, FacilityNode* d) {
 	cout << *o << " -> " << *d << endl;
 }
@@ -40,46 +41,22 @@ void print(FacilityNode* o, FacilityNode* d) {
 
 int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
-//ROOT
-//	unsigned int s[] = {5,5};
-//	double b[] = {1, 0, 0, 0};
-//	ftypes.push_back(new FacilityType(0,10,s,1,1, b,1));
-//	//REGIONS
-//	unsigned int s1[] = {2,3};
-//	double b1[] = {0.6, 0.2,0.15,0.05};
-//	ftypes.push_back(new FacilityType(1,200,s1,5, 0.5, b1,0.6));
-//	unsigned int s2[] = {3,1};
-//	double b2[] = {0.7, 0.15,0.1,0.05};
-//	ftypes.push_back(new FacilityType(1,300,s2,8, 0.6, b2,0.8));
-//	//FINALS
-//	unsigned int s3[] = {1,1};
-//	double b3[] = {0.3, 0.3,0.2,0.2};
-//	ftypes.push_back(new FacilityType(2,50,s3,3, 0.5, b3,0.5));
-//	unsigned int s4[] = {0,1};
-//	double b4[] = {0.2, 0.3,0.3,0.2};
-//	ftypes.push_back(new FacilityType(2,20,s4,4, 0.6, b4,0.5));
-//	cout << *ftypes.front() << endl;
-//	for ( size_t i = 0; i < ftypes.size(); ++i ) {
-//		cout << *ftypes[i] << endl;
-//	}
-
 	//	FacilityNode* root = generateSubtree(new FacilityNode(ftypes[0]), ftypes);
 	//	root->printSubtree();
 	//	root->toChild(0)->getDestination()->toChild(0)->forEachPath();
 	//	root->toChild(0)->forEachPath(print);
 	//
-//	string str = "Hello   How Are  You  Today";
-//	vector<string> v;
-//	istringstream buf(str);
-//	for(std::string token; getline(buf, token, ' '); ) {
-//		if(! token.empty()) v.push_back(token);
-//	}
-//
-//	copy(v.begin(), v.end(), std::ostream_iterator<std::string>(std::cout, "."));
-//	std::cout << '\n';
-
+	//	string str = "Hello   How Are  You  Today";
+	//	vector<string> v;
+	//	istringstream buf(str);
+	//	for(std::string token; getline(buf, token, ' '); ) {
+	//		if(! token.empty()) v.push_back(token);
+	//	}
+	//
+	//	copy(v.begin(), v.end(), std::ostream_iterator<std::string>(std::cout, "."));
+	//	std::cout << '\n';
+	//srand(1000);
 	int sum = 0;
-	int x;
 	ifstream in;
 
 	in.open("benchmarks/instances/sample-server.dat");
@@ -87,44 +64,19 @@ int main() {
 		cout << "Unable to open file";
 		exit(1); // terminate with error
 	}
+	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
-	//	int n;
-//	in >> n;
-//	for (int i = 0; i < n; ++i) {
-//		int bandwidth;
-//		in >> bandwidth;
-//		problem.bandwidths.push_back( bandwidth);
-//		//cout << bandwidth <<endl;
-//	}
-//	in >> n;
-//	for (int i = 0; i < n; ++i) {
-//		ServerType* stype = new ServerType();
-//		in >> *stype;
-//		problem.servers.push_back(stype);
-//		//cout << *stype <<endl;
-//	}
-//	in >> n;
-//	for (int i = 0; i < n; ++i) {
-//		FacilityType* ftype = new FacilityType();
-//		ftype->read(in, problem);
-//		problem.facilities.push_back(ftype);
-//		//cout << *ftype <<endl;
-//	}
-	while (in >> x) {
-		cout << x << endl;
-		sum = sum + x;
-	}
-//
 	in.close();
 	cout << "Sum = " << sum << endl;
 	cout << *problem;
-	return 0;
-	//ofstream myfile;
-	//	myfile.open ("/tmp/pserver.dot");
-	//	myfile << "digraph G {\n";
-	//	root->toDotty(myfile);
-	//	myfile << "}\n";
-	//	myfile.close();
+	FacilityNode* root = new FacilityNode(problem->facilities[0]);
+	generateSubtree(root, *problem);
+	ofstream myfile;
+	myfile.open ("/tmp/pserver.dot");
+	myfile << "digraph G {\n";
+	root->toDotty(myfile);
+	myfile << "}\n";
+	myfile.close();
 	//root->toDotty(cout);
 	//	FacilityType* f1 = new FacilityType(1,100,a,10, 0.5, b,0.5);
 	//	FacilityNode* n1 = new FacilityNode(f1);
