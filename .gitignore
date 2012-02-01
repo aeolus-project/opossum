@@ -1,4 +1,10 @@
+# c++ / cmake
+*.o
+/bin
+/build
+
 #Eclipse
+.cpproject
 .project
 .classpath
 .settings

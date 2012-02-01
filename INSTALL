@@ -29,3 +29,6 @@
  ./configure
  make
  sudo make install
+
+== Fedora ==
+yum install cmake boost boost-devel libxml2 libxml2-devel
