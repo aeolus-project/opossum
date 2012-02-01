@@ -37,6 +37,7 @@
 
 using namespace std;
 
+
 class ServerType
 {
 public:
@@ -57,6 +58,15 @@ private:
 };
 
 
+// Foncteur servant à libérer un pointeur - applicable à n'importe quel type
+struct Delete
+{
+   template <class T> void operator ()(T*& p) const
+   {
+      delete p;
+      p = NULL;
+   }
+};
 
 class PSLProblem;
 
@@ -66,7 +76,6 @@ public:
 	FacilityType() : level(0), demand(0), binoN(1), binoP(1), reliabilityProbability(1)
 	{}
 	virtual ~FacilityType() {
-		//FIXME delete [] serverCapacities; delete [] bandwidthProbabilities;
 	}
 	inline unsigned int getLevel() const { return level; }
 	inline unsigned int getDemand() const { return demand; }
@@ -82,9 +91,6 @@ public:
 	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
-	//inline double getBandwitdhProbability(const unsigned int stype) const { return bandwidthProbabilities[stype];}
-	//inline double getReliabilityProbability() const { return reliabilityProbability; }
-
 private:
 	unsigned int level;
 	unsigned int demand;
@@ -100,25 +106,14 @@ class PSLProblem {
 
 public:
 	PSLProblem() {
-		//TODO ctor
 	}
 	~PSLProblem() {
-		//TODO dtor
+		for_each(servers.begin(), servers.end(), Delete());
+		for_each(facilities.begin(), facilities.end(), Delete());
 	}
 	vector<unsigned int> bandwidths;
 	vector<ServerType*> servers;
 	vector<FacilityType*> facilities;
-
-	//FIXME probleme de copie
-	//	inline vector< unsigned int> getBandwidths() {
-	//		return bandwidths;
-	//	}
-	//	inline vector<FacilityType*> getFacilities() const {
-	//		return facilities;
-	//	}
-	//	inline vector<ServerType*> getServers() const {
-	//		return servers;
-	//	}
 
 	//TODO déclarer deux fois les méthodes amies ?
 	friend istream& operator>>(istream& in, PSLProblem& problem);
@@ -141,7 +136,10 @@ public:
 	FacilityNode(FacilityType* type) : id(NEXT_ID++), type(type), father(NULL) {
 	}
 	~FacilityNode() {
-		//TODO dtor;
+		delete type;
+		//FIXME dtor
+		//delete father;
+		//for_each(children.begin(), children.end(), Delete());
 	}
 	inline unsigned int getID() const { return id; }
 	inline FacilityType* getType() const { return type; }
@@ -201,6 +199,8 @@ public:
 	}
 
 ~NetworkLink() {
+	delete origin;
+	delete destination;
 }
 inline FacilityNode* getOrigin() const { return origin; }
 inline FacilityNode* getDestination() const { return destination; }
@@ -220,7 +220,6 @@ bool reliable;
 };
 
 
-//FacilityNode* generateSubtree(vector<FacilityType*> ftypes, unsigned int idx);
 FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem);
 
 inline double randd();

@@ -85,22 +85,6 @@ bool FacilityType::genRandomReliability()
 unsigned int FacilityNode::NEXT_ID=0;
 
 
-//FacilityNode *generateSubtree(const vector<FacilityType*> ftypes, unsigned int idx)
-//{
-//	FacilityNode* root = new FacilityNode(ftypes[idx]);
-//	const unsigned int level = ftypes[idx]->getLevel();
-//	while(idx  < ftypes.size() && ftypes[idx]->getLevel() == level) {idx++;}
-//	while(idx  < ftypes.size() && ftypes[idx]->getLevel() == level + 1) {
-//		const unsigned int nbc = ftypes[idx]->genRandomFacilities();
-//		for (unsigned int i = 0; i < nbc; ++i) {
-//			FacilityNode* child = generateSubtree(ftypes, idx);
-//			new NetworkLink(root, child);
-//		}
-//		idx++;
-//	}
-//	return root;
-//}
-
 FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem)
 {
 	unsigned int idx = 0;

@@ -41,20 +41,6 @@ void print(FacilityNode* o, FacilityNode* d) {
 
 int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
-	//	FacilityNode* root = generateSubtree(new FacilityNode(ftypes[0]), ftypes);
-	//	root->printSubtree();
-	//	root->toChild(0)->getDestination()->toChild(0)->forEachPath();
-	//	root->toChild(0)->forEachPath(print);
-	//
-	//	string str = "Hello   How Are  You  Today";
-	//	vector<string> v;
-	//	istringstream buf(str);
-	//	for(std::string token; getline(buf, token, ' '); ) {
-	//		if(! token.empty()) v.push_back(token);
-	//	}
-	//
-	//	copy(v.begin(), v.end(), std::ostream_iterator<std::string>(std::cout, "."));
-	//	std::cout << '\n';
 	//srand(1000);
 	int sum = 0;
 	ifstream in;
@@ -77,28 +63,5 @@ int main() {
 	root->toDotty(myfile);
 	myfile << "}\n";
 	myfile.close();
-	//root->toDotty(cout);
-	//	FacilityType* f1 = new FacilityType(1,100,a,10, 0.5, b,0.5);
-	//	FacilityNode* n1 = new FacilityNode(f1);
-	//	FacilityNode* n2 = new FacilityNode(f1);
-	//	cout << *f1 << endl << *serverTypes[0] <<endl;
-	//	for (int var = 0; var < 10; ++var) {
-	//
-	//		NetworkLink* l1 = new NetworkLink(n1, n2);
-	//		cout << *l1 << endl;
-	//	}
-	//	cout << endl;
-	//	bool v1 = true;
-	//	bool v2 = false;
-	//	v1 &= false;
-	//	v2 &= false;
-	//	cout << v1 << endl;
-	//	cout << v2 << endl;
-	//	v1 = true;
-	//	v2 = false;
-	//	v1 &= true;
-	//	v2 &= true;
-	//	cout << v1 << endl;
-	//	cout << v2 << endl;
 	return 0;
 }
