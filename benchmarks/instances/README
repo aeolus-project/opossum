@@ -8,6 +8,6 @@ The test data's file format, using one or four column(s), is as follows:
 <B := 1 x b, a vector of  bandwidths in increasing order>
 < m := #types of servers>	
 <S := m x 2 server each line is a type of server, i.e. a vector (#connections, cost)>
-< n := #types of facility>	
-  <F := 1 x n, each line is a facility, i.e. a vector (level, demand, max-servers[m], B(n,p), bandwidth-probability[b], reliability-probability)>
+< n := #types of facility>
+<F := 1 x n, each line is a facility, i.e. a vector (level, demand, max-servers[m], B(n,p), bandwidth-probability[b], reliability-probability)>
 
