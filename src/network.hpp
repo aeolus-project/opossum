@@ -1,28 +1,28 @@
 /**
-*  Copyright (c) 2011, Arnaud Malapert and Mohamed Rezgui
-*  All rights reserved.
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions are met:
-*
-*      * Redistributions of source code must retain the above copyright
-*        notice, this list of conditions and the following disclaimer.
-*      * Redistributions in binary form must reproduce the above copyright
-*        notice, this list of conditions and the following disclaimer in the
-*        documentation and/or other materials provided with the distribution.
-*      * Neither the name of the Arnaud Malapert nor the
-*        names of its contributors may be used to endorse or promote products
-*        derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
-*  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-*  DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
-*  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-*  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-*  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-*  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2011, Arnaud Malapert and Mohamed Rezgui
+ *  All rights reserved.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of the Arnaud Malapert nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
+ *  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef NETWORK_HPP_
 #define NETWORK_HPP_
@@ -30,98 +30,116 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <iterator>
+#include <algorithm>
 #include <vector>
+#include <assert.h>
+#include <boost/random/variate_generator.hpp>
+#include <boost/generator_iterator.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random.hpp>
+#include <boost/random/uniform_01.hpp>
+#include <boost/random/binomial_distribution.hpp>
 
+//
+//#include <boost/math/distributions/binomial.hpp>
+//using boost::math::binomial;
+
+
+using namespace boost::random;
 using namespace std;
+
+// Foncteur servant à libérer un pointeur - applicable à n'importe quel type
+struct Delete
+{
+	template <class T> void operator ()(T*& p) const
+	{
+		delete p;
+		p = NULL;
+	}
+};
+
+template <typename T>
+T& dereference(T* ptr) { return *ptr; }
 
 class ServerType
 {
 public:
-	ServerType(unsigned int capacity, unsigned int cost) {
-		this->capacity = capacity;
-		this->cost = cost;
+	ServerType() : capacity(0), cost(0) {
 	}
-
+	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {
+	}
 	virtual ~ServerType() {};
 	inline unsigned int getCost() const { return cost; }
 	inline unsigned int getMaxConnections() const { return capacity; }
+
+	friend istream& operator>>(istream& in, ServerType& f);
 protected:
 private:
-	unsigned int cost;
 	unsigned int capacity;
+	unsigned int cost;
+
 };
 
 
-static const unsigned int nbServerTypes = 2;
-static const ServerType* serverTypes[] = { new ServerType(500,5), new ServerType(100,2) };
 
-static const unsigned int nbBandwidths=4;
-static const unsigned int bandwidths[] = {1000,100,20,2};
-
-//static const unsigned int nbColors =9;
-//static const string colors[] ={"firebrick", "forestgreen", "goldenrod", "navyblue",
-//		"darkviolet", "brown", "darkorange","cyan", "lightblue"};
-
-
+class PSLProblem;
 
 class FacilityType
 {
+
+
+
 public:
-	FacilityType() : level(0), demand(0), serverCapacities(NULL), binoN(1), binoP(1), bandwidthProbabilities(NULL), reliabilityProbability(1)
-	{}
-	FacilityType(unsigned int level, unsigned int demand, unsigned int serverCapacities[], unsigned int binoN, double binoP, double bandwidthProbabilities[],double reliabilityProbability) : level(level), demand(demand), serverCapacities(serverCapacities), binoN(binoN), binoP(binoP), bandwidthProbabilities(bandwidthProbabilities), reliabilityProbability(reliabilityProbability)
-	{}
-	virtual ~FacilityType() { delete [] serverCapacities; delete [] bandwidthProbabilities; }
+	FacilityType() : level(0), demand(0), binornd(NULL), reliabilityProbability(1)
+	{
+		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
+	}
+	virtual ~FacilityType() {
+		delete binornd;
+	}
 	inline unsigned int getLevel() const { return level; }
 	inline unsigned int getDemand() const { return demand; }
-	inline unsigned int getServerCapacity(const unsigned int stype) const {
-		return stype < nbServerTypes ? serverCapacities[stype] : 0;
+	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
 	}
-	inline unsigned int getConnexionCapacity() const {
-		unsigned int tot = 0;
-		for (unsigned int i = 0; i < nbServerTypes; ++i) {
-			tot+= serverCapacities[i] * serverTypes[i]->getMaxConnections();
-		}
-		return tot;
-	}
+	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
 	//string toGEXF();
 	unsigned int genRandomFacilities();
-	unsigned int genRandomBandwidth();
-	unsigned int genRandomBandwidth(unsigned int maxBandwidth);
+	unsigned int genRandomBandwidthIndex();
+	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);
 	bool genRandomReliability();
 
+	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
-	inline double getBandwitdhProbability(const unsigned int stype) const {
-		return stype < nbBandwidths? bandwidthProbabilities[stype] : 0;
-	}
-	inline double getReliabilityProbability() const { return reliabilityProbability; }
-
 private:
+	static mt19937 random_generator;
+	static uniform_01< mt19937&, double > randd;
+	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
+
 	unsigned int level;
 	unsigned int demand;
-	unsigned int* serverCapacities;
-	unsigned int binoN;
-	double binoP;
-	double* bandwidthProbabilities;
+	vector<unsigned int> serverCapacities;
+	variate_generator<mt19937&, binomial_distribution<> >* binornd;
+	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 
 };
+
+
 
 class NetworkLink;
 
 
 class FacilityNode
 {
-	friend class NetworkLink;  // bof !!
+	friend class NetworkLink;
 	static unsigned int NEXT_ID;
 
 public:
 	FacilityNode(FacilityType* type) : id(NEXT_ID++), type(type), father(NULL) {
 	}
-	~FacilityNode() {
-		// delete children; ??
-	}
+	~FacilityNode();
 	inline unsigned int getID() const { return id; }
 	inline FacilityType* getType() const { return type; }
 	inline NetworkLink* toFather() const { return father; }
@@ -136,7 +154,7 @@ public:
 	inline bool isLeaf() const {
 		return children.empty();
 	}
-	unsigned int getMinIncomingConnections();
+	unsigned int getMinIncomingConnections(vector<ServerType*>* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
 	void printSubtree();
@@ -151,26 +169,65 @@ private:
 };
 
 
+class PSLProblem {
+
+
+public:
+
+	PSLProblem() {
+	}
+	~PSLProblem() {
+		for_each(servers.begin(), servers.end(), Delete());
+		for_each(facilities.begin(), facilities.end(), Delete());
+	}
+	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
+	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
+	inline unsigned int getNbServers() const { return servers.size();}
+	inline unsigned int getNbFacilities() const { return facilities.size();}
+
+	FacilityNode* generateNetwork();
+
+	friend ostream& operator<<(ostream& out, const PSLProblem& f);
+	friend istream& operator>>(istream& in, PSLProblem& problem);
+protected:
+	FacilityNode* generateSubtree(FacilityNode* root);
+private:
+	vector<unsigned int> bandwidths;
+	vector<ServerType*> servers;
+	vector<FacilityType*> facilities;
+
+};
 
 class NetworkLink {
 
 public:
-	NetworkLink(FacilityNode* father, FacilityNode* child) : origin(father), destination(child), bandwidth(0),reliable(0)
+	NetworkLink(FacilityNode* father, FacilityNode* child, vector<int>* bandwidths) : origin(father), destination(child), bandwidth(0),reliable(0)
 	{
 		father->children.push_back(this);
 		child->father=this;
+		bandwidth = (*bandwidths)[child->getType()->genRandomBandwidthIndex()];
+		reliable = child->getType()->genRandomReliability();
+	}
 
-		//Is the link from the grandfather to the father reliable ?
-		if( father->isRoot() ) {
-			bandwidth = child->getType()->genRandomBandwidth();
+	NetworkLink(FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool ignoreHierarchy) : origin(father), destination(child), bandwidth(0),reliable(0)
+	{
+		father->children.push_back(this);
+		child->father=this;
+		if( father->isRoot() || ignoreHierarchy) {
+			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
 			reliable = child->getType()->genRandomReliability();
 		} else {
-			bandwidth = child->getType()->genRandomBandwidth(father->toFather()->getBandwidth());
+			unsigned int fbandw = father->toFather()->getBandwidth();
+			int maxIndex = problem.getNbBandwidths();
+			while( maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {maxIndex--;}
+			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex(maxIndex));
 			reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
 		}
-
 	}
+
 	~NetworkLink() {
+		delete origin;
+		delete destination;
 	}
 	inline FacilityNode* getOrigin() const { return origin; }
 	inline FacilityNode* getDestination() const { return destination; }
@@ -190,16 +247,18 @@ private:
 };
 
 
-//FacilityNode* generateSubtree(vector<FacilityType*> ftypes, unsigned int idx);
-FacilityNode *generateSubtree(FacilityNode* root, const vector<FacilityType*> ftypes);
 
-inline double randd();
-//unsigned int randi(int min, int max);
-unsigned int binornd(const int n, const double p);
 
+
+ostream& operator<<(ostream& out, const PSLProblem& f);
+istream& operator>>(istream& in, PSLProblem& s);
 
 ostream& operator<<(ostream& out, const ServerType& s);
+istream& operator>>(istream& in, ServerType& s);
+
 ostream& operator<<(ostream& out, const FacilityType& f);
+
+
 ostream& operator<<(ostream& out, const FacilityNode& n);
 ostream& operator<<(ostream& out, const NetworkLink& l);
 
