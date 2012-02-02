@@ -34,7 +34,19 @@
 #include <algorithm>
 #include <vector>
 #include <assert.h>
+#include <boost/random/variate_generator.hpp>
+#include <boost/generator_iterator.hpp>
+#include "boost/random/mersenne_twister.hpp"
+#include <boost/random.hpp>
+#include <boost/random/uniform_01.hpp>
+#include <boost/random/binomial_distribution.hpp>
 
+//
+//#include <boost/math/distributions/binomial.hpp>
+//using boost::math::binomial;
+
+
+using namespace boost::random;
 using namespace std;
 
 
@@ -61,20 +73,27 @@ private:
 // Foncteur servant à libérer un pointeur - applicable à n'importe quel type
 struct Delete
 {
-   template <class T> void operator ()(T*& p) const
-   {
-      delete p;
-      p = NULL;
-   }
+	template <class T> void operator ()(T*& p) const
+	{
+		delete p;
+		p = NULL;
+	}
 };
 
 class PSLProblem;
 
 class FacilityType
 {
+
+
+
 public:
-	FacilityType() : level(0), demand(0), binoN(1), binoP(1), reliabilityProbability(1)
-	{}
+	FacilityType() : level(0), demand(0), binornd(random_generator,binomial_distribution<>(1,1)), reliabilityProbability(1)
+	{
+		//binomial_distribution<> my_binomial(1,1);
+		//variate_generator<mt19937, binomial_distribution<> > binornd(random_generator, my_binomial);
+		//binornd = new variate_generator<mt19937, binomial_distribution<> >(random_generator, my_binomial);
+	}
 	virtual ~FacilityType() {
 	}
 	inline unsigned int getLevel() const { return level; }
@@ -92,17 +111,20 @@ public:
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
 private:
+	static const mt19937 random_generator;
+	static uniform_01< mt19937, double > randd;
+
 	unsigned int level;
 	unsigned int demand;
 	vector<unsigned int> serverCapacities;
-	unsigned int binoN;
-	double binoP;
+	variate_generator<mt19937, binomial_distribution<> > binornd;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 
 };
 
 class PSLProblem {
+
 
 public:
 	PSLProblem() {
@@ -114,7 +136,6 @@ public:
 	vector<unsigned int> bandwidths;
 	vector<ServerType*> servers;
 	vector<FacilityType*> facilities;
-
 	//TODO déclarer deux fois les méthodes amies ?
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 protected:
@@ -198,33 +219,33 @@ public:
 		}
 	}
 
-~NetworkLink() {
-	delete origin;
-	delete destination;
-}
-inline FacilityNode* getOrigin() const { return origin; }
-inline FacilityNode* getDestination() const { return destination; }
-inline bool isReliable() const { return reliable; }
-inline unsigned int getBandwidth() const { return bandwidth; }
-void forEachPath() const;
-void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
-ostream& toDotty(ostream& out);
-ostream& toGEXF(ostream& out);
-//string* toGEXF();
+	~NetworkLink() {
+		delete origin;
+		delete destination;
+	}
+	inline FacilityNode* getOrigin() const { return origin; }
+	inline FacilityNode* getDestination() const { return destination; }
+	inline bool isReliable() const { return reliable; }
+	inline unsigned int getBandwidth() const { return bandwidth; }
+	void forEachPath() const;
+	void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+	ostream& toDotty(ostream& out);
+	ostream& toGEXF(ostream& out);
+	//string* toGEXF();
 protected:
 private:
-FacilityNode *origin;
-FacilityNode *destination;
-unsigned int bandwidth;
-bool reliable;
+	FacilityNode *origin;
+	FacilityNode *destination;
+	unsigned int bandwidth;
+	bool reliable;
 };
 
 
 FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem);
 
-inline double randd();
+//inline double randd();
 //unsigned int randi(int min, int max);
-unsigned int binornd(const int n, const double p);
+//unsigned int binornd(const int n, const double p);
 
 template <typename T>
 T& dereference(T* ptr) { return *ptr; }
@@ -236,7 +257,6 @@ ostream& operator<<(ostream& out, const ServerType& s);
 istream& operator>>(istream& in, ServerType& s);
 
 ostream& operator<<(ostream& out, const FacilityType& f);
-//istream& operator>>(istream& in, FacilityType& f);
 
 
 ostream& operator<<(ostream& out, const FacilityNode& n);

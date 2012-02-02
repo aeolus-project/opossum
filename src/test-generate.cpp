@@ -55,13 +55,16 @@ int main() {
 	in.close();
 	cout << "Sum = " << sum << endl;
 	cout << *problem;
-	FacilityNode* root = new FacilityNode(problem->facilities[0]);
-	generateSubtree(root, *problem);
-	ofstream myfile;
-	myfile.open ("/tmp/pserver.dot");
-	myfile << "digraph G {\n";
-	root->toDotty(myfile);
-	myfile << "}\n";
-	myfile.close();
+	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
+	cout << problem->facilities[0]->genRandomFacilities() << endl;
+	cout << *(problem->facilities[1]) << endl;
+	cout << problem->facilities[1]->genRandomFacilities() << endl;
+//	generateSubtree(root, *problem);
+//	ofstream myfile;
+//	myfile.open ("/tmp/pserver.dot");
+//	myfile << "digraph G {\n";
+//	root->toDotty(myfile);
+//	myfile << "}\n";
+//	myfile.close();
 	return 0;
 }

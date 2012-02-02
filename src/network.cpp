@@ -27,24 +27,25 @@
 #include "./network.hpp"
 
 
-double randd()
-{
-	return rand() / (double) RAND_MAX;
-}
+//double randd()
+//{
+//	return rand() / (double) RAND_MAX;
+//}
 
-unsigned int binornd(const int n, const double p)
-{
-	unsigned int r=0;
-	for (int i = 0; i < n; ++i) {
-		if(randd() < p) { r++; }
-	}
-	return r;
-}
+//unsigned int binornd(const int n, const double p)
+//{
+//	unsigned int r=0;
+//	for (int i = 0; i < n; ++i) {
+//		if(randd() < p) { r++; }
+//	}
+//	return r;
+//}
 
 
 unsigned int FacilityType::genRandomFacilities()
 {
-	return binornd(binoN, binoP);
+	cout << "B(" << binornd.distribution().t() <<  ", " << binornd.distribution().p() << ")" <<endl;
+	return binornd();
 }
 
 
@@ -157,6 +158,8 @@ void FacilityNode::printSubtree() {
 	}
 }
 
+const mt19937 FacilityType::random_generator;
+uniform_01< mt19937, double > FacilityType::randd(FacilityType::random_generator);
 
 istream & FacilityType::read(istream & in, const PSLProblem& problem)
 {
@@ -167,7 +170,14 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem)
 		in >> tmp;
 		serverCapacities.push_back(tmp);
 	}
-	in >> binoN >> binoP;
+	int t;
+	in >> t;
+	double p;
+	in >> p;
+	binomial_distribution<> my_binomial(t,p);
+	//FIXME Why do I have to create an auxiliary variable ?
+	variate_generator<mt19937, binomial_distribution<> > binornd(random_generator, my_binomial);
+	this->binornd = binornd;
 	n = problem.bandwidths.size();
 	double d;
 	while(bandwidthProbabilities.size() < n) {
@@ -191,7 +201,7 @@ ostream& operator<<(ostream& out, const FacilityType& f) {
 
 	out << "Level:" << f.getLevel() << "\tDemand:" << f.getDemand() << "\tCapacities:{ ";
 	copy(f.serverCapacities.begin(), f.serverCapacities.end(), ostream_iterator<int>(out, " "));
-	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binoN << "," << f.binoP <<")\tBandwidths:{ ";
+	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binornd.distribution().t() << "," << f.binornd.distribution().p() <<")\tBandwidths:{ ";
 	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(), ostream_iterator<double>(out, " "));
 	out << "}\tReliability:" << f.reliabilityProbability;
 	return out;
