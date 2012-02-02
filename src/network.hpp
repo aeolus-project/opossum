@@ -36,7 +36,7 @@
 #include <assert.h>
 #include <boost/random/variate_generator.hpp>
 #include <boost/generator_iterator.hpp>
-#include "boost/random/mersenne_twister.hpp"
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
@@ -49,6 +49,18 @@
 using namespace boost::random;
 using namespace std;
 
+// Foncteur servant à libérer un pointeur - applicable à n'importe quel type
+struct Delete
+{
+	template <class T> void operator ()(T*& p) const
+	{
+		delete p;
+		p = NULL;
+	}
+};
+
+template <typename T>
+T& dereference(T* ptr) { return *ptr; }
 
 class ServerType
 {
@@ -70,15 +82,6 @@ private:
 };
 
 
-// Foncteur servant à libérer un pointeur - applicable à n'importe quel type
-struct Delete
-{
-	template <class T> void operator ()(T*& p) const
-	{
-		delete p;
-		p = NULL;
-	}
-};
 
 class PSLProblem;
 
@@ -88,13 +91,12 @@ class FacilityType
 
 
 public:
-	FacilityType() : level(0), demand(0), binornd(random_generator,binomial_distribution<>(1,1)), reliabilityProbability(1)
+	FacilityType() : level(0), demand(0), binornd(NULL), reliabilityProbability(1)
 	{
-		//binomial_distribution<> my_binomial(1,1);
-		//variate_generator<mt19937, binomial_distribution<> > binornd(random_generator, my_binomial);
-		//binornd = new variate_generator<mt19937, binomial_distribution<> >(random_generator, my_binomial);
+		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
 	}
 	virtual ~FacilityType() {
+		delete binornd;
 	}
 	inline unsigned int getLevel() const { return level; }
 	inline unsigned int getDemand() const { return demand; }
@@ -111,57 +113,33 @@ public:
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
 private:
-	static const mt19937 random_generator;
-	static uniform_01< mt19937, double > randd;
+	static mt19937 random_generator;
+	static uniform_01< mt19937&, double > randd;
+	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
 
 	unsigned int level;
 	unsigned int demand;
 	vector<unsigned int> serverCapacities;
-	variate_generator<mt19937, binomial_distribution<> > binornd;
+	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 
 };
 
-class PSLProblem {
 
-
-public:
-	PSLProblem() {
-	}
-	~PSLProblem() {
-		for_each(servers.begin(), servers.end(), Delete());
-		for_each(facilities.begin(), facilities.end(), Delete());
-	}
-	vector<unsigned int> bandwidths;
-	vector<ServerType*> servers;
-	vector<FacilityType*> facilities;
-	//TODO déclarer deux fois les méthodes amies ?
-	friend istream& operator>>(istream& in, PSLProblem& problem);
-protected:
-private:
-
-
-
-};
 
 class NetworkLink;
 
 
 class FacilityNode
 {
-	friend class NetworkLink;  // bof !!
+	friend class NetworkLink;
 	static unsigned int NEXT_ID;
 
 public:
 	FacilityNode(FacilityType* type) : id(NEXT_ID++), type(type), father(NULL) {
 	}
-	~FacilityNode() {
-		delete type;
-		//FIXME dtor
-		//delete father;
-		//for_each(children.begin(), children.end(), Delete());
-	}
+	~FacilityNode();
 	inline unsigned int getID() const { return id; }
 	inline FacilityType* getType() const { return type; }
 	inline NetworkLink* toFather() const { return father; }
@@ -191,6 +169,34 @@ private:
 };
 
 
+class PSLProblem {
+
+
+public:
+
+	PSLProblem() {
+	}
+	~PSLProblem() {
+		for_each(servers.begin(), servers.end(), Delete());
+		for_each(facilities.begin(), facilities.end(), Delete());
+	}
+	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
+	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
+	inline unsigned int getNbServers() const { return servers.size();}
+	inline unsigned int getNbFacilities() const { return facilities.size();}
+
+	FacilityNode* generateNetwork();
+
+	friend ostream& operator<<(ostream& out, const PSLProblem& f);
+	friend istream& operator>>(istream& in, PSLProblem& problem);
+protected:
+	FacilityNode* generateSubtree(FacilityNode* root);
+private:
+	vector<unsigned int> bandwidths;
+	vector<ServerType*> servers;
+	vector<FacilityType*> facilities;
+
+};
 
 class NetworkLink {
 
@@ -208,13 +214,13 @@ public:
 		father->children.push_back(this);
 		child->father=this;
 		if( father->isRoot() || ignoreHierarchy) {
-			bandwidth = problem.bandwidths[child->getType()->genRandomBandwidthIndex()];
+			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
 			reliable = child->getType()->genRandomReliability();
 		} else {
 			unsigned int fbandw = father->toFather()->getBandwidth();
-			int maxIndex = problem.bandwidths.size()-1;
-			while( maxIndex >= 0 && problem.bandwidths[maxIndex] > fbandw) {maxIndex--;}
-			bandwidth = problem.bandwidths[child->getType()->genRandomBandwidthIndex(maxIndex)];
+			int maxIndex = problem.getNbBandwidths();
+			while( maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {maxIndex--;}
+			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex(maxIndex));
 			reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
 		}
 	}
@@ -241,14 +247,8 @@ private:
 };
 
 
-FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem);
 
-//inline double randd();
-//unsigned int randi(int min, int max);
-//unsigned int binornd(const int n, const double p);
 
-template <typename T>
-T& dereference(T* ptr) { return *ptr; }
 
 ostream& operator<<(ostream& out, const PSLProblem& f);
 istream& operator>>(istream& in, PSLProblem& s);

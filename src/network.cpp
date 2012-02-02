@@ -27,82 +27,15 @@
 #include "./network.hpp"
 
 
-//double randd()
-//{
-//	return rand() / (double) RAND_MAX;
-//}
-
-//unsigned int binornd(const int n, const double p)
-//{
-//	unsigned int r=0;
-//	for (int i = 0; i < n; ++i) {
-//		if(randd() < p) { r++; }
-//	}
-//	return r;
-//}
-
-
-unsigned int FacilityType::genRandomFacilities()
-{
-	cout << "B(" << binornd.distribution().t() <<  ", " << binornd.distribution().p() << ")" <<endl;
-	return binornd();
+FacilityNode::~FacilityNode() {
+	delete type;
+	delete father;
+	for_each(children.begin(), children.end(), Delete());
 }
 
-
-unsigned int FacilityType::genRandomBandwidthIndex()
-{
-	double cum = 0;
-	const double p = randd();
-	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
-		cum+= bandwidthProbabilities[i];
-		if(p <= cum) {return i;}
-	}
-	assert(cum == 1);
-	exit (1);
-}
-
-unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
-	double tot = 0;
-	//compute total probability
-	for (unsigned int i = 0; i <= maxIndex; ++i) {
-		tot += bandwidthProbabilities[i];
-	}
-	//compute random values using normalized probabilities
-	double cum = 0;
-	const double p = randd();
-	for (unsigned int i = 0; i <= maxIndex; ++i) {
-		cum+= bandwidthProbabilities[i]/tot;
-		if(p <= cum) { return i;}
-	}
-	assert(cum == 1);
-	exit (1);
-}
-
-bool FacilityType::genRandomReliability()
-{
-	return randd() < reliabilityProbability;
-}
 
 unsigned int FacilityNode::NEXT_ID=0;
 
-
-FacilityNode *generateSubtree(FacilityNode* root, PSLProblem& problem)
-{
-	unsigned int idx = 0;
-	const unsigned int level = root->getType()->getLevel();
-	const unsigned int n = problem.facilities.size();
-	while(idx  < n && problem.facilities[idx]->getLevel() <= level) {idx++;}
-	while(idx  < n && problem.facilities[idx]->getLevel() == level + 1) {
-		const unsigned int nbc = problem.facilities[idx]->genRandomFacilities();
-		for (unsigned int i = 0; i < nbc; ++i) {
-			FacilityNode* child = new FacilityNode(problem.facilities[idx]);
-			new NetworkLink(root, child, problem, false);
-			generateSubtree(child, problem);
-		}
-		idx++;
-	}
-	return root;
-}
 
 unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* servers) {
 	const unsigned int capa = type->getConnexionCapacity(servers);
@@ -158,13 +91,61 @@ void FacilityNode::printSubtree() {
 	}
 }
 
-const mt19937 FacilityType::random_generator;
-uniform_01< mt19937, double > FacilityType::randd(FacilityType::random_generator);
+bool FacilityType::genRandomReliability()
+{
+	return randd() < reliabilityProbability;
+}
+
+
+unsigned int FacilityType::genRandomBandwidthIndex()
+{
+	double cum = 0;
+	const double p = randd();
+	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
+		cum+= bandwidthProbabilities[i];
+		if(p <= cum) {return i;}
+	}
+	assert(cum == 1);
+	exit (1);
+}
+
+unsigned int FacilityType::genRandomFacilities()
+{
+	cout << "B(" << binornd->distribution().t() <<  ", " << binornd->distribution().p() << ")" <<endl;
+	return (*binornd)();
+}
+
+
+unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
+	double tot = 0;
+	//compute total probability
+	for (unsigned int i = 0; i <= maxIndex; ++i) {
+		tot += bandwidthProbabilities[i];
+	}
+	//compute random values using normalized probabilities
+	double cum = 0;
+	const double p = randd();
+	for (unsigned int i = 0; i <= maxIndex; ++i) {
+		cum+= bandwidthProbabilities[i]/tot;
+		if(p <= cum) { return i;}
+	}
+	assert(cum == 1);
+	exit (1);
+}
+
+#ifdef NDEBUG
+mt19937 FacilityType::random_generator(static_cast<unsigned int>(std::time(0)));
+#else
+mt19937 FacilityType::random_generator;
+#endif
+
+uniform_01< mt19937&, double > FacilityType::randd(FacilityType::random_generator);
+variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(random_generator, binomial_distribution<>(1,1));
 
 istream & FacilityType::read(istream & in, const PSLProblem& problem)
 {
 	in >> level >> demand;
-	unsigned int n = problem.servers.size();
+	unsigned int n = problem.getNbServers();
 	int tmp;
 	while(serverCapacities.size() < n) {
 		in >> tmp;
@@ -174,11 +155,9 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem)
 	in >> t;
 	double p;
 	in >> p;
-	binomial_distribution<> my_binomial(t,p);
-	//FIXME Why do I have to create an auxiliary variable ?
-	variate_generator<mt19937, binomial_distribution<> > binornd(random_generator, my_binomial);
-	this->binornd = binornd;
-	n = problem.bandwidths.size();
+	delete binornd;
+	binornd = new variate_generator<mt19937&, binomial_distribution<> >(random_generator, binomial_distribution<>(t,p));
+	n = problem.getNbBandwidths();
 	double d;
 	while(bandwidthProbabilities.size() < n) {
 		in >> d;
@@ -201,7 +180,7 @@ ostream& operator<<(ostream& out, const FacilityType& f) {
 
 	out << "Level:" << f.getLevel() << "\tDemand:" << f.getDemand() << "\tCapacities:{ ";
 	copy(f.serverCapacities.begin(), f.serverCapacities.end(), ostream_iterator<int>(out, " "));
-	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binornd.distribution().t() << "," << f.binornd.distribution().p() <<")\tBandwidths:{ ";
+	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binornd->distribution().t() << "," << f.binornd->distribution().p() <<")\tBandwidths:{ ";
 	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(), ostream_iterator<double>(out, " "));
 	out << "}\tReliability:" << f.reliabilityProbability;
 	return out;
@@ -228,6 +207,30 @@ ostream & operator <<(ostream & out, const PSLProblem & f)
 	transform(f.servers.begin(), f.servers.end(), ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
 	transform(f.facilities.begin(), f.facilities.end(), ostream_iterator<FacilityType>(out, "\n"), dereference<FacilityType>);
 	return out;
+}
+
+FacilityNode *PSLProblem::generateNetwork()
+{
+	FacilityNode* root = new FacilityNode(facilities[0]);
+	return generateSubtree(root);
+}
+
+FacilityNode *PSLProblem::generateSubtree(FacilityNode *root)
+{
+	unsigned int idx = 0;
+	const unsigned int level = root->getType()->getLevel();
+	const unsigned int n = facilities.size();
+	while(idx  < n && facilities[idx]->getLevel() <= level) {idx++;}
+	while(idx  < n && facilities[idx]->getLevel() == level + 1) {
+		const unsigned int nbc = facilities[idx]->genRandomFacilities();
+		for (unsigned int i = 0; i < nbc; ++i) {
+			FacilityNode* child = new FacilityNode(facilities[idx]);
+			new NetworkLink(root, child, *this, false);
+			generateSubtree(child);
+		}
+		idx++;
+	}
+	return root;
 }
 
 istream & operator >>(istream & in, PSLProblem & problem)
@@ -328,6 +331,10 @@ ostream & NetworkLink::toGEXF(ostream & out)
 {
 	return out;
 }
+
+
+
+
 
 
 
