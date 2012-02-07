@@ -4,8 +4,7 @@ SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
 
 FILE (GLOB_RECURSE project_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
 #SET (project_MOC_HEADERS app.h)
-#SET (project_LIBS ${Boost_LIBRARIES} ${QT_LIBRARIES} ${Log4Cxx_LIBRARIES})
-SET (project_LIBS ilocplex cplex concert m pthread) #boost_random gexf xml2
+SET (project_LIBS ${Boost_LIBRARIES} ${XML2_LIBRARY_DIRS} gexf ilocplex cplex concert m pthread) #boost_random gexf xml2
 SET (project_BIN ${PROJECT_NAME})
 
 

@@ -24,55 +24,59 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "network.hpp"
-#include "GexfGen.hpp"
 
-#include <string>
-#include <sstream>
-#include <vector>
-#include <iterator>
-#include <iostream>
-#include <algorithm>
+#ifndef GEXFGEN_HPP_
+#define GEXFGEN_HPP_
+
+#include <libgexf/libgexf.h>
+
+#include "network.hpp"
 
 using namespace std;
 
-void print(FacilityNode* o, FacilityNode* d) {
-	cout << *o << " -> " << *d << endl;
-}
+/*
+ 1er graphe & 2ème graphe
+Attributs Node : nb de serveurs, demandes, nb de connexions, nb de connexions locales
+Attribut Link : bandwidth, reliability
+
+ 2ème graphe  Attribut Link : nb de connexions passant par le lien (yij),  
+                              bandwidth sur le lien cumulé bij
+
+3ème graphe :
+	Attribut Link : zij nombre de connexion du site de i vers j selon le chemin (i,j)
+ */
 
 
-int main() {
-	cout << "Hello World!!!" << endl; // prints Hello World!!!
-	//srand(1000);
-	int sum = 0;
-	ifstream in;
+class AbstractGexfGen {
+protected:
+	FacilityNode* _root;
+	virtual void initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf) = 0;
+	virtual void initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf) = 0;
+	void initGexf(libgexf::GEXF *gexf);
 
-	in.open("benchmarks/instances/sample-server.dat");
-	if (!in) {
-		cout << "Unable to open file";
-		exit(1); // terminate with error
-	}
-	PSLProblem* problem = new PSLProblem();
-	in >> *problem;
-	in.close();
-	cout << "Sum = " << sum << endl;
-	cout << *problem;
+public:
+	AbstractGexfGen(FacilityNode* root);
+	void writeToFile(string pathFile);
 
-	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
-//
-	FacilityNode* root = problem->generateNetwork();
-//	generateSubtree(root, *problem);
-	ofstream myfile;
-	myfile.open ("test.dot");
-	myfile << "digraph G {\n";
-	root->toDotty(myfile);
-	myfile << "}\n";
-	myfile.close();
+}; 
+
+class InstanceGexfGen : public AbstractGexfGen {
+protected:
+	void initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf);
+	void initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf);
+
+public:
+	InstanceGexfGen(FacilityNode* root);
+};
 
 
-	AbstractGexfGen* generatorGexf = new InstanceGexfGen(root);
-	generatorGexf->writeToFile("test.gexf");
-	delete generatorGexf;
+class FlowConnectionsGexfGen : public AbstractGexfGen {
+protected:
+	void initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf);
+	void initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf);
 
-	return 0;
-}
+public:
+	FlowConnectionsGexfGen(FacilityNode* root);
+};
+
+#endif //GEXFGEN_HPP_

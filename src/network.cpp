@@ -24,8 +24,9 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "./network.hpp"
+#include "network.hpp"
 
+#include "Utils.hpp"
 
 FacilityNode::~FacilityNode() {
 	delete type;
@@ -57,11 +58,6 @@ ostream & FacilityNode::toDotty(ostream & out)
 	for ( size_t i = 0; i < children.size(); ++i ) {
 		children[i]->getDestination()->toDotty(out);
 	}
-	return out;
-}
-
-ostream & FacilityNode::toGEXF(ostream & out)
-{
 	return out;
 }
 
@@ -305,8 +301,6 @@ ostream & NetworkLink::toDotty(ostream & out)
 }
 
 
-
-
 void NetworkLink::forEachPath(void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const
 {
 	FacilityNode* ancestor = getDestination();
@@ -327,10 +321,6 @@ void NetworkLink::forEachPath(void(*ptr)(FacilityNode *n1, FacilityNode *n2)) co
 	} while(! ancestor->isRoot());
 }
 
-ostream & NetworkLink::toGEXF(ostream & out)
-{
-	return out;
-}
 
 
 

@@ -27,13 +27,12 @@
 #ifndef NETWORK_HPP_
 #define NETWORK_HPP_
 
-#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <iterator>
 #include <algorithm>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <boost/random/variate_generator.hpp>
 #include <boost/generator_iterator.hpp>
 #include <boost/random/mersenne_twister.hpp>
@@ -44,7 +43,6 @@
 //
 //#include <boost/math/distributions/binomial.hpp>
 //using boost::math::binomial;
-
 
 using namespace boost::random;
 using namespace std;
@@ -156,7 +154,6 @@ public:
 	}
 	unsigned int getMinIncomingConnections(vector<ServerType*>* servers);
 	ostream& toDotty(ostream& out);
-	ostream& toGEXF(ostream& out);
 	void printSubtree();
 protected:
 private:
@@ -236,8 +233,6 @@ public:
 	void forEachPath() const;
 	void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
 	ostream& toDotty(ostream& out);
-	ostream& toGEXF(ostream& out);
-	//string* toGEXF();
 protected:
 private:
 	FacilityNode *origin;

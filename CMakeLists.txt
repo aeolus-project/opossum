@@ -73,18 +73,13 @@ SET (CMAKE_MODULE_PATH "${MAINFOLDER}/tools/share/cmake")
 
 ################ BOOST Lib Check ####################
 FIND_PACKAGE (Boost REQUIRED)
-if(Boost_FOUND)
-	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-	LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-	#message(STATUS "BOOST Lib found" )
-else()
-	#message(STATUS "BOOST Lib not found so put this library in the folder: ${CMAKE_LINKER_PATH}" )
-endif(Boost_FOUND)
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+#LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 ################ XML2 Lib Check ####################
 FIND_PACKAGE(XML2 REQUIRED)
 INCLUDE_DIRECTORIES(${XML2_INCLUDE_DIRS})
-LINK_DIRECTORIES(${XML2_LIBRARY_DIRS})
+#LINK_DIRECTORIES(${XML2_LIBRARY_DIRS})
 
 
 ################ INCLUDE others Libs ####################
@@ -111,20 +106,22 @@ LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86_sles10_4.1/static_pic ${CPLEX_R
 
 #RESET DEFAULT FLAGS 
 SET(CMAKE_CXX_FLAGS "")
-
+#-Wall -Wstrict-aliasing
+SET(COMMON_FLAGS "-fmessage-length=0 -O0 -O2 -fPIC -fexceptions -DNDEBUG -DIL_STD")
+ 
 if(FORCE_32)
 	SET(CMAKE_CXX_COMPILE_OBJECT
-	    "<CMAKE_CXX_COMPILER>  <DEFINES> <FLAGS> -fmessage-length=0 -Wall -c -O0 -O2 -m32 -fPIC -fexceptions -DNDEBUG -DIL_STD <SOURCE> -o <OBJECT>")
+	    "<CMAKE_CXX_COMPILER>  <DEFINES> <FLAGS> -c -m32  ${COMMON_FLAGS} <SOURCE> -o <OBJECT>")
 
 	SET(CMAKE_CXX_LINK_EXECUTABLE
-	    "<CMAKE_CXX_COMPILER>  <FLAGS> -fmessage-length=0 -O0 -Wall -O2 -m32 -fPIC -fexceptions -DNDEBUG -DIL_STD <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+	    "<CMAKE_CXX_COMPILER>  <FLAGS> -m32  ${COMMON_FLAGS} <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 else()
 
 	SET(CMAKE_CXX_COMPILE_OBJECT
-	    "<CMAKE_CXX_COMPILER>  <DEFINES> <FLAGS> -fmessage-length=0 -Wall -c -O0 -O2 -fPIC -fexceptions -DNDEBUG -DIL_STD <SOURCE> -o <OBJECT>")
+	    "<CMAKE_CXX_COMPILER>  <DEFINES> <FLAGS> -c  ${COMMON_FLAGS} <SOURCE> -o <OBJECT>")
 
 	SET(CMAKE_CXX_LINK_EXECUTABLE
-	    "<CMAKE_CXX_COMPILER>  <FLAGS> -fmessage-length=0 -Wall -O0 -O2 -fPIC -fexceptions -DNDEBUG -DIL_STD <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+	    "<CMAKE_CXX_COMPILER>  <FLAGS> -fmessage-length=0 ${COMMON_FLAGS} <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 endif(FORCE_32)
 	
 

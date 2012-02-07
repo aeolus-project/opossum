@@ -24,55 +24,25 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "network.hpp"
-#include "GexfGen.hpp"
+#ifndef UTILS_HPP_
+#define UTILS_HPP_
 
-#include <string>
+
 #include <sstream>
-#include <vector>
-#include <iterator>
-#include <iostream>
-#include <algorithm>
+#include <string>
+#include <ctime>
+#include <cstdlib>
 
-using namespace std;
 
-void print(FacilityNode* o, FacilityNode* d) {
-	cout << *o << " -> " << *d << endl;
+namespace Utils {
+
+template <typename T>
+std::string convert2str(T t) {
+    std::stringstream ss;
+    ss << t;
+    return ss.str();
 }
 
-
-int main() {
-	cout << "Hello World!!!" << endl; // prints Hello World!!!
-	//srand(1000);
-	int sum = 0;
-	ifstream in;
-
-	in.open("benchmarks/instances/sample-server.dat");
-	if (!in) {
-		cout << "Unable to open file";
-		exit(1); // terminate with error
-	}
-	PSLProblem* problem = new PSLProblem();
-	in >> *problem;
-	in.close();
-	cout << "Sum = " << sum << endl;
-	cout << *problem;
-
-	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
-//
-	FacilityNode* root = problem->generateNetwork();
-//	generateSubtree(root, *problem);
-	ofstream myfile;
-	myfile.open ("test.dot");
-	myfile << "digraph G {\n";
-	root->toDotty(myfile);
-	myfile << "}\n";
-	myfile.close();
-
-
-	AbstractGexfGen* generatorGexf = new InstanceGexfGen(root);
-	generatorGexf->writeToFile("test.gexf");
-	delete generatorGexf;
-
-	return 0;
 }
+
+#endif
