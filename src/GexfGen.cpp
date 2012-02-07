@@ -28,12 +28,15 @@
 #include "GexfGen.hpp"
 #include "Utils.hpp"
 
-AbstractGexfGen::AbstractGexfGen(FacilityNode* root) : _root(root) {
+using namespace Utils;
+
+AbstractGexfGen::AbstractGexfGen(FacilityNode* root) : _root(root), _gexf(NULL) {
+	_gexf = new libgexf::GEXF();
 }
 
-void AbstractGexfGen::initGexf(libgexf::GEXF* gexf) {
+void AbstractGexfGen::initGexf() {
 
-	initFaciltyNode(_root, gexf);
+	initFacilityNode(_root);
 
     // meta data
     //libgexf::MetaData& meta = gexf->getMetaData();
@@ -48,101 +51,147 @@ void AbstractGexfGen::writeToFile(string pathFile) {
 		return;
 	}
 
-	libgexf::GEXF* gexf = new libgexf::GEXF();
-
-	this->initGexf(gexf);
+	this->initGexf();
 
 	// write gexf file
     libgexf::FileWriter *writer = new libgexf::FileWriter();
-    writer->init(pathFile, gexf);
+    writer->init(pathFile, _gexf);
     writer->write();
 }
 
-InstanceGexfGen::InstanceGexfGen(FacilityNode* root) : AbstractGexfGen(root) {}
+//TO DO : Mettre la reliability, bandwith, demande, capacity server
+// Générer les instances et pouvoirles visualiser
+//Taille du noeud dépend de la demande
+//Couleur pour le nombre de serveurs
+//Taille du noeud en fonction de la realibility
+//Faire les solutions à la main
 
-void InstanceGexfGen::initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf) {
-	if(gexf == NULL) {
-		cout << "Problem NULL Pointer with gexf" << endl;
-		return;
-	}
+InstanceGexfGen::InstanceGexfGen(FacilityNode* root) : AbstractGexfGen(root) {
 
-	libgexf::DirectedGraph& graph = gexf->getDirectedGraph();
-//	libgexf::UndirectedGraph& graph = gexf->getUndirectedGraph();
+	libgexf::Data& data = _gexf->getData();
+	//NodeAttributes
+	data.addNodeAttributeColumn(convert2str(NumberOfServers), "NumberOfServers",  "INTEGER");
+	data.addNodeAttributeColumn(convert2str(Demands), "Demands", "INTEGER");
+	data.addNodeAttributeColumn(convert2str(NumberOfConnexions), "NumberOfConnexions", "INTEGER");
+	data.addNodeAttributeColumn(convert2str(NumberOfLocalConnexions), "NumberOfLocalConnexions", "INTEGER");
 
-	graph.addNode(Utils::convert2str(node->getID()));
+	data.setNodeAttributeDefault(convert2str(NumberOfServers), "0");
+	data.setNodeAttributeDefault(convert2str(Demands), "0");
+	data.setNodeAttributeDefault(convert2str(NumberOfConnexions), "0");
+	data.setNodeAttributeDefault(convert2str(NumberOfLocalConnexions), "0");
 
-	libgexf::Data& data = gexf->getData();
-	data.setNodeLabel(Utils::convert2str(node->getID()), Utils::convert2str(node->getType()->getDemand()));
+	//EdgeAttributes
+	data.addEdgeAttributeColumn(convert2str(Bandwidth), "Bandwidth", "DOUBLE");
+	data.addEdgeAttributeColumn(convert2str(Reliability), "Reliability", "INTEGER");
+
+	data.setEdgeAttributeDefault(convert2str(Bandwidth), "0.0");
+	data.setEdgeAttributeDefault(convert2str(Reliability), "0");
+
+}
+
+void InstanceGexfGen::initFacilityNode(FacilityNode* node) {
+
+	libgexf::DirectedGraph& graph = _gexf->getDirectedGraph();
+//	libgexf::UndirectedGraph& graph = _gexf->getUndirectedGraph();
+
+	graph.addNode(convert2str(node->getID()));
+
+	libgexf::Data& data = _gexf->getData();
+	data.setNodeLabel(convert2str(node->getID()), convert2str(node->getID()));
+
+	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfServers), convert2str(node->getType()->getServerCapacitiesCount()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getDemand()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfConnexions), "10");
+	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfLocalConnexions), "10");
 
 	if(!node->isRoot()) {
-		initNetworkLink(node->toFather(), gexf);
+		initNetworkLink(node->toFather());
 	}
 
 	for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
-		initFaciltyNode(node->toChild(i)->getDestination(), gexf);
+		initFacilityNode(node->toChild(i)->getDestination());
 	}
 }
 
-void InstanceGexfGen::initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf) {
-	if(gexf == NULL) {
-		cout << "Problem NULL Pointer with gexf" << endl;
-		return;
-	}
+void InstanceGexfGen::initNetworkLink(NetworkLink* network) {
 
-	libgexf::DirectedGraph& graph = gexf->getDirectedGraph();
-//	libgexf::UndirectedGraph& graph = gexf->getUndirectedGraph();
+	libgexf::DirectedGraph& graph = _gexf->getDirectedGraph();
+//	libgexf::UndirectedGraph& graph = _gexf->getUndirectedGraph();
 
-	string idEdge(Utils::convert2str(network->getOrigin()->getID()) + "-" + Utils::convert2str(network->getDestination()->getID()));
+	string idEdge(convert2str(network->getOrigin()->getID()) + "-" + convert2str(network->getDestination()->getID()));
 	graph.addEdge(idEdge,
-					Utils::convert2str(network->getOrigin()->getID()),
-					Utils::convert2str(network->getDestination()->getID()));
+					convert2str(network->getOrigin()->getID()),
+					convert2str(network->getDestination()->getID()));
 
-	libgexf::Data& data = gexf->getData();
-	data.setEdgeLabel(idEdge, Utils::convert2str(network->getBandwidth()));
-
+	libgexf::Data& data = _gexf->getData();
+	data.setEdgeLabel(idEdge, convert2str(network->getBandwidth()));
+	data.setEdgeValue(convert2str(idEdge), convert2str(Bandwidth), convert2str(network->getBandwidth()));
+	data.setEdgeValue(convert2str(idEdge), convert2str(Reliability), convert2str(network->isReliable()));
 }
 
 FlowConnectionsGexfGen::FlowConnectionsGexfGen(FacilityNode* root) : AbstractGexfGen(root) {
+	libgexf::Data& data = _gexf->getData();
+	//NodeAttributes
+	data.addNodeAttributeColumn(convert2str(NumberOfServers), "NumberOfServers", "INTEGER");
+	data.addNodeAttributeColumn(convert2str(Demands), "Demands", "INTEGER");
+	data.addNodeAttributeColumn(convert2str(NumberOfConnexions), "NumberOfConnexions", "INTEGER");
+	data.addNodeAttributeColumn(convert2str(NumberOfLocalConnexions), "NumberOfLocalConnexions", "INTEGER");
+
+	data.setNodeAttributeDefault(convert2str(NumberOfServers), "0");
+	data.setNodeAttributeDefault(convert2str(Demands), "0");
+	data.setNodeAttributeDefault(convert2str(NumberOfConnexions), "0");
+	data.setNodeAttributeDefault(convert2str(NumberOfLocalConnexions), "0");
+
+
+	//EdgeAttributes
+	data.addEdgeAttributeColumn(convert2str(NumberOfConnexionsOnEdgeY), "NumberOfConnexionsOnEdgeY", "INTEGER");
+	data.addEdgeAttributeColumn(convert2str(CumulativeBandwidth), "CumulativeBandwidth", "DOUBLE");
+
+	data.setEdgeAttributeDefault(convert2str(NumberOfConnexionsOnEdgeY), "0");
+	data.setEdgeAttributeDefault(convert2str(CumulativeBandwidth), "0.0");
+
+
 }
 
-void FlowConnectionsGexfGen::initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf) {
-	if(gexf == NULL) {
-		cout << "Problem NULL Pointer with gexf" << endl;
-		return;
-	}
+void FlowConnectionsGexfGen::initFacilityNode(FacilityNode* node) {
 
-	libgexf::DirectedGraph& graph = gexf->getDirectedGraph();
-//	libgexf::UndirectedGraph& graph = gexf->getUndirectedGraph();
 
-	graph.addNode(Utils::convert2str(node->getID()));
+	libgexf::DirectedGraph& graph = _gexf->getDirectedGraph();
+//	libgexf::UndirectedGraph& graph = _gexf->getUndirectedGraph();
 
-	libgexf::Data& data = gexf->getData();
-	data.setNodeLabel(Utils::convert2str(node->getID()), Utils::convert2str(node->getType()->getDemand()));
+	graph.addNode(convert2str(node->getID()));
+
+	libgexf::Data& data = _gexf->getData();
+	data.setNodeLabel(convert2str(node->getID()), convert2str(node->getID()));
+
+	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfServers), convert2str(node->getType()->getServerCapacitiesCount()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getDemand()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfConnexions), "10");
+	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfLocalConnexions), "10");
+
 
 	if(!node->isRoot()) {
-		initNetworkLink(node->toFather(), gexf);
+		initNetworkLink(node->toFather());
 	}
 
 	for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
-		initFaciltyNode(node->toChild(i)->getDestination(), gexf);
+		initFacilityNode(node->toChild(i)->getDestination());
 	}
 }
 
-void FlowConnectionsGexfGen::initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf) {
-	if(gexf == NULL) {
-		cout << "Problem NULL Pointer with gexf" << endl;
-		return;
-	}
+void FlowConnectionsGexfGen::initNetworkLink(NetworkLink* network) {
 
-	libgexf::DirectedGraph& graph = gexf->getDirectedGraph();
-//	libgexf::UndirectedGraph& graph = gexf->getUndirectedGraph();
+	libgexf::DirectedGraph& graph = _gexf->getDirectedGraph();
+//	libgexf::UndirectedGraph& graph = _gexf->getUndirectedGraph();
 
-	string idEdge(Utils::convert2str(network->getOrigin()->getID()) + "-" + Utils::convert2str(network->getDestination()->getID()));
+	string idEdge(convert2str(network->getOrigin()->getID()) + "-" + convert2str(network->getDestination()->getID()));
 	graph.addEdge(idEdge,
-					Utils::convert2str(network->getOrigin()->getID()),
-					Utils::convert2str(network->getDestination()->getID()));
+					convert2str(network->getOrigin()->getID()),
+					convert2str(network->getDestination()->getID()));
 
-	libgexf::Data& data = gexf->getData();
-	data.setEdgeLabel(idEdge, Utils::convert2str(network->getBandwidth()));
+	libgexf::Data& data = _gexf->getData();
+	data.setEdgeLabel(idEdge, convert2str(network->getBandwidth()));
 
+	data.setEdgeValue(convert2str(idEdge), convert2str(NumberOfConnexionsOnEdgeY), "10");
+	data.setEdgeValue(convert2str(idEdge), convert2str(CumulativeBandwidth), "100.0");
 }

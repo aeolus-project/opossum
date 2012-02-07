@@ -45,14 +45,28 @@ Attribut Link : bandwidth, reliability
 3ème graphe :
 	Attribut Link : zij nombre de connexion du site de i vers j selon le chemin (i,j)
  */
+enum NodeAttribute {
+	NumberOfServers,
+	Demands,
+	NumberOfConnexions,
+	NumberOfLocalConnexions
+};
 
+enum EdgeAttribute {
+	Bandwidth,
+	Reliability,
+	NumberOfConnexionsOnEdgeY, //nb de connexions passant par le lien (yij)
+	CumulativeBandwidth, //bandwidth sur le lien cumulé bij
+	NumberOfConnexionsOnEdgeZ //Attribut Link : zij nombre de connexion du site de i vers j selon le chemin (i,j)
+};
 
 class AbstractGexfGen {
 protected:
+	libgexf::GEXF* _gexf;
 	FacilityNode* _root;
-	virtual void initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf) = 0;
-	virtual void initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf) = 0;
-	void initGexf(libgexf::GEXF *gexf);
+	virtual void initFacilityNode(FacilityNode* node) = 0;
+	virtual void initNetworkLink(NetworkLink* network) = 0;
+	void initGexf();
 
 public:
 	AbstractGexfGen(FacilityNode* root);
@@ -62,8 +76,8 @@ public:
 
 class InstanceGexfGen : public AbstractGexfGen {
 protected:
-	void initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf);
-	void initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf);
+	void initFacilityNode(FacilityNode* node);
+	void initNetworkLink(NetworkLink* network);
 
 public:
 	InstanceGexfGen(FacilityNode* root);
@@ -72,8 +86,8 @@ public:
 
 class FlowConnectionsGexfGen : public AbstractGexfGen {
 protected:
-	void initFaciltyNode(FacilityNode* node, libgexf::GEXF* gexf);
-	void initNetworkLink(NetworkLink* network, libgexf::GEXF* gexf);
+	void initFacilityNode(FacilityNode* node);
+	void initNetworkLink(NetworkLink* network);
 
 public:
 	FlowConnectionsGexfGen(FacilityNode* root);
