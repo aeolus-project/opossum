@@ -101,8 +101,13 @@ public:
 	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
 	}
 	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
-	inline unsigned int getServerCapacitiesCount() const {return serverCapacities.size();}
-	inline unsigned int toServerCapacity(unsigned int i) const { return serverCapacities[i]; }
+	inline unsigned int getMaxServerCapacities() const {
+		int maxCap = 0;
+		for(int i = 0; i < serverCapacities.size(); i++) {
+			maxCap += serverCapacities[i];
+		}
+		return maxCap;
+	}
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidthIndex();
 	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);

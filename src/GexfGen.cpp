@@ -70,12 +70,12 @@ InstanceGexfGen::InstanceGexfGen(FacilityNode* root) : AbstractGexfGen(root) {
 
 	libgexf::Data& data = _gexf->getData();
 	//NodeAttributes
-	data.addNodeAttributeColumn(convert2str(NumberOfServers), "NumberOfServers",  "INTEGER");
+	data.addNodeAttributeColumn(convert2str(MaxNumberOfServers), "MaxNumberOfServers",  "INTEGER");
 	data.addNodeAttributeColumn(convert2str(Demands), "Demands", "INTEGER");
 	data.addNodeAttributeColumn(convert2str(NumberOfConnexions), "NumberOfConnexions", "INTEGER");
 	data.addNodeAttributeColumn(convert2str(NumberOfLocalConnexions), "NumberOfLocalConnexions", "INTEGER");
 
-	data.setNodeAttributeDefault(convert2str(NumberOfServers), "0");
+	data.setNodeAttributeDefault(convert2str(MaxNumberOfServers), "0");
 	data.setNodeAttributeDefault(convert2str(Demands), "0");
 	data.setNodeAttributeDefault(convert2str(NumberOfConnexions), "0");
 	data.setNodeAttributeDefault(convert2str(NumberOfLocalConnexions), "0");
@@ -99,7 +99,7 @@ void InstanceGexfGen::initFacilityNode(FacilityNode* node) {
 	libgexf::Data& data = _gexf->getData();
 	data.setNodeLabel(convert2str(node->getID()), convert2str(node->getID()));
 
-	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfServers), convert2str(node->getType()->getServerCapacitiesCount()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(MaxNumberOfServers), convert2str(node->getType()->getMaxServerCapacities()));
 	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getDemand()));
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfConnexions), "10");
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfLocalConnexions), "10");
@@ -118,10 +118,16 @@ void InstanceGexfGen::initNetworkLink(NetworkLink* network) {
 	libgexf::DirectedGraph& graph = _gexf->getDirectedGraph();
 //	libgexf::UndirectedGraph& graph = _gexf->getUndirectedGraph();
 
+	float reliable = 1.0;
+	if(network->isReliable()) {
+		reliable = 2.0;
+	}
+
 	string idEdge(convert2str(network->getOrigin()->getID()) + "-" + convert2str(network->getDestination()->getID()));
 	graph.addEdge(idEdge,
 					convert2str(network->getOrigin()->getID()),
-					convert2str(network->getDestination()->getID()));
+					convert2str(network->getDestination()->getID()),
+					reliable);
 
 	libgexf::Data& data = _gexf->getData();
 	data.setEdgeLabel(idEdge, convert2str(network->getBandwidth()));
@@ -132,12 +138,12 @@ void InstanceGexfGen::initNetworkLink(NetworkLink* network) {
 FlowConnectionsGexfGen::FlowConnectionsGexfGen(FacilityNode* root) : AbstractGexfGen(root) {
 	libgexf::Data& data = _gexf->getData();
 	//NodeAttributes
-	data.addNodeAttributeColumn(convert2str(NumberOfServers), "NumberOfServers", "INTEGER");
+	data.addNodeAttributeColumn(convert2str(MaxNumberOfServers), "MaxNumberOfServers", "INTEGER");
 	data.addNodeAttributeColumn(convert2str(Demands), "Demands", "INTEGER");
 	data.addNodeAttributeColumn(convert2str(NumberOfConnexions), "NumberOfConnexions", "INTEGER");
 	data.addNodeAttributeColumn(convert2str(NumberOfLocalConnexions), "NumberOfLocalConnexions", "INTEGER");
 
-	data.setNodeAttributeDefault(convert2str(NumberOfServers), "0");
+	data.setNodeAttributeDefault(convert2str(MaxNumberOfServers), "0");
 	data.setNodeAttributeDefault(convert2str(Demands), "0");
 	data.setNodeAttributeDefault(convert2str(NumberOfConnexions), "0");
 	data.setNodeAttributeDefault(convert2str(NumberOfLocalConnexions), "0");
@@ -164,7 +170,7 @@ void FlowConnectionsGexfGen::initFacilityNode(FacilityNode* node) {
 	libgexf::Data& data = _gexf->getData();
 	data.setNodeLabel(convert2str(node->getID()), convert2str(node->getID()));
 
-	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfServers), convert2str(node->getType()->getServerCapacitiesCount()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(MaxNumberOfServers), convert2str(node->getType()->getMaxServerCapacities()));
 	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getDemand()));
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfConnexions), "10");
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfLocalConnexions), "10");
@@ -184,10 +190,16 @@ void FlowConnectionsGexfGen::initNetworkLink(NetworkLink* network) {
 	libgexf::DirectedGraph& graph = _gexf->getDirectedGraph();
 //	libgexf::UndirectedGraph& graph = _gexf->getUndirectedGraph();
 
+	float reliable = 1.0;
+	if(network->isReliable()) {
+		reliable = 2.0;
+	}
+
 	string idEdge(convert2str(network->getOrigin()->getID()) + "-" + convert2str(network->getDestination()->getID()));
 	graph.addEdge(idEdge,
 					convert2str(network->getOrigin()->getID()),
-					convert2str(network->getDestination()->getID()));
+					convert2str(network->getDestination()->getID()),
+					reliable);
 
 	libgexf::Data& data = _gexf->getData();
 	data.setEdgeLabel(idEdge, convert2str(network->getBandwidth()));

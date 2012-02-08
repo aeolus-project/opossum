@@ -35,18 +35,36 @@
 using namespace std;
 
 /*
- 1er graphe & 2ème graphe
-Attributs Node : nb de serveurs, demandes, nb de connexions, nb de connexions locales
-Attribut Link : bandwidth, reliability
+For the 1st graph :
+Attributs Node : MaxNumberOfServers,
+				 Demands,
+				 NumberOfConnexions,
+				 NumberOfLocalConnexions
 
- 2ème graphe  Attribut Link : nb de connexions passant par le lien (yij),  
-                              bandwidth sur le lien cumulé bij
+Attribut Link : Bandwidth,
+				Reliability
+------------------------------------------------------------------------------------
+For the 2nd graph :
+Attributs Node : MaxNumberOfServers,
+				 Demands,
+				 NumberOfConnexions,
+				 NumberOfLocalConnexions
 
-3ème graphe :
-	Attribut Link : zij nombre de connexion du site de i vers j selon le chemin (i,j)
- */
+Attribut Link : NumberOfConnexionsOnEdgeY //nb of connexions on the link (yij)
+				CumulativeBandwidth, //bandwidth on the cumulative link bij
+------------------------------------------------------------------------------------
+For the 3nd graph :
+Attributs Node : MaxNumberOfServers,
+				 Demands,
+				 NumberOfConnexions,
+				 NumberOfLocalConnexions
+
+Attribut Link : NumberOfConnexionsOnEdgeZ //zij nb of connexions of facility from i to j with the link (i,j)
+
+*/
+
 enum NodeAttribute {
-	NumberOfServers,
+	MaxNumberOfServers,
 	Demands,
 	NumberOfConnexions,
 	NumberOfLocalConnexions
@@ -55,9 +73,9 @@ enum NodeAttribute {
 enum EdgeAttribute {
 	Bandwidth,
 	Reliability,
-	NumberOfConnexionsOnEdgeY, //nb de connexions passant par le lien (yij)
-	CumulativeBandwidth, //bandwidth sur le lien cumulé bij
-	NumberOfConnexionsOnEdgeZ //Attribut Link : zij nombre de connexion du site de i vers j selon le chemin (i,j)
+	NumberOfConnexionsOnEdgeY, //nb of connexions on the link (yij)
+	CumulativeBandwidth, //bandwidth on the cumulative link bij
+	NumberOfConnexionsOnEdgeZ //zij nb of connexions of facility from i to j with the link (i,j)
 };
 
 class AbstractGexfGen {
