@@ -16,6 +16,7 @@ int add(int i, int j)
 
 BOOST_AUTO_TEST_SUITE(VariantsSuite)
 
+//TODO Fixer la seed pour les tests
 
 BOOST_AUTO_TEST_CASE(networkGeneration)
 {

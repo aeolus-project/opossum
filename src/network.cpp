@@ -75,6 +75,11 @@ inline FacilityNode *FacilityNode::getChild(unsigned int i) const
 	return children[i]->getDestination();
 }
 
+bool FacilityNode::isReliableFromRoot()
+{
+	return isRoot() ? true : toFather()->isReliable() && getFather()->isReliableFromRoot();
+}
+
 void FacilityNode::print(ostream& out) {
 	string shift = string(2 * type->getLevel(),' ');
 	string sep = string(15,'-');
@@ -354,6 +359,87 @@ ostream & NetworkLink::toGEXF(ostream & out)
 {
 	return out;
 }
+
+int RankMapper::rankX(FacilityNode *node)
+{
+	return node->getID();
+}
+
+
+inline int RankMapper::offsetXk()
+{
+	return nodeCount;
+}
+
+inline int RankMapper::rankX(FacilityNode *node, unsigned int stype)
+{
+	return offsetXk() + node->getID() * serverCount + stype;
+}
+
+
+inline int RankMapper::offsetYi()
+{
+	return offsetXk() + nodeCount * serverCount;
+}
+
+int RankMapper::rankY(FacilityNode *node, unsigned int stage)
+{
+	return offsetYi() + node->getID() * stageCount + stage;
+}
+
+inline int RankMapper::offsetYij()
+{
+	return offsetYi() + nodeCount * stageCount;
+}
+
+inline int RankMapper::rankY(NetworkLink *link, unsigned int stage)
+{
+	return offsetYij() + link->getID() * stageCount + stage;
+
+}
+
+inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination) {
+	//TODO not yet implemented
+	return 0;
+
+}
+
+inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination, unsigned int stage) {
+
+	return rank(source, destination) * stageCount + stage;
+
+}
+
+inline int RankMapper::offsetZ()
+{
+	return offsetYij() + linkCount() * stageCount;
+}
+
+inline int RankMapper::rankZ(FacilityNode *source, FacilityNode *destination, unsigned int stage)
+{
+	return offsetZ() + rank(source, destination, stage);
+}
+
+
+inline int RankMapper::offsetB()
+{
+	return offsetZ() + pathCount() * stageCount;
+}
+
+
+inline int RankMapper::rankB(FacilityNode *source, FacilityNode *destination, unsigned int stage)
+{
+	return offsetB() + rank(source, destination, stage);
+}
+
+
+
+
+
+
+
+
+
 
 
 

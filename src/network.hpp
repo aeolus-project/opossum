@@ -182,6 +182,7 @@ public:
 	inline bool isLeaf() const {
 		return children.empty();
 	}
+	bool isReliableFromRoot();
 	unsigned int getMinIncomingConnections(ServerTypeList* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
@@ -281,7 +282,40 @@ private:
 };
 
 
+class RankMapper {
 
+	RankMapper(PSLProblem& problem, unsigned int nodeCount, unsigned int stageCount, unsigned int serverCount) : nodeCount(nodeCount), stageCount(stageCount),serverCount(serverCount) {
+
+
+	}
+	~RankMapper() {
+
+	}
+public:
+	inline int rankX(FacilityNode* node);
+	inline int rankX(FacilityNode* node, unsigned int stype);
+	inline int rankY(FacilityNode* node, unsigned int stage);
+	inline int rankY(NetworkLink* link,unsigned int stage);
+	inline int rankZ(FacilityNode* source, FacilityNode* destination, unsigned int stage);
+	inline int rankB(FacilityNode* source, FacilityNode* destination, unsigned int stage);
+	private:
+
+
+	inline int rank(FacilityNode* source, FacilityNode* destination);
+	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage);
+
+	inline int offsetXk();
+	inline int offsetYi();
+	inline int offsetYij();
+	inline int offsetZ();
+	inline int offsetB();
+
+	inline int linkCount() { return nodeCount - 1; }
+	inline int pathCount() { return 0; }
+	unsigned int nodeCount;
+	unsigned int stageCount;
+	unsigned int serverCount;
+};
 
 
 ostream& operator<<(ostream& out, const PSLProblem& f);
