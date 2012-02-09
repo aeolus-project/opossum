@@ -9,7 +9,7 @@
  *      * Redistributions in binary form must reproduce the above copyright
  *        notice, this list of conditions and the following disclaimer in the
  *        documentation and/or other materials provided with the distribution.
- *      * Neither the name of the Arnaud Malapert nor the
+ *      * Neither the name of Arnaud Malapert nor the
  *        names of its contributors may be used to endorse or promote products
  *        derived from this software without specific prior written permission.
  *
@@ -34,7 +34,7 @@ FacilityNode::~FacilityNode() {
 }
 
 
-unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* servers) {
+unsigned int FacilityNode::getMinIncomingConnections(ServerTypeList* servers) {
 	//FIXME Invalid computation of min incoming connections
 	const unsigned int capa = type->getConnexionCapacity(servers);
 	unsigned int res = type->getTotalDemand() >  capa ? type->getTotalDemand() -  capa : 0 ;
@@ -75,16 +75,16 @@ inline FacilityNode *FacilityNode::getChild(unsigned int i) const
 	return children[i]->getDestination();
 }
 
-void FacilityNode::print() {
+void FacilityNode::print(ostream& out) {
 	string shift = string(2 * type->getLevel(),' ');
 	string sep = string(15,'-');
 	if(children.size() > 0) {
-		cout << shift << children.size() << " " << sep << endl;
+		out << shift << children.size() << " " << sep << endl;
 		for ( size_t i = 0; i < children.size(); ++i ) {
-			cout << shift <<  *children[i] << endl;
+			out << shift <<  *children[i] << endl;
 		}
 		for ( size_t i = 0; i < children.size(); ++i ) {
-			children[i]->getDestination()->print();
+			children[i]->getDestination()->print(out);
 		}
 	}
 }
@@ -170,7 +170,7 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem)
 	return in;
 }
 
-unsigned int FacilityType::getConnexionCapacity(const vector<ServerType*>* servers) const
+unsigned int FacilityType::getConnexionCapacity(const ServerTypeList* servers) const
 {
 	unsigned int tot = 0;
 	for (unsigned int i = 0; i < servers->size(); ++i) {
@@ -211,6 +211,7 @@ ostream & operator <<(ostream & out, const PSLProblem & f)
 	cout << "}" << endl ;
 	transform(f.servers.begin(), f.servers.end(), ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
 	transform(f.facilities.begin(), f.facilities.end(), ostream_iterator<FacilityType>(out, "\n"), dereference<FacilityType>);
+	if(f.root) f.root->print(out);
 	return out;
 }
 
@@ -226,6 +227,17 @@ FacilityNode *PSLProblem::generateNetwork(bool hierarchic)
 	generateSubtree(root, hierarchic);
 	return root;
 }
+
+ostream & PSLProblem::toDotty(ostream & out)
+{
+	if(root) {
+		out << "digraph G {\n";
+		root->toDotty(out);
+		out << "}\n";
+	}
+	return out;
+}
+
 
 void PSLProblem::generateSubtree(FacilityNode *current, bool hierarchic)
 {
@@ -286,7 +298,7 @@ ostream & operator <<(ostream& out, const FacilityNode& n)
 void NetworkLink::forEachPath() const
 {
 	FacilityNode* ancestor = getDestination();
-	vector<FacilityNode*> successors;
+	FacilityList successors;
 	do {
 		ancestor= ancestor->getFather();
 		successors.push_back(getDestination());
@@ -321,7 +333,7 @@ ostream & NetworkLink::toDotty(ostream & out)
 void NetworkLink::forEachPath(void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const
 {
 	FacilityNode* ancestor = getDestination();
-	vector<FacilityNode*> successors;
+	FacilityList successors;
 	do {
 		ancestor= ancestor->getFather();
 		successors.push_back(getDestination());

@@ -46,6 +46,31 @@
 using namespace boost::random;
 using namespace std;
 
+// class predeclarations
+class ServerType;
+class FacilityType;
+class FacilityNode;
+class NetworkLink;
+class PSLProblem;
+
+typedef vector<unsigned int> IntList;
+typedef vector<unsigned int>::iterator IntListIterator;
+
+typedef vector<ServerType*> ServerTypeList;
+typedef vector<ServerType*>::iterator ServerTypeListIterator;
+
+typedef vector<FacilityType*> FacilityTypeList;
+typedef vector<FacilityType*>::iterator FacilityTypeListIterator;
+
+
+typedef vector<FacilityNode*> FacilityList;
+typedef vector<FacilityNode*>::iterator FacilityListIterator;
+
+typedef vector<NetworkLink*> LinkList;
+typedef vector<NetworkLink*>::iterator LinkListIterator;
+
+//Functors and templates
+
 // Foncteur servant à libérer un pointeur - applicable à n'importe quel type
 struct Delete
 {
@@ -81,12 +106,8 @@ private:
 
 
 
-class PSLProblem;
-
 class FacilityType
 {
-
-
 
 public:
 	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1)
@@ -100,7 +121,7 @@ public:
 	inline unsigned int getDemand(unsigned int stage) const { return demands[stage]; }
 	inline unsigned int getTotalDemand() {
 		unsigned int sum=0;
-		for(std::vector<unsigned int>::iterator j=demands.begin();j!=demands.end();++j)
+		for(IntListIterator j=demands.begin();j!=demands.end();++j)
 			sum += *j;
 		return sum;
 	}
@@ -108,11 +129,11 @@ public:
 	}
 	inline unsigned int getTotalCapacity() {
 		unsigned int sum=0;
-		for(vector<unsigned int>::iterator j=demands.begin();j!=demands.end();++j)
+		for(IntListIterator j=demands.begin();j!=demands.end();++j)
 			sum += *j;
 		return sum;
 	}
-	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
+	unsigned int getConnexionCapacity(const ServerTypeList* servers) const;
 	//string toGEXF();
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidthIndex();
@@ -128,8 +149,8 @@ private:
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
 
 	unsigned int level;
-	vector<unsigned int> demands;
-	vector<unsigned int> serverCapacities;
+	IntList demands;
+	IntList serverCapacities;
 	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
@@ -137,8 +158,6 @@ private:
 };
 
 
-
-class NetworkLink;
 
 
 class FacilityNode
@@ -163,16 +182,16 @@ public:
 	inline bool isLeaf() const {
 		return children.empty();
 	}
-	unsigned int getMinIncomingConnections(vector<ServerType*>* servers);
+	unsigned int getMinIncomingConnections(ServerTypeList* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
-	void print();
+	void print(ostream& out);
 protected:
 private:
 	unsigned int id;
 	FacilityType* type;
 	NetworkLink* father;
-	vector<NetworkLink*> children;
+	LinkList children;
 
 
 };
@@ -182,7 +201,6 @@ class PSLProblem {
 
 
 public:
-
 	PSLProblem() : numberOfGroups(0), root(NULL), nodeCount(0) {
 	}
 	~PSLProblem() {
@@ -204,15 +222,17 @@ public:
 	inline unsigned int getNodeCount() const { return nodeCount;}
 	inline unsigned int getLinkCount() const { return nodeCount-1;}
 
+	ostream& toDotty(ostream& out);
+
 	friend ostream& operator<<(ostream& out, const PSLProblem& f);
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 protected:
 	void generateSubtree(FacilityNode* root, bool hierarchic);
 private:
-	vector<unsigned int> bandwidths;
-	vector<ServerType*> servers;
+	IntList bandwidths;
+	ServerTypeList servers;
 	unsigned int numberOfGroups;
-	vector<FacilityType*> facilities;
+	FacilityTypeList facilities;
 	FacilityNode* root;
 	unsigned int nodeCount;
 

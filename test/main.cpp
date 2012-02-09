@@ -6,12 +6,42 @@
 #include <exception>
 #include <unistd.h>
 
+//#include "../src/network.hpp"
+
+
 int add(int i, int j)
 {
-    return i + j;
+	return i + j;
 }
 
 BOOST_AUTO_TEST_SUITE(VariantsSuite)
+
+
+BOOST_AUTO_TEST_CASE(networkGeneration)
+{
+	//FIXME Tests does not compile !?
+	//	ifstream in;
+	//
+	//	in.open("benchmarks/instances/sample-server.dat");
+	//	if (!in) {
+	//		BOOST_ERROR("Unable to open file");
+	//	}
+	//	PSLProblem* problem = new PSLProblem();
+	//	in >> *problem;
+	//	in.close();
+	//		problem->generateNetwork();
+	//		cout << *problem;
+	//		ofstream myfile;
+	//		myfile.open ("/tmp/pserver.dot");
+	//		problem->toDotty(myfile);
+	//		myfile.close();
+
+	//	FILE * pFile;
+	//	pFile = tmpfile ();
+	//	// temporary file created. code here.
+	//	fclose (pFile);
+}
+
 
 BOOST_AUTO_TEST_CASE(simplePass)
 {
@@ -19,60 +49,60 @@ BOOST_AUTO_TEST_CASE(simplePass)
 
 BOOST_AUTO_TEST_CASE(checkFailure)
 {
-    BOOST_CHECK(add(2, 2) == 5);
+	BOOST_CHECK(add(2, 2) == 5);
 }
 
 BOOST_AUTO_TEST_CASE(multipleCheckFailures)
 {
-    BOOST_CHECK(add(2, 2) == 1);
-    BOOST_CHECK(add(2, 2) == 2);
-    BOOST_CHECK(add(2, 2) == 3);
+	BOOST_CHECK(add(2, 2) == 1);
+	BOOST_CHECK(add(2, 2) == 2);
+	BOOST_CHECK(add(2, 2) == 3);
 }
 
 BOOST_AUTO_TEST_CASE(requireFailure)
 {
-    BOOST_REQUIRE(add(2, 2) == 5);
+	BOOST_REQUIRE(add(2, 2) == 5);
 }
 
 BOOST_AUTO_TEST_CASE(explicitError)
 {
-    BOOST_ERROR("Error message");
+	BOOST_ERROR("Error message");
 }
 
 BOOST_AUTO_TEST_CASE(explicitFailure)
 {
-    BOOST_FAIL("Failure message");
+	BOOST_FAIL("Failure message");
 }
 
 BOOST_AUTO_TEST_CASE(errorThenFailure)
 {
-    BOOST_FAIL("Error message");
-    BOOST_FAIL("Failure message");
+	BOOST_FAIL("Error message");
+	BOOST_FAIL("Failure message");
 }
 
 BOOST_AUTO_TEST_CASE(uncaughtException)
 {
-    throw "Catch me if you can!";
+	throw "Catch me if you can!";
 }
 
 BOOST_AUTO_TEST_CASE(stdException)
 {
-    throw new std::exception();
+	throw new std::exception();
 }
 
 BOOST_AUTO_TEST_CASE(checkMessageFailure)
 {
-    BOOST_CHECK_MESSAGE(add(2, 2) == 5, "add(..) result: " << add(2, 2));
+	BOOST_CHECK_MESSAGE(add(2, 2) == 5, "add(..) result: " << add(2, 2));
 }
 
 BOOST_AUTO_TEST_CASE(checkEqualFailure)
 {
-    BOOST_CHECK_EQUAL(add( 2,2 ), 5);
+	BOOST_CHECK_EQUAL(add( 2,2 ), 5);
 }
 
 BOOST_AUTO_TEST_CASE(threeSeconds)
 {
-    sleep(3);
+	sleep(3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

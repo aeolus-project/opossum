@@ -52,17 +52,14 @@ int main() {
 	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
 	in.close();
-	cout << *problem;
+//	cout << *problem;
 	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
 //
-	FacilityNode* root = problem->generateNetwork();
-	root -> print();
-//	generateSubtree(root, *problem);
+	problem->generateNetwork();
+	cout << *problem;
 	ofstream myfile;
 	myfile.open ("/tmp/pserver.dot");
-	myfile << "digraph G {\n";
-	root->toDotty(myfile);
-	myfile << "}\n";
+	problem->toDotty(myfile);
 	myfile.close();
 	return 0;
 }
