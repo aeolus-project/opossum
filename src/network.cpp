@@ -39,7 +39,7 @@ unsigned int FacilityNode::NEXT_ID=0;
 
 unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* servers) {
 	const unsigned int capa = type->getConnexionCapacity(servers);
-	unsigned int res = type->getDemand() >  capa ? type->getDemand() -  capa : 0 ;
+	unsigned int res = type->getTotalDemand() >  capa ? type->getTotalDemand() -  capa : 0 ;
 	for ( size_t i = 0; i < children.size(); ++i ) {
 		res+= children[i]->getDestination()->getMinIncomingConnections(servers);
 	}
@@ -50,7 +50,7 @@ unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* server
 ostream & FacilityNode::toDotty(ostream & out)
 {
 	out << getID();
-	out << "[label=\"" <<  getType()->getDemand() << "\"];" << endl;
+	out << "[label=\"" <<  getType()->getTotalDemand() << "\"];" << endl;
 	if(! isRoot()) {
 		toFather()->toDotty(out);
 	}
@@ -144,9 +144,10 @@ variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd
 
 istream & FacilityType::read(istream & in, const PSLProblem& problem)
 {
-	in >> level >> demand;
-	unsigned int n = problem.getNbServers();
 	int tmp;
+	in >> level >> tmp;
+	demands.push_back(tmp);
+	unsigned int n = problem.getNbServers();
 	while(serverCapacities.size() < n) {
 		in >> tmp;
 		serverCapacities.push_back(tmp);
@@ -178,7 +179,9 @@ unsigned int FacilityType::getConnexionCapacity(const vector<ServerType*>* serve
 
 ostream& operator<<(ostream& out, const FacilityType& f) {
 
-	out << "Level:" << f.getLevel() << "\tDemand:" << f.getDemand() << "\tCapacities:{ ";
+	out << "Level:" << f.getLevel() << "\tDemand:{";
+	copy(f.demands.begin(), f.demands.end(), ostream_iterator<int>(out, " "));
+	out << "}\tCapacities:{ ";
 	copy(f.serverCapacities.begin(), f.serverCapacities.end(), ostream_iterator<int>(out, " "));
 	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binornd->distribution().t() << "," << f.binornd->distribution().p() <<")\tBandwidths:{ ";
 	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(), ostream_iterator<double>(out, " "));

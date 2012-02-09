@@ -91,7 +91,7 @@ class FacilityType
 
 
 public:
-	FacilityType() : level(0), demand(0), binornd(NULL), reliabilityProbability(1)
+	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1)
 	{
 		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
 	}
@@ -99,8 +99,20 @@ public:
 		delete binornd;
 	}
 	inline unsigned int getLevel() const { return level; }
-	inline unsigned int getDemand() const { return demand; }
+	inline unsigned int getDemand(unsigned int stage) const { return demands[stage]; }
+	inline unsigned int getTotalDemand() {
+		unsigned int sum=0;
+		for(std::vector<unsigned int>::iterator j=demands.begin();j!=demands.end();++j)
+			sum += *j;
+		return sum;
+	}
 	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
+	}
+	inline unsigned int getTotalCapacity() {
+		unsigned int sum=0;
+		for(vector<unsigned int>::iterator j=demands.begin();j!=demands.end();++j)
+			sum += *j;
+		return sum;
 	}
 	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
 	//string toGEXF();
@@ -118,7 +130,7 @@ private:
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
 
 	unsigned int level;
-	unsigned int demand;
+	vector<unsigned int> demands;
 	vector<unsigned int> serverCapacities;
 	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 	vector<double> bandwidthProbabilities;
