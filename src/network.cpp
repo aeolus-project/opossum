@@ -34,10 +34,8 @@ FacilityNode::~FacilityNode() {
 }
 
 
-unsigned int FacilityNode::NEXT_ID=0;
-
-
 unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* servers) {
+	//FIXME Invalid computation of min incoming connections
 	const unsigned int capa = type->getConnexionCapacity(servers);
 	unsigned int res = type->getTotalDemand() >  capa ? type->getTotalDemand() -  capa : 0 ;
 	for ( size_t i = 0; i < children.size(); ++i ) {
@@ -77,7 +75,7 @@ inline FacilityNode *FacilityNode::getChild(unsigned int i) const
 	return children[i]->getDestination();
 }
 
-void FacilityNode::printSubtree() {
+void FacilityNode::print() {
 	string shift = string(2 * type->getLevel(),' ');
 	string sep = string(15,'-');
 	if(children.size() > 0) {
@@ -86,7 +84,7 @@ void FacilityNode::printSubtree() {
 			cout << shift <<  *children[i] << endl;
 		}
 		for ( size_t i = 0; i < children.size(); ++i ) {
-			children[i]->getDestination()->printSubtree();
+			children[i]->getDestination()->print();
 		}
 	}
 }
@@ -148,9 +146,9 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem)
 	in >> level;
 	unsigned int n = problem.getNbGroups();
 	while(demands.size() < n) {
-			in >> tmp;
-			demands.push_back(tmp);
-		}
+		in >> tmp;
+		demands.push_back(tmp);
+	}
 	n = problem.getNbServers();
 	while(serverCapacities.size() < n) {
 		in >> tmp;
@@ -223,26 +221,28 @@ FacilityNode *PSLProblem::generateNetwork() {
 
 FacilityNode *PSLProblem::generateNetwork(bool hierarchic)
 {
-	FacilityNode* root = new FacilityNode(facilities[0]);
-	return generateSubtree(root, hierarchic);
+	nodeCount = 0;
+	root = new FacilityNode(nodeCount++, facilities[0]);
+	generateSubtree(root, hierarchic);
+	return root;
 }
 
-FacilityNode *PSLProblem::generateSubtree(FacilityNode *root, bool hierarchic)
+void PSLProblem::generateSubtree(FacilityNode *current, bool hierarchic)
 {
 	unsigned int idx = 0;
-	const unsigned int level = root->getType()->getLevel();
+	const unsigned int level = current->getType()->getLevel();
 	const unsigned int n = facilities.size();
 	while(idx  < n && facilities[idx]->getLevel() <= level) {idx++;}
 	while(idx  < n && facilities[idx]->getLevel() == level + 1) {
 		const unsigned int nbc = facilities[idx]->genRandomFacilities();
 		for (unsigned int i = 0; i < nbc; ++i) {
-			FacilityNode* child = new FacilityNode(facilities[idx]);
-			new NetworkLink(root, child, *this, hierarchic);
+			FacilityNode* child = new FacilityNode(nodeCount, facilities[idx]);
+			new NetworkLink(nodeCount - 1, current, child, *this, hierarchic);
+			nodeCount++;
 			generateSubtree(child, hierarchic);
 		}
 		idx++;
 	}
-	return root;
 }
 
 istream & operator >>(istream & in, PSLProblem & problem)
@@ -279,9 +279,7 @@ ostream & operator <<(ostream& out, const NetworkLink& l)
 ostream & operator <<(ostream& out, const FacilityNode& n)
 {
 	return out << n.getID(); // << " " << n.getChildrenCount();
-
 }
-
 
 
 

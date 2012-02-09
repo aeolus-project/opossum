@@ -144,10 +144,9 @@ class NetworkLink;
 class FacilityNode
 {
 	friend class NetworkLink;
-	static unsigned int NEXT_ID;
 
 public:
-	FacilityNode(FacilityType* type) : id(NEXT_ID++), type(type), father(NULL) {
+	FacilityNode(unsigned int id, FacilityType* type) : id(id), type(type), father(NULL) {
 	}
 	~FacilityNode();
 	inline unsigned int getID() const { return id; }
@@ -167,7 +166,7 @@ public:
 	unsigned int getMinIncomingConnections(vector<ServerType*>* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
-	void printSubtree();
+	void print();
 protected:
 private:
 	unsigned int id;
@@ -184,12 +183,14 @@ class PSLProblem {
 
 public:
 
-	PSLProblem() {
+	PSLProblem() : numberOfGroups(0), root(NULL), nodeCount(0) {
 	}
 	~PSLProblem() {
+		delete root;
 		for_each(servers.begin(), servers.end(), Delete());
 		for_each(facilities.begin(), facilities.end(), Delete());
 	}
+
 	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
 	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
 	inline unsigned int getNbServers() const { return servers.size();}
@@ -199,31 +200,38 @@ public:
 	FacilityNode* generateNetwork();
 	FacilityNode* generateNetwork(bool hierarchic);
 
+	inline FacilityNode* getRoot() const { return root;}
+	inline unsigned int getNodeCount() const { return nodeCount;}
+	inline unsigned int getLinkCount() const { return nodeCount-1;}
+
 	friend ostream& operator<<(ostream& out, const PSLProblem& f);
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 protected:
-	FacilityNode* generateSubtree(FacilityNode* root, bool hierarchic);
+	void generateSubtree(FacilityNode* root, bool hierarchic);
 private:
 	vector<unsigned int> bandwidths;
 	vector<ServerType*> servers;
 	unsigned int numberOfGroups;
 	vector<FacilityType*> facilities;
+	FacilityNode* root;
+	unsigned int nodeCount;
 
 };
 
 class NetworkLink {
 
 public:
-	NetworkLink(FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic) : origin(father), destination(child), bandwidth(0),reliable(0)
+
+	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic) : id(id), origin(father), destination(child), bandwidth(0),reliable(0)
 	{
 		father->children.push_back(this);
 		child->father=this;
-		if( father->isRoot() || ! hierarchic) {
+		if( father->isRoot() || !hierarchic) {
 			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
 			reliable = child->getType()->genRandomReliability();
 		} else {
 			unsigned int fbandw = father->toFather()->getBandwidth();
-			int maxIndex = problem.getNbBandwidths();
+			int maxIndex = problem.getNbBandwidths() - 1;
 			while( maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {maxIndex--;}
 			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex(maxIndex));
 			reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
@@ -234,6 +242,7 @@ public:
 		delete origin;
 		delete destination;
 	}
+	inline unsigned int getID() const { return id; }
 	inline FacilityNode* getOrigin() const { return origin; }
 	inline FacilityNode* getDestination() const { return destination; }
 	inline bool isReliable() const { return reliable; }
@@ -242,9 +251,9 @@ public:
 	void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
-	//string* toGEXF();
 protected:
 private:
+	unsigned int id;
 	FacilityNode *origin;
 	FacilityNode *destination;
 	unsigned int bandwidth;

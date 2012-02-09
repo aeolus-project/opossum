@@ -56,6 +56,7 @@ int main() {
 	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
 //
 	FacilityNode* root = problem->generateNetwork();
+	root -> print();
 //	generateSubtree(root, *problem);
 	ofstream myfile;
 	myfile.open ("/tmp/pserver.dot");
