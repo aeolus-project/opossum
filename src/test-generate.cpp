@@ -42,7 +42,6 @@ void print(FacilityNode* o, FacilityNode* d) {
 int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
 	//srand(1000);
-	int sum = 0;
 	ifstream in;
 
 	in.open("benchmarks/instances/sample-server.dat");
@@ -53,7 +52,6 @@ int main() {
 	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
 	in.close();
-	cout << "Sum = " << sum << endl;
 	cout << *problem;
 	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
 //

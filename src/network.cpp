@@ -111,7 +111,7 @@ unsigned int FacilityType::genRandomBandwidthIndex()
 
 unsigned int FacilityType::genRandomFacilities()
 {
-	cout << "B(" << binornd->distribution().t() <<  ", " << binornd->distribution().p() << ")" <<endl;
+	//cout << "B(" << binornd->distribution().t() <<  ", " << binornd->distribution().p() << ")" <<endl;
 	return (*binornd)();
 }
 
@@ -145,9 +145,13 @@ variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd
 istream & FacilityType::read(istream & in, const PSLProblem& problem)
 {
 	int tmp;
-	in >> level >> tmp;
-	demands.push_back(tmp);
-	unsigned int n = problem.getNbServers();
+	in >> level;
+	unsigned int n = problem.getNbGroups();
+	while(demands.size() < n) {
+			in >> tmp;
+			demands.push_back(tmp);
+		}
+	n = problem.getNbServers();
 	while(serverCapacities.size() < n) {
 		in >> tmp;
 		serverCapacities.push_back(tmp);
@@ -179,7 +183,7 @@ unsigned int FacilityType::getConnexionCapacity(const vector<ServerType*>* serve
 
 ostream& operator<<(ostream& out, const FacilityType& f) {
 
-	out << "Level:" << f.getLevel() << "\tDemand:{";
+	out << "Level:" << f.getLevel() << "\tDemand:{ ";
 	copy(f.demands.begin(), f.demands.end(), ostream_iterator<int>(out, " "));
 	out << "}\tCapacities:{ ";
 	copy(f.serverCapacities.begin(), f.serverCapacities.end(), ostream_iterator<int>(out, " "));
@@ -212,13 +216,18 @@ ostream & operator <<(ostream & out, const PSLProblem & f)
 	return out;
 }
 
-FacilityNode *PSLProblem::generateNetwork()
-{
-	FacilityNode* root = new FacilityNode(facilities[0]);
-	return generateSubtree(root);
+
+FacilityNode *PSLProblem::generateNetwork() {
+	return generateNetwork(true);
 }
 
-FacilityNode *PSLProblem::generateSubtree(FacilityNode *root)
+FacilityNode *PSLProblem::generateNetwork(bool hierarchic)
+{
+	FacilityNode* root = new FacilityNode(facilities[0]);
+	return generateSubtree(root, hierarchic);
+}
+
+FacilityNode *PSLProblem::generateSubtree(FacilityNode *root, bool hierarchic)
 {
 	unsigned int idx = 0;
 	const unsigned int level = root->getType()->getLevel();
@@ -228,8 +237,8 @@ FacilityNode *PSLProblem::generateSubtree(FacilityNode *root)
 		const unsigned int nbc = facilities[idx]->genRandomFacilities();
 		for (unsigned int i = 0; i < nbc; ++i) {
 			FacilityNode* child = new FacilityNode(facilities[idx]);
-			new NetworkLink(root, child, *this, false);
-			generateSubtree(child);
+			new NetworkLink(root, child, *this, hierarchic);
+			generateSubtree(child, hierarchic);
 		}
 		idx++;
 	}
@@ -251,6 +260,7 @@ istream & operator >>(istream & in, PSLProblem & problem)
 		in >> *stype;
 		problem.servers.push_back(stype);
 	}
+	in >> problem.numberOfGroups;
 	in >> n;
 	for (int i = 0; i < n; ++i) {
 		FacilityType* ftype = new FacilityType();

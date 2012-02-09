@@ -41,9 +41,6 @@
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
 
-//
-//#include <boost/math/distributions/binomial.hpp>
-//using boost::math::binomial;
 
 
 using namespace boost::random;
@@ -61,6 +58,7 @@ struct Delete
 
 template <typename T>
 T& dereference(T* ptr) { return *ptr; }
+
 
 class ServerType
 {
@@ -195,17 +193,20 @@ public:
 	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
 	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
 	inline unsigned int getNbServers() const { return servers.size();}
+	inline unsigned int getNbGroups() const { return numberOfGroups; }
 	inline unsigned int getNbFacilities() const { return facilities.size();}
 
 	FacilityNode* generateNetwork();
+	FacilityNode* generateNetwork(bool hierarchic);
 
 	friend ostream& operator<<(ostream& out, const PSLProblem& f);
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 protected:
-	FacilityNode* generateSubtree(FacilityNode* root);
+	FacilityNode* generateSubtree(FacilityNode* root, bool hierarchic);
 private:
 	vector<unsigned int> bandwidths;
 	vector<ServerType*> servers;
+	unsigned int numberOfGroups;
 	vector<FacilityType*> facilities;
 
 };
@@ -213,19 +214,11 @@ private:
 class NetworkLink {
 
 public:
-	NetworkLink(FacilityNode* father, FacilityNode* child, vector<int>* bandwidths) : origin(father), destination(child), bandwidth(0),reliable(0)
+	NetworkLink(FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic) : origin(father), destination(child), bandwidth(0),reliable(0)
 	{
 		father->children.push_back(this);
 		child->father=this;
-		bandwidth = (*bandwidths)[child->getType()->genRandomBandwidthIndex()];
-		reliable = child->getType()->genRandomReliability();
-	}
-
-	NetworkLink(FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool ignoreHierarchy) : origin(father), destination(child), bandwidth(0),reliable(0)
-	{
-		father->children.push_back(this);
-		child->father=this;
-		if( father->isRoot() || ignoreHierarchy) {
+		if( father->isRoot() || ! hierarchic) {
 			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
 			reliable = child->getType()->genRandomReliability();
 		} else {
