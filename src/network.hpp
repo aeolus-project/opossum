@@ -129,7 +129,7 @@ public:
 	}
 	inline unsigned int getTotalCapacity() {
 		unsigned int sum=0;
-		for(IntListIterator j=demands.begin();j!=demands.end();++j)
+		for(IntListIterator j=serverCapacities.begin();j!=serverCapacities.end();++j)
 			sum += *j;
 		return sum;
 	}
@@ -182,6 +182,7 @@ public:
 	inline bool isLeaf() const {
 		return children.empty();
 	}
+	void levelCounts(IntList& levels);
 	bool isReliableFromRoot();
 	unsigned int getMinIncomingConnections(ServerTypeList* servers);
 	ostream& toDotty(ostream& out);
@@ -198,67 +199,11 @@ private:
 };
 
 
-class PSLProblem {
-
-
-public:
-	PSLProblem() : numberOfGroups(0), root(NULL), nodeCount(0) {
-	}
-	~PSLProblem() {
-		delete root;
-		for_each(servers.begin(), servers.end(), Delete());
-		for_each(facilities.begin(), facilities.end(), Delete());
-	}
-
-	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
-	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
-	inline unsigned int getNbServers() const { return servers.size();}
-	inline unsigned int getNbGroups() const { return numberOfGroups; }
-	inline unsigned int getNbFacilities() const { return facilities.size();}
-
-	FacilityNode* generateNetwork();
-	FacilityNode* generateNetwork(bool hierarchic);
-
-	inline FacilityNode* getRoot() const { return root;}
-	inline unsigned int getNodeCount() const { return nodeCount;}
-	inline unsigned int getLinkCount() const { return nodeCount-1;}
-
-	ostream& toDotty(ostream& out);
-
-	friend ostream& operator<<(ostream& out, const PSLProblem& f);
-	friend istream& operator>>(istream& in, PSLProblem& problem);
-protected:
-	void generateSubtree(FacilityNode* root, bool hierarchic);
-private:
-	IntList bandwidths;
-	ServerTypeList servers;
-	unsigned int numberOfGroups;
-	FacilityTypeList facilities;
-	FacilityNode* root;
-	unsigned int nodeCount;
-
-};
-
 class NetworkLink {
 
 public:
 
-	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic) : id(id), origin(father), destination(child), bandwidth(0),reliable(0)
-	{
-		father->children.push_back(this);
-		child->father=this;
-		if( father->isRoot() || !hierarchic) {
-			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
-			reliable = child->getType()->genRandomReliability();
-		} else {
-			unsigned int fbandw = father->toFather()->getBandwidth();
-			int maxIndex = problem.getNbBandwidths() - 1;
-			while( maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {maxIndex--;}
-			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex(maxIndex));
-			reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
-		}
-	}
-
+	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic);
 	~NetworkLink() {
 		delete origin;
 		delete destination;
@@ -285,11 +230,10 @@ private:
 class RankMapper {
 
 	RankMapper(PSLProblem& problem, unsigned int nodeCount, unsigned int stageCount, unsigned int serverCount) : nodeCount(nodeCount), stageCount(stageCount),serverCount(serverCount) {
-
-
+		//problem.getRoot()->levelCounts(levelCounts);
 	}
-	~RankMapper() {
 
+	~RankMapper() {
 	}
 public:
 	inline int rankX(FacilityNode* node);
@@ -298,15 +242,14 @@ public:
 	inline int rankY(NetworkLink* link,unsigned int stage);
 	inline int rankZ(FacilityNode* source, FacilityNode* destination, unsigned int stage);
 	inline int rankB(FacilityNode* source, FacilityNode* destination, unsigned int stage);
-	private:
-
+private:
+	inline int offsetXk();
+	inline int offsetYi();
+	inline int offsetYij();
 
 	inline int rank(FacilityNode* source, FacilityNode* destination);
 	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage);
 
-	inline int offsetXk();
-	inline int offsetYi();
-	inline int offsetYij();
 	inline int offsetZ();
 	inline int offsetB();
 
@@ -315,6 +258,53 @@ public:
 	unsigned int nodeCount;
 	unsigned int stageCount;
 	unsigned int serverCount;
+	//IntList levelLastIDs;
+};
+
+
+class PSLProblem {
+
+
+public:
+	PSLProblem() : numberOfGroups(0), root(NULL), nodeCount(0) {
+	}
+	~PSLProblem() {
+		delete root;
+		for_each(servers.begin(), servers.end(), Delete());
+		for_each(facilities.begin(), facilities.end(), Delete());
+	}
+
+	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
+	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
+	inline unsigned int getNbServers() const { return servers.size();}
+	inline unsigned int getNbGroups() const { return numberOfGroups; }
+	inline unsigned int getNbFacilities() const { return facilities.size();}
+
+	FacilityNode* generateNetwork();
+
+	//generate Breadth-First Numbered Tree
+	FacilityNode* generateNetwork(bool hierarchic);
+
+	inline FacilityNode* getRoot() const { return root;}
+	inline unsigned int getNodeCount() const { return nodeCount;}
+	inline unsigned int getLinkCount() const { return nodeCount-1;}
+
+	ostream& toDotty(ostream& out);
+
+	friend ostream& operator<<(ostream& out, const PSLProblem& f);
+	friend istream& operator>>(istream& in, PSLProblem& problem);
+protected:
+	void generateSubtree(FacilityNode* root, bool hierarchic);
+	unsigned int generateBreadthFirstNumberedTree(bool hierarchic);
+private:
+	IntList bandwidths;
+	ServerTypeList servers;
+	unsigned int numberOfGroups;
+	FacilityTypeList facilities;
+	FacilityNode* root;
+	IntList levelNodeCounts;
+	unsigned int nodeCount;
+
 };
 
 

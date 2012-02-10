@@ -43,7 +43,6 @@ int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
 	//srand(1000);
 	ifstream in;
-
 	in.open("benchmarks/instances/sample-server.dat");
 	if (!in) {
 		cout << "Unable to open file";
@@ -52,9 +51,9 @@ int main() {
 	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
 	in.close();
-//	cout << *problem;
+	//	cout << *problem;
 	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
-//
+	//
 	problem->generateNetwork();
 	cout << *problem;
 	ofstream myfile;

@@ -25,7 +25,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "./network.hpp"
-
+#include <queue>
 
 FacilityNode::~FacilityNode() {
 	delete type;
@@ -48,7 +48,7 @@ unsigned int FacilityNode::getMinIncomingConnections(ServerTypeList* servers) {
 ostream & FacilityNode::toDotty(ostream & out)
 {
 	out << getID();
-	out << "[label=\"" <<  getType()->getTotalDemand() << "\"];" << endl;
+	out << "[shape=record, label=\"{{" <<  getID() << "}|{" << getType()->getTotalDemand() << "|" << getType()->getTotalCapacity() << "}}\"];" << endl;
 	if(! isRoot()) {
 		toFather()->toDotty(out);
 	}
@@ -78,6 +78,14 @@ inline FacilityNode *FacilityNode::getChild(unsigned int i) const
 bool FacilityNode::isReliableFromRoot()
 {
 	return isRoot() ? true : toFather()->isReliable() && getFather()->isReliableFromRoot();
+}
+
+void FacilityNode::levelCounts(IntList& levels)
+{
+	levels[type->getLevel()] = levels[type->getLevel()] + 1;
+	for ( size_t i = 0; i < children.size(); ++i ) {
+		children[i]->getDestination()->levelCounts(levels);
+	}
 }
 
 void FacilityNode::print(ostream& out) {
@@ -227,9 +235,37 @@ FacilityNode *PSLProblem::generateNetwork() {
 
 FacilityNode *PSLProblem::generateNetwork(bool hierarchic)
 {
+	levelNodeCounts.clear();
+	levelNodeCounts.push_back(0);
 	nodeCount = 0;
+	queue<FacilityNode*> queue;
 	root = new FacilityNode(nodeCount++, facilities[0]);
-	generateSubtree(root, hierarchic);
+	queue.push(root);
+	unsigned int ftype=1, clevel=0, idx=0;
+	FacilityNode* current = queue.front();
+	do {
+		queue.pop();
+		idx=ftype;
+		while(idx  < facilities.size() && facilities[idx]->getLevel() == clevel + 1) {
+			//number of children
+			const unsigned int nbc = facilities[idx]->genRandomFacilities();
+			//generate children
+			for (unsigned int i = 0; i < nbc; ++i) {
+				FacilityNode* child = new FacilityNode(nodeCount, facilities[idx]);
+				new NetworkLink(nodeCount - 1, current, child, *this, hierarchic);
+				queue.push(child);
+				nodeCount++;
+			}
+			idx++;
+		}
+		if(queue.empty()) break;
+		current = queue.front();
+		if(current->getType()->getLevel() == clevel + 1) {
+			levelNodeCounts.push_back(queue.size()); //Add number of facilities at level clevel
+			clevel=current->getType()->getLevel();
+			ftype=idx;
+		} else assert(current->getType()->getLevel() == clevel);
+	} while(ftype < facilities.size());
 	return root;
 }
 
@@ -241,6 +277,46 @@ ostream & PSLProblem::toDotty(ostream & out)
 		out << "}\n";
 	}
 	return out;
+}
+
+
+unsigned int PSLProblem::generateBreadthFirstNumberedTree(bool hierarchic)
+{
+	IntList levelNodeCounts;
+	levelNodeCounts.push_back(0);
+	nodeCount = 0;
+	queue<FacilityNode*> queue;
+	root = new FacilityNode(nodeCount++, facilities[0]);
+	queue.push(root);
+	unsigned int ftype=1, clevel=0, idx=0;
+	FacilityNode* current = queue.front();
+	do {
+		queue.pop();
+		idx=ftype;
+		while(idx  < facilities.size() && facilities[idx]->getLevel() == clevel + 1) {
+			//number of children
+			const unsigned int nbc = facilities[idx]->genRandomFacilities();
+			//generate children
+			for (unsigned int i = 0; i < nbc; ++i) {
+				FacilityNode* child = new FacilityNode(nodeCount, facilities[idx]);
+				new NetworkLink(nodeCount - 1, current, child, *this, hierarchic);
+				queue.push(child);
+				nodeCount++;
+			}
+			idx++;
+		}
+		if(queue.empty()) break;
+		current = queue.front();
+		if(current->getType()->getLevel() == clevel + 1) {
+			levelNodeCounts.push_back(queue.size()); //Add number of facilities at level clevel
+			clevel=current->getType()->getLevel();
+			ftype=idx;
+		} else assert(current->getType()->getLevel() == clevel);
+	} while(ftype < facilities.size());
+	//copy(levelCounts.begin(), levelCounts.end(), ostream_iterator<unsigned int>(cout, " "));
+	//cout << endl;
+
+	return 0;
 }
 
 
@@ -299,6 +375,21 @@ ostream & operator <<(ostream& out, const FacilityNode& n)
 }
 
 
+NetworkLink::NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic) : id(id), origin(father), destination(child), bandwidth(0),reliable(0)
+{
+	father->children.push_back(this);
+	child->father=this;
+	if( father->isRoot() || !hierarchic) {
+		bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
+		reliable = child->getType()->genRandomReliability();
+	} else {
+		unsigned int fbandw = father->toFather()->getBandwidth();
+		int maxIndex = problem.getNbBandwidths() - 1;
+		while( maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {maxIndex--;}
+		bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex(maxIndex));
+		reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
+	}
+}
 
 void NetworkLink::forEachPath() const
 {
@@ -431,6 +522,11 @@ inline int RankMapper::rankB(FacilityNode *source, FacilityNode *destination, un
 {
 	return offsetB() + rank(source, destination, stage);
 }
+
+
+
+
+
 
 
 
