@@ -453,8 +453,6 @@ public:
 	friend ostream& operator<<(ostream& out, const PSLProblem& f);
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 protected:
-	void generateSubtree(FacilityNode* root, bool hierarchic);
-	unsigned int generateBreadthFirstNumberedTree(bool hierarchic);
 private:
 	IntList bandwidths;
 	ServerTypeList servers;

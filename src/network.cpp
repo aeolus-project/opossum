@@ -294,68 +294,6 @@ ostream & PSLProblem::toDotty(ostream & out) {
 	return out;
 }
 
-unsigned int PSLProblem::generateBreadthFirstNumberedTree(bool hierarchic) {
-	IntList levelNodeCounts;
-	levelNodeCounts.push_back(0);
-	nodeCount = 0;
-	queue<FacilityNode*> queue;
-	root = new FacilityNode(nodeCount++, facilities[0]);
-	queue.push(root);
-	unsigned int ftype = 1, clevel = 0, idx = 0;
-	FacilityNode* current = queue.front();
-	do {
-		queue.pop();
-		idx = ftype;
-		while (idx < facilities.size()
-				&& facilities[idx]->getLevel() == clevel + 1) {
-			//number of children
-			const unsigned int nbc = facilities[idx]->genRandomFacilities();
-			//generate children
-			for (unsigned int i = 0; i < nbc; ++i) {
-				FacilityNode* child = new FacilityNode(nodeCount,
-						facilities[idx]);
-				new NetworkLink(nodeCount - 1, current, child, *this,
-						hierarchic);
-				queue.push(child);
-				nodeCount++;
-			}
-			idx++;
-		}
-		if (queue.empty())
-			break;
-		current = queue.front();
-		if (current->getType()->getLevel() == clevel + 1) {
-			levelNodeCounts.push_back(queue.size()); //Add number of facilities at level clevel
-			clevel = current->getType()->getLevel();
-			ftype = idx;
-		} else
-			assert(current->getType()->getLevel() == clevel);
-	} while (ftype < facilities.size());
-	//copy(levelCounts.begin(), levelCounts.end(), ostream_iterator<unsigned int>(cout, " "));
-	//cout << endl;
-
-	return 0;
-}
-
-void PSLProblem::generateSubtree(FacilityNode *current, bool hierarchic) {
-	unsigned int idx = 0;
-	const unsigned int level = current->getType()->getLevel();
-	const unsigned int n = facilities.size();
-	while (idx < n && facilities[idx]->getLevel() <= level) {
-		idx++;
-	}
-	while (idx < n && facilities[idx]->getLevel() == level + 1) {
-		const unsigned int nbc = facilities[idx]->genRandomFacilities();
-		for (unsigned int i = 0; i < nbc; ++i) {
-			FacilityNode* child = new FacilityNode(nodeCount, facilities[idx]);
-			new NetworkLink(nodeCount - 1, current, child, *this, hierarchic);
-			nodeCount++;
-			generateSubtree(child, hierarchic);
-		}
-		idx++;
-	}
-}
-
 istream & operator >>(istream & in, PSLProblem & problem) {
 	int n;
 	in >> n;
