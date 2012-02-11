@@ -282,6 +282,7 @@ FacilityNode *PSLProblem::generateNetwork(bool hierarchic) {
 	while (!queue.empty()) {
 		queue.pop(); //TODO how to clear a queue ?
 	}
+	assert(checkNetwork());
 	return root;
 }
 
@@ -292,6 +293,32 @@ ostream & PSLProblem::toDotty(ostream & out) {
 		out << "}\n";
 	}
 	return out;
+}
+
+bool PSLProblem::checkNetwork()
+{
+	unsigned int sum = 0;
+	//Test 1
+	for (IntListIterator j = levelNodeCounts.begin();
+			j != levelNodeCounts.end(); ++j)
+		sum += *j;
+	if( sum != nodeCount) return false;
+
+	//TODO Test 2
+//	sum = 0;
+//	for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
+//		sum ++;
+//	}
+//	if( sum != nodeCount) return false;
+
+	//Test 3
+	sum = 0;
+	for (LinkIterator n = root->lbegin(); n != root->lend(); ++n) {
+		sum ++;
+	}
+	if( sum != getLinkCount()) return false;
+
+	return true;
 }
 
 istream & operator >>(istream & in, PSLProblem & problem) {
@@ -346,7 +373,7 @@ NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
 		bandwidth = problem.getBandwidth(
 				child->getType()->genRandomBandwidthIndex(maxIndex));
 		reliable = father->toFather()->isReliable()
-				&& child->getType()->genRandomReliability();
+								&& child->getType()->genRandomReliability();
 	}
 }
 
@@ -407,8 +434,8 @@ ostream & NetworkLink::toGEXF(ostream & out) {
 }
 
 RankMapper::RankMapper(PSLProblem& problem) :
-		nodeCount(problem.getNodeCount()), stageCount(
-				problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
+						nodeCount(problem.getNodeCount()), stageCount(
+								problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
 	levelNodeCounts = problem.getLevelNodeCounts();
 }
 

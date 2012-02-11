@@ -433,6 +433,7 @@ public:
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
 
+	bool checkNetwork();
 	inline FacilityNode* getRoot() const {
 		return root;
 	}

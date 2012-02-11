@@ -79,7 +79,7 @@ int main() {
 //	}
 //	cout << endl;
 	//	cout << *problem;
-
+	cout << "ok: " << problem->checkNetwork() << endl;
 
 	RankMapper* rankM = new RankMapper((*problem));
 	cout << rankM->rankX(problem->getRoot())<< endl;
