@@ -56,23 +56,36 @@ int main() {
 	//
 	problem->generateNetwork();
 	cout << *problem;
+
+
 //	ofstream myfile;
 //	myfile.open ("/tmp/pserver.dot");
 //	problem->toDotty(myfile);
 //	myfile.close();
 
-	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
-		//cout << i->getID() << " ";
-		//FIXME
-		cout << *i << endl;
-	}
-	cout << endl;
-	cout << "Nodes :";
-	cout << endl;
-	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
-		cout << i->getID() << endl;
-	}
-	cout << endl;
+
+//	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
+//		//cout << i->getID() << " ";
+//		//FIXME
+//		cout << *i << endl;
+//	}
+//	cout << endl;
+
+
+	//	cout << "Nodes :";
+//	cout << endl;
+//	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
+//		cout << i->getID() << endl;
+//	}
+//	cout << endl;
 	//	cout << *problem;
+
+
+	RankMapper* rankM = new RankMapper((*problem));
+	cout << rankM->rankX(problem->getRoot())<< endl;
+	FacilityNode* source = problem->getRoot()->getChild(1);
+	cout << rankM->rankX(problem->getRoot(), 1) << endl;
+	FacilityNode* destination = source->getChild(0)->getChild(0);
+	cout << rankM->rankZ(source, destination,1) << endl;
 	return 0;
 }

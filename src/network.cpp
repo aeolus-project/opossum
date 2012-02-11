@@ -27,6 +27,7 @@
 #include "./network.hpp"
 
 FacilityNode::~FacilityNode() {
+	//FIXME ~NetworkLink()
 	delete type;
 	delete father;
 	for_each(children.begin(), children.end(), Delete());
@@ -88,7 +89,6 @@ void FacilityNode::print(ostream& out) {
 		}
 	}
 }
-
 
 NodeIterator FacilityNode::nbegin() {
 	return (NodeIterator(this));
@@ -243,7 +243,7 @@ FacilityNode *PSLProblem::generateNetwork() {
 
 FacilityNode *PSLProblem::generateNetwork(bool hierarchic) {
 	levelNodeCounts.clear();
-	levelNodeCounts.push_back(0);
+	levelNodeCounts.push_back(1);
 	nodeCount = 0;
 	queue<FacilityNode*> queue;
 	root = new FacilityNode(nodeCount++, facilities[0]);
@@ -279,8 +279,9 @@ FacilityNode *PSLProblem::generateNetwork(bool hierarchic) {
 		} else
 			assert(current->getType()->getLevel() == clevel);
 	} while (ftype < facilities.size());
-	while (!queue.empty())
+	while (!queue.empty()) {
 		queue.pop(); //TODO how to clear a queue ?
+	}
 	return root;
 }
 
@@ -407,7 +408,7 @@ NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
 		bandwidth = problem.getBandwidth(
 				child->getType()->genRandomBandwidthIndex(maxIndex));
 		reliable = father->toFather()->isReliable()
-						&& child->getType()->genRandomReliability();
+				&& child->getType()->genRandomReliability();
 	}
 }
 
@@ -467,12 +468,10 @@ ostream & NetworkLink::toGEXF(ostream & out) {
 	return out;
 }
 
-
-RankMapper::RankMapper(PSLProblem& problem, unsigned int nodeCount,
-		unsigned int stageCount, unsigned int serverCount) :
-			nodeCount(problem.getNodeCount()), stageCount(problem.getNbGroups() + 1), serverCount(
-					problem.getNbServers()) {
-	//problem.getRoot()->levelCounts(levelCounts);
+RankMapper::RankMapper(PSLProblem& problem) :
+		nodeCount(problem.getNodeCount()), stageCount(
+				problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
+	levelNodeCounts = problem.getLevelNodeCounts();
 }
 
 int RankMapper::rankX(FacilityNode *node) {
@@ -483,7 +482,7 @@ inline int RankMapper::offsetXk() {
 	return nodeCount;
 }
 
-inline int RankMapper::rankX(FacilityNode *node, unsigned int stype) {
+int RankMapper::rankX(FacilityNode *node, unsigned int stype) {
 	return offsetXk() + node->getID() * serverCount + stype;
 }
 
@@ -499,15 +498,21 @@ inline int RankMapper::offsetYij() {
 	return offsetYi() + nodeCount * stageCount;
 }
 
-inline int RankMapper::rankY(NetworkLink *link, unsigned int stage) {
+int RankMapper::rankY(NetworkLink *link, unsigned int stage) {
 	return offsetYij() + link->getID() * stageCount + stage;
 
 }
 
 inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination) {
-	//TODO not yet implemented
-	return 0;
-
+	int levelCumulNodeCount = 0;
+	int levelCumulPathCount = 0;
+	int length = destination->getType()->getLevel() - source->getType()->getLevel();
+	for (int l = 0; l < length; ++l) {
+		levelCumulNodeCount += levelNodeCounts[l]; //number of nodes of level lower or equal than l;
+		levelCumulPathCount += nodeCount - levelCumulNodeCount; //number of path of length l
+	}
+	//path are ranked by length and their index using the bread-first numbered tree.
+	return levelCumulPathCount + (destination->getID() - levelCumulNodeCount);
 }
 
 inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination,
@@ -521,7 +526,7 @@ inline int RankMapper::offsetZ() {
 	return offsetYij() + linkCount() * stageCount;
 }
 
-inline int RankMapper::rankZ(FacilityNode *source, FacilityNode *destination,
+int RankMapper::rankZ(FacilityNode *source, FacilityNode *destination,
 		unsigned int stage) {
 	return offsetZ() + rank(source, destination, stage);
 }
@@ -530,13 +535,13 @@ inline int RankMapper::offsetB() {
 	return offsetZ() + pathCount() * stageCount;
 }
 
-inline int RankMapper::rankB(FacilityNode *source, FacilityNode *destination,
+int RankMapper::rankB(FacilityNode *source, FacilityNode *destination,
 		unsigned int stage) {
 	return offsetB() + rank(source, destination, stage);
 }
 
 LinkIterator::LinkIterator(FacilityNode* p) {
-	if(p && !p->isLeaf()) {
+	if (p && !p->isLeaf()) {
 		current = p->cbegin();
 		end = p->cend();
 	}
@@ -544,7 +549,7 @@ LinkIterator::LinkIterator(FacilityNode* p) {
 LinkIterator::~LinkIterator() {
 	//delete current;
 	//TODO how to clear a queue ?
-	for_each(queue.begin(), queue.end(), Delete());
+	//for_each(queue.begin(), queue.end(), Delete());
 }
 
 LinkIterator & LinkIterator::operator ++() {
@@ -564,20 +569,18 @@ NetworkLink LinkIterator::operator *() {
 
 NodeIterator& NodeIterator::operator++() {
 	if (node != NULL) {
-		if(clink== NULL) {
+		if (clink == NULL) {
 			clink = node->lbegin();
 			elink = node->lend();
 		}
-		if(clink != elink) {
+		if (clink != elink) {
 			//FIXME severe issue with node iterators
-			node= clink->getDestination();
+			//node=  (**clink).getDestination();
+			node = clink->getDestination();
 			clink++;
+		} else {
+			node = NULL;
 		}
-		else {
-			node=NULL;
-		}
-
-		//node_ = node_->next_;
 	}
 	return (*this);
 }

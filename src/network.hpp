@@ -191,7 +191,7 @@ public:
 	inline NetworkLink* toChild(unsigned int i) const {
 		return children[i];
 	}
-	inline FacilityNode* getChild(unsigned int i) const;
+	FacilityNode* getChild(unsigned int i) const;
 	inline bool isRoot() const {
 		return father == NULL;
 	}
@@ -250,13 +250,11 @@ public:
 		return (current != other.current);
 	}
 
-	// Update my state such that I refer to the next element in the
-	// SQueue.
 	LinkIterator& operator++();
 
 	LinkIterator& operator++(int) {
-		//FIXME Iterateurs
-		//Iterator tmp(*this);
+		//FIXME why a local variable (compilation warning).
+		//LinkIterator tmp(*this);
 		++(*this);
 		return *this;
 		//return(tmp);
@@ -364,30 +362,30 @@ private:
 
 class RankMapper {
 
-	RankMapper(PSLProblem& problem, unsigned int nodeCount,
-			unsigned int stageCount, unsigned int serverCount);
+
+public:
+	RankMapper(PSLProblem& problem);
 	~RankMapper() {
 	}
-public:
-	inline int rankX(FacilityNode* node);
-	inline int rankX(FacilityNode* node, unsigned int stype);
-	inline int rankY(FacilityNode* node, unsigned int stage);
-	inline int rankY(NetworkLink* link, unsigned int stage);
-	inline int rankZ(FacilityNode* source, FacilityNode* destination,
+	int rankX(FacilityNode* node);
+	int rankX(FacilityNode* node, unsigned int stype);
+	int rankY(FacilityNode* node, unsigned int stage);
+	int rankY(NetworkLink* link, unsigned int stage);
+	int rankZ(FacilityNode* source, FacilityNode* destination,
 			unsigned int stage);
-	inline int rankB(FacilityNode* source, FacilityNode* destination,
+	int rankB(FacilityNode* source, FacilityNode* destination,
 			unsigned int stage);
 private:
-	inline int offsetXk();
-	inline int offsetYi();
-	inline int offsetYij();
+	int offsetXk();
+	int offsetYi();
+	int offsetYij();
 
-	inline int rank(FacilityNode* source, FacilityNode* destination);
-	inline int rank(FacilityNode* source, FacilityNode* destination,
+	int rank(FacilityNode* source, FacilityNode* destination);
+	int rank(FacilityNode* source, FacilityNode* destination,
 			unsigned int stage);
 
-	inline int offsetZ();
-	inline int offsetB();
+	int offsetZ();
+	int offsetB();
 
 	inline int linkCount() {
 		return nodeCount - 1;
@@ -398,7 +396,8 @@ private:
 	unsigned int nodeCount;
 	unsigned int stageCount;
 	unsigned int serverCount;
-	//IntList levelLastIDs;
+	IntList levelNodeCounts;
+
 };
 
 class PSLProblem {
@@ -440,6 +439,11 @@ public:
 	inline unsigned int getNodeCount() const {
 		return nodeCount;
 	}
+
+	inline IntList getLevelNodeCounts() const {
+		return levelNodeCounts;
+	}
+
 	inline unsigned int getLinkCount() const {
 		return nodeCount - 1;
 	}
