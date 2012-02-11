@@ -56,9 +56,23 @@ int main() {
 	//
 	problem->generateNetwork();
 	cout << *problem;
-	ofstream myfile;
-	myfile.open ("/tmp/pserver.dot");
-	problem->toDotty(myfile);
-	myfile.close();
+//	ofstream myfile;
+//	myfile.open ("/tmp/pserver.dot");
+//	problem->toDotty(myfile);
+//	myfile.close();
+
+	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
+		//cout << i->getID() << " ";
+		//FIXME
+		cout << *i << endl;
+	}
+	cout << endl;
+	cout << "Nodes :";
+	cout << endl;
+	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
+		cout << i->getID() << endl;
+	}
+	cout << endl;
+	//	cout << *problem;
 	return 0;
 }

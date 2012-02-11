@@ -6,8 +6,8 @@
 #include <exception>
 #include <unistd.h>
 
-//#include "../src/network.hpp"
-
+#include "../src/network.hpp"
+#include "../src/network.cpp"
 
 int add(int i, int j)
 {
@@ -21,14 +21,14 @@ BOOST_AUTO_TEST_SUITE(VariantsSuite)
 BOOST_AUTO_TEST_CASE(networkGeneration)
 {
 	//FIXME Tests does not compile !?
-	//	ifstream in;
-	//
-	//	in.open("benchmarks/instances/sample-server.dat");
-	//	if (!in) {
-	//		BOOST_ERROR("Unable to open file");
-	//	}
-	//	PSLProblem* problem = new PSLProblem();
-	//	in >> *problem;
+		ifstream in;
+
+		in.open("benchmarks/instances/sample-server.dat");
+		if (!in) {
+			BOOST_ERROR("Unable to open file");
+		}
+		PSLProblem* problem = new PSLProblem();
+		in >> *problem;
 	//	in.close();
 	//		problem->generateNetwork();
 	//		cout << *problem;

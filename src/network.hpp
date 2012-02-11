@@ -33,6 +33,7 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
+#include <queue>
 #include <assert.h>
 #include <boost/random/variate_generator.hpp>
 #include <boost/generator_iterator.hpp>
@@ -40,8 +41,6 @@
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
-
-
 
 using namespace boost::random;
 using namespace std;
@@ -51,6 +50,8 @@ class ServerType;
 class FacilityType;
 class FacilityNode;
 class NetworkLink;
+class LinkIterator;
+class NodeIterator;
 class PSLProblem;
 
 typedef vector<unsigned int> IntList;
@@ -62,7 +63,6 @@ typedef vector<ServerType*>::iterator ServerTypeListIterator;
 typedef vector<FacilityType*> FacilityTypeList;
 typedef vector<FacilityType*>::iterator FacilityTypeListIterator;
 
-
 typedef vector<FacilityNode*> FacilityList;
 typedef vector<FacilityNode*>::iterator FacilityListIterator;
 
@@ -72,29 +72,35 @@ typedef vector<NetworkLink*>::iterator LinkListIterator;
 //Functors and templates
 
 // Foncteur servant à libérer un pointeur - applicable à n'importe quel type
-struct Delete
-{
-	template <class T> void operator ()(T*& p) const
-	{
+struct Delete {
+	template<class T> void operator ()(T*& p) const {
 		delete p;
 		p = NULL;
 	}
 };
 
-template <typename T>
-T& dereference(T* ptr) { return *ptr; }
+template<typename T>
+T& dereference(T* ptr) {
+	return *ptr;
+}
 
-
-class ServerType
-{
+class ServerType {
 public:
-	ServerType() : capacity(0), cost(0) {
+	ServerType() :
+		capacity(0), cost(0) {
 	}
-	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {
+	ServerType(unsigned int capacity, unsigned int cost) :
+		capacity(capacity), cost(cost) {
 	}
-	virtual ~ServerType() {};
-	inline unsigned int getCost() const { return cost; }
-	inline unsigned int getMaxConnections() const { return capacity; }
+	virtual ~ServerType() {
+	}
+	;
+	inline unsigned int getCost() const {
+		return cost;
+	}
+	inline unsigned int getMaxConnections() const {
+		return capacity;
+	}
 
 	friend istream& operator>>(istream& in, ServerType& f);
 protected:
@@ -104,32 +110,36 @@ private:
 
 };
 
-
-
-class FacilityType
-{
+class FacilityType {
 
 public:
-	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1)
-	{
-		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
+	FacilityType() :
+		level(0), binornd(NULL), reliabilityProbability(1) {
+		binornd = new variate_generator<mt19937&, binomial_distribution<> >(
+				fake_binornd);
 	}
 	virtual ~FacilityType() {
 		delete binornd;
 	}
-	inline unsigned int getLevel() const { return level; }
-	inline unsigned int getDemand(unsigned int stage) const { return demands[stage]; }
+	inline unsigned int getLevel() const {
+		return level;
+	}
+	inline unsigned int getDemand(unsigned int stage) const {
+		return demands[stage];
+	}
 	inline unsigned int getTotalDemand() {
-		unsigned int sum=0;
-		for(IntListIterator j=demands.begin();j!=demands.end();++j)
+		unsigned int sum = 0;
+		for (IntListIterator j = demands.begin(); j != demands.end(); ++j)
 			sum += *j;
 		return sum;
 	}
-	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
+	inline unsigned int getServerCapacity(const unsigned int stype) const {
+		return serverCapacities[stype];
 	}
 	inline unsigned int getTotalCapacity() {
-		unsigned int sum=0;
-		for(IntListIterator j=serverCapacities.begin();j!=serverCapacities.end();++j)
+		unsigned int sum = 0;
+		for (IntListIterator j = serverCapacities.begin();
+				j != serverCapacities.end(); ++j)
 			sum += *j;
 		return sum;
 	}
@@ -145,7 +155,7 @@ public:
 protected:
 private:
 	static mt19937 random_generator;
-	static uniform_01< mt19937&, double > randd;
+	static uniform_01<mt19937&, double> randd;
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
 
 	unsigned int level;
@@ -157,37 +167,59 @@ private:
 
 };
 
-
-
-
-class FacilityNode
-{
+class FacilityNode {
 	friend class NetworkLink;
 
 public:
-	FacilityNode(unsigned int id, FacilityType* type) : id(id), type(type), father(NULL) {
+	FacilityNode(unsigned int id, FacilityType* type) :
+		id(id), type(type), father(NULL) {
 	}
 	~FacilityNode();
-	inline unsigned int getID() const { return id; }
-	inline FacilityType* getType() const { return type; }
-	inline NetworkLink* toFather() const { return father; }
+	inline unsigned int getID() const {
+		return id;
+	}
+	inline FacilityType* getType() const {
+		return type;
+	}
+	inline NetworkLink* toFather() const {
+		return father;
+	}
 	FacilityNode* getFather() const;
-	inline unsigned int getChildrenCount() const {return children.size();}
-	inline NetworkLink* toChild(unsigned int i) const { return children[i]; }
+	inline unsigned int getChildrenCount() const {
+		return children.size();
+	}
+	inline NetworkLink* toChild(unsigned int i) const {
+		return children[i];
+	}
 	inline FacilityNode* getChild(unsigned int i) const;
-	inline bool isRoot() const { return father == NULL; }
+	inline bool isRoot() const {
+		return father == NULL;
+	}
 	inline bool isInternalNode() const {
 		return !isRoot() && !isLeaf();
 	}
 	inline bool isLeaf() const {
 		return children.empty();
 	}
-	void levelCounts(IntList& levels);
 	bool isReliableFromRoot();
 	unsigned int getMinIncomingConnections(ServerTypeList* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
 	void print(ostream& out);
+
+	LinkListIterator cbegin() {
+		return children.begin();
+	}
+
+	LinkListIterator cend() {
+		return children.end();
+	}
+
+	NodeIterator nbegin();
+	NodeIterator nend();
+
+	LinkIterator lbegin();
+	LinkIterator lend();
 protected:
 private:
 	unsigned int id;
@@ -196,25 +228,129 @@ private:
 	LinkList children;
 
 
+
 };
 
+class LinkIterator: public std::iterator<std::forward_iterator_tag, FacilityNode> {
+public:
+	LinkIterator(FacilityNode* p);
+	~LinkIterator();
+
+	// The assignment and relational operators are straightforward
+	LinkIterator& operator=(const LinkIterator& other) {
+		current = other.current;
+		return (*this);
+	}
+
+	bool operator==(const LinkIterator& other) {
+		return (current == other.current);
+	}
+
+	bool operator!=(const LinkIterator& other) {
+		return (current != other.current);
+	}
+
+	// Update my state such that I refer to the next element in the
+	// SQueue.
+	LinkIterator& operator++();
+
+	LinkIterator& operator++(int) {
+		//FIXME Iterateurs
+		//Iterator tmp(*this);
+		++(*this);
+		return *this;
+		//return(tmp);
+
+	}
+
+	NetworkLink operator*();
+
+	NetworkLink* operator->() {
+		return *current;
+	}
+
+private:
+	LinkListIterator current;
+	LinkListIterator end;
+	deque<FacilityNode*> queue;
+};
+
+class NodeIterator: public std::iterator<std::forward_iterator_tag, FacilityNode> {
+public:
+	NodeIterator(FacilityNode* p) :
+		node(p), clink(NULL), elink(NULL) {
+	}
+	~NodeIterator() {
+		delete node;
+	}
+
+	// The assignment and relational operators are straightforward
+	NodeIterator& operator=(const NodeIterator& other) {
+		node = other.node;
+		return (*this);
+	}
+
+	bool operator==(const NodeIterator& other) {
+		return (node == other.node);
+	}
+
+	bool operator!=(const NodeIterator& other) {
+		return (node != other.node);
+	}
+
+	NodeIterator& operator++();
+	NodeIterator& operator++(int) {
+		//FIXME Iterateurs
+		//Iterator tmp(*this);
+		++(*this);
+		return *this;
+		//return(tmp);
+
+	}
+
+	FacilityNode operator*() {
+		return (*node);
+	}
+
+	FacilityNode* operator->() {
+		return node;
+	}
+
+private:
+	FacilityNode* node;
+	LinkIterator clink;
+	LinkIterator elink;
+
+};
 
 class NetworkLink {
 
 public:
 
-	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool hierarchic);
+	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child,
+			PSLProblem& problem, bool hierarchic);
 	~NetworkLink() {
-		delete origin;
-		delete destination;
+		//FIXME ~NetworkLink()
+		//delete origin;
+		//delete destination;
 	}
-	inline unsigned int getID() const { return id; }
-	inline FacilityNode* getOrigin() const { return origin; }
-	inline FacilityNode* getDestination() const { return destination; }
-	inline bool isReliable() const { return reliable; }
-	inline unsigned int getBandwidth() const { return bandwidth; }
+	inline unsigned int getID() const {
+		return id;
+	}
+	inline FacilityNode* getOrigin() const {
+		return origin;
+	}
+	inline FacilityNode* getDestination() const {
+		return destination;
+	}
+	inline bool isReliable() const {
+		return reliable;
+	}
+	inline unsigned int getBandwidth() const {
+		return bandwidth;
+	}
 	void forEachPath() const;
-	void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+	void forEachPath(void(*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
 protected:
@@ -226,47 +362,50 @@ private:
 	bool reliable;
 };
 
-
 class RankMapper {
 
-	RankMapper(PSLProblem& problem, unsigned int nodeCount, unsigned int stageCount, unsigned int serverCount) : nodeCount(nodeCount), stageCount(stageCount),serverCount(serverCount) {
-		//problem.getRoot()->levelCounts(levelCounts);
-	}
-
+	RankMapper(PSLProblem& problem, unsigned int nodeCount,
+			unsigned int stageCount, unsigned int serverCount);
 	~RankMapper() {
 	}
 public:
 	inline int rankX(FacilityNode* node);
 	inline int rankX(FacilityNode* node, unsigned int stype);
 	inline int rankY(FacilityNode* node, unsigned int stage);
-	inline int rankY(NetworkLink* link,unsigned int stage);
-	inline int rankZ(FacilityNode* source, FacilityNode* destination, unsigned int stage);
-	inline int rankB(FacilityNode* source, FacilityNode* destination, unsigned int stage);
+	inline int rankY(NetworkLink* link, unsigned int stage);
+	inline int rankZ(FacilityNode* source, FacilityNode* destination,
+			unsigned int stage);
+	inline int rankB(FacilityNode* source, FacilityNode* destination,
+			unsigned int stage);
 private:
 	inline int offsetXk();
 	inline int offsetYi();
 	inline int offsetYij();
 
 	inline int rank(FacilityNode* source, FacilityNode* destination);
-	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage);
+	inline int rank(FacilityNode* source, FacilityNode* destination,
+			unsigned int stage);
 
 	inline int offsetZ();
 	inline int offsetB();
 
-	inline int linkCount() { return nodeCount - 1; }
-	inline int pathCount() { return 0; }
+	inline int linkCount() {
+		return nodeCount - 1;
+	}
+	inline int pathCount() {
+		return 0;
+	}
 	unsigned int nodeCount;
 	unsigned int stageCount;
 	unsigned int serverCount;
 	//IntList levelLastIDs;
 };
 
-
 class PSLProblem {
 
-
 public:
-	PSLProblem() : numberOfGroups(0), root(NULL), nodeCount(0) {
+	PSLProblem() :
+		numberOfGroups(0), root(NULL), nodeCount(0) {
 	}
 	~PSLProblem() {
 		delete root;
@@ -274,20 +413,36 @@ public:
 		for_each(facilities.begin(), facilities.end(), Delete());
 	}
 
-	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
-	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
-	inline unsigned int getNbServers() const { return servers.size();}
-	inline unsigned int getNbGroups() const { return numberOfGroups; }
-	inline unsigned int getNbFacilities() const { return facilities.size();}
+	inline unsigned int getBandwidth(unsigned int idx) const {
+		return bandwidths[idx];
+	}
+	inline unsigned int getNbBandwidths() const {
+		return bandwidths.size();
+	}
+	inline unsigned int getNbServers() const {
+		return servers.size();
+	}
+	inline unsigned int getNbGroups() const {
+		return numberOfGroups;
+	}
+	inline unsigned int getNbFacilities() const {
+		return facilities.size();
+	}
 
 	FacilityNode* generateNetwork();
 
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
 
-	inline FacilityNode* getRoot() const { return root;}
-	inline unsigned int getNodeCount() const { return nodeCount;}
-	inline unsigned int getLinkCount() const { return nodeCount-1;}
+	inline FacilityNode* getRoot() const {
+		return root;
+	}
+	inline unsigned int getNodeCount() const {
+		return nodeCount;
+	}
+	inline unsigned int getLinkCount() const {
+		return nodeCount - 1;
+	}
 
 	ostream& toDotty(ostream& out);
 
@@ -305,8 +460,8 @@ private:
 	IntList levelNodeCounts;
 	unsigned int nodeCount;
 
-};
 
+};
 
 ostream& operator<<(ostream& out, const PSLProblem& f);
 istream& operator>>(istream& in, PSLProblem& s);
@@ -316,9 +471,7 @@ istream& operator>>(istream& in, ServerType& s);
 
 ostream& operator<<(ostream& out, const FacilityType& f);
 
-
 ostream& operator<<(ostream& out, const FacilityNode& n);
 ostream& operator<<(ostream& out, const NetworkLink& l);
-
 
 #endif /* NETWORK_HPP_ */
