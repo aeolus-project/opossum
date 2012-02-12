@@ -24,7 +24,9 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "./network.hpp"
+#include "network.hpp"
+#include "GexfGen.hpp"
+
 #include <string>
 #include <sstream>
 #include <vector>
@@ -43,6 +45,9 @@ int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
 	//srand(1000);
 	ifstream in;
+
+	//FacilityType::setSeed(1000);
+
 	in.open("benchmarks/instances/sample-server.dat");
 	if (!in) {
 		cout << "Unable to open file";
@@ -93,5 +98,13 @@ int main() {
 //	cout << rankM->rankX(problem->getRoot(), 1) << endl;
 //	FacilityNode* destination = source->getChild(0)->getChild(0);
 //	cout << rankM->rankZ(source, destination,1) << endl;
+
+
+
+//	AbstractGexfGen* generatorGexf = new InstanceGexfGen(root);
+//	generatorGexf->writeToFile("test.gexf");
+//	delete generatorGexf;
+
+
 	return 0;
 }

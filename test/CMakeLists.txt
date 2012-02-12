@@ -1,8 +1,12 @@
-SET (EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/bin/Test")
-SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/Test")
+
+SET (EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
+SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
 
 FILE (GLOB_RECURSE test_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
-SET (test_LIBS boost_unit_test_framework boost_random gexf xml2)
+
+#ADD boost_unit_test_framework because it is not set on ${Boost_LIBRARIES}
+SET (test_LIBS boost_unit_test_framework ${Boost_LIBRARIES} ${XML2_LIBRARY_DIRS} gexf ilocplex cplex concert m pthread) #boost_random gexf xml2
+#SET (test_LIBS boost_unit_test_framework boost_random gexf xml2)
 SET (test_BIN ${PROJECT_NAME}-tests)
 
 ADD_EXECUTABLE(${test_BIN} ${test_SRCS})

@@ -1,0 +1,37 @@
+#include <boost/random/variate_generator.hpp>
+#include <boost/generator_iterator.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_01.hpp>
+#include <boost/random.hpp>
+#include <boost/generator_iterator.hpp>    
+#include <boost/random/binomial_distribution.hpp>
+
+using namespace boost::random;
+
+using namespace std;
+
+int main() {
+
+	typedef boost::mt19937 RNGType; 
+                    // produces randomness out of thin air
+                                    // see pseudo-random number generators
+	//initialise ton seed
+	RNGType rng( time(NULL) );  
+
+	const int n = 20;
+	const double p = 0.5;
+	binomial_distribution<> my_binomial(n,p);      // binomial distribution with n=20, p=0.5
+                                         // see random number distributions
+
+	boost::variate_generator<RNGType, binomial_distribution<> > 
+		next_value(rng, my_binomial);     // glues randomness with mapping
+
+	for(int i = 0; i < 10; i++) {
+	int x = next_value();             
+	cout << x << endl;
+	}
+
+	return 0;
+
+}
+

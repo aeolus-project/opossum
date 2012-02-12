@@ -35,12 +35,17 @@
 #include <vector>
 #include <queue>
 #include <assert.h>
+#include <cassert>
 #include <boost/random/variate_generator.hpp>
 #include <boost/generator_iterator.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
+
+
+//Define the seed of random
+#define SEED 1000
 
 using namespace boost::random;
 using namespace std;
@@ -110,17 +115,23 @@ private:
 
 };
 
-class FacilityType {
+class FacilityType
+{
 
 public:
-	FacilityType() :
-		level(0), binornd(NULL), reliabilityProbability(1) {
-		binornd = new variate_generator<mt19937&, binomial_distribution<> >(
-				fake_binornd);
+	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1),
+					random_generator(default_random_generator), randd(NULL)
+	{
+		randd = new uniform_01< mt19937&, double >(random_generator);
+		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
 	}
 	virtual ~FacilityType() {
+		delete randd;
 		delete binornd;
 	}
+
+	void setSeed(int seed);
+
 	inline unsigned int getLevel() const {
 		return level;
 	}
@@ -143,25 +154,34 @@ public:
 			sum += *j;
 		return sum;
 	}
-	unsigned int getConnexionCapacity(const ServerTypeList* servers) const;
-	//string toGEXF();
+
+
+	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
+
+	inline double genRandd() {
+		return (*randd)();
+	}
+
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidthIndex();
 	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);
 	bool genRandomReliability();
 
+
 	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
 private:
-	static mt19937 random_generator;
-	static uniform_01<mt19937&, double> randd;
+	static mt19937 default_random_generator;
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
+
+	mt19937 random_generator;
+	variate_generator<mt19937&, binomial_distribution<> >* binornd;
+	uniform_01< mt19937&, double >* randd;
 
 	unsigned int level;
 	IntList demands;
 	IntList serverCapacities;
-	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 
@@ -220,6 +240,7 @@ public:
 
 	LinkIterator lbegin();
 	LinkIterator lend();
+
 protected:
 private:
 	unsigned int id;

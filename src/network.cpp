@@ -24,7 +24,7 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "./network.hpp"
+#include "network.hpp"
 
 FacilityNode::~FacilityNode() {
 	//FIXME ~NetworkLink()
@@ -59,11 +59,8 @@ ostream & FacilityNode::toDotty(ostream & out) {
 	return out;
 }
 
-ostream & FacilityNode::toGEXF(ostream & out) {
-	return out;
-}
-
-FacilityNode *FacilityNode::getFather() const {
+FacilityNode *FacilityNode::getFather() const
+{
 	return father->getOrigin();
 }
 
@@ -106,13 +103,13 @@ LinkIterator FacilityNode::lend() {
 	return (LinkIterator(NULL));
 }
 
-bool FacilityType::genRandomReliability() {
-	return randd() < reliabilityProbability;
+bool FacilityType::genRandomReliability(){
+	return (*randd)() < reliabilityProbability;
 }
 
 unsigned int FacilityType::genRandomBandwidthIndex() {
 	double cum = 0;
-	const double p = randd();
+	const double p = (*randd)();
 	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
 		cum += bandwidthProbabilities[i];
 		if (p <= cum) {
@@ -135,7 +132,7 @@ unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	}
 	//compute random values using normalized probabilities
 	double cum = 0;
-	const double p = randd();
+	const double p = (*randd)();
 	for (unsigned int i = 0; i <= maxIndex; ++i) {
 		cum += bandwidthProbabilities[i] / tot;
 		if (p <= cum) {
@@ -145,16 +142,25 @@ unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	exit(1);
 }
 
-#ifdef NDEBUG
-mt19937 FacilityType::random_generator(static_cast<unsigned int>(std::time(0)));
-#else
-mt19937 FacilityType::random_generator;
+#ifdef NDEBUG //Mode Release
+mt19937 FacilityType::default_random_generator(static_cast<unsigned int>(std::time(NULL)));
+#else //Mode Debug
+mt19937 FacilityType::default_random_generator(SEED);
 #endif
 
-uniform_01<mt19937&, double> FacilityType::randd(
-		FacilityType::random_generator);
-variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(
-		random_generator, binomial_distribution<>(1, 1));
+//uniform_01<mt19937&, double> FacilityType::randd(default_random_generator);
+variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(default_random_generator, binomial_distribution<>(1,1));
+
+//Set a new seed for random generators
+void FacilityType::setSeed(int seed) {
+	random_generator.seed(seed);
+	delete randd;
+	randd = new uniform_01< mt19937&, double >(random_generator);
+	int t = binornd->distribution().t();
+	int p = binornd->distribution().p();
+	delete binornd;
+	binornd = new variate_generator<mt19937&, binomial_distribution<> >(random_generator, binomial_distribution<>(t,p));
+}
 
 istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 	int tmp;
