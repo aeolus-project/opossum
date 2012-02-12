@@ -18,6 +18,20 @@ SET (APPLICATION_VENDOR_NAME "momo_nono")
 SET (APPLICATION_VENDOR_URL "www.i3s.unice.fr")
 SET (APPLICATION_ID "${APPLICATION_VENDOR_ID}.${PROJECT_NAME}")
 
+################ FORCE SET TYPE OF BUILD ####################
+SET (DEBUG_BUILD FALSE)
+# DEBUG or RELEASE
+#SET (CMAKE_BUILD_TYPE "DEBUG")
+#build Debug only when explicitally set
+if(CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "debug")
+	message(STATUS "Building Debug")
+	SET (CMAKE_BUILD_TYPE "Debug")
+    SET (DEBUG_BUILD TRUE)
+else()
+	message(STATUS "Building Release")
+	SET (CMAKE_BUILD_TYPE "Release")
+endif()
+
 ################ FORCE COMPILATION 32 Bits ####################
 SET (FORCE_32 TRUE)
 
@@ -47,17 +61,6 @@ message(STATUS "OS_TYPE: ${OS_SYSTEM}" )
 message(STATUS "ARCH_TYPE: ${ARCH_SYSTEM} bits" )
 message(STATUS "FORCE_32: ${FORCE_32}" )
 
-################ FORCE SET TYPE OF BUILD ####################
-# DEBUG or RELEASE
-#SET (CMAKE_BUILD_TYPE "DEBUG")
-#build Debug only when explicitally set
-if(CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "debug")
-	message(STATUS "Building Debug")
-	SET (CMAKE_BUILD_TYPE "Debug")
-else()
-	message(STATUS "Building Release")
-	SET (CMAKE_BUILD_TYPE "Release")
-endif()
 
 ################ # DEBUG or RELEASE ####################
 SET (CMAKE_VERBOSE_MAKEFILE 1) # Use 1 for debugging, 0 for release
@@ -107,8 +110,14 @@ LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86_sles10_4.1/static_pic ${CPLEX_R
 #RESET DEFAULT FLAGS 
 SET(CMAKE_CXX_FLAGS "")
 #-Wall -Wstrict-aliasing
-SET(COMMON_FLAGS "-fmessage-length=0 -O0 -O2 -fPIC -fexceptions -DNDEBUG -DIL_STD")
- 
+SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fPIC -fexceptions -DIL_STD")
+
+IF(DEBUG_BUILD)
+    SET(COMMON_FLAGS "-g -ggdb ${COMMON_FLAGS}")
+ELSE()
+    SET(COMMON_FLAGS "-O2 -D NDEBUG ${COMMON_FLAGS}")
+ENDIF()
+
 if(FORCE_32)
 	SET(CMAKE_CXX_COMPILE_OBJECT
 	    "<CMAKE_CXX_COMPILER>  <DEFINES> <FLAGS> -c -m32  ${COMMON_FLAGS} <SOURCE> -o <OBJECT>")
@@ -142,8 +151,8 @@ FOREACH (CONFIGINPUT ${CONFIGINPUTS})
     CONFIGURE_FILE ("${CONFIGINPUT}" "${CONFIGOUTPUT2}")
 ENDFOREACH (CONFIGINPUT ${CONFIGINPUTS})
 
-#################### Add Build Targets #################### 
 ADD_SUBDIRECTORY(src)
+#################### Add Build Targets #################### 
 #Build the test drivers if necessary
 if(BUILD_TESTS)
     FILE (GLOB_RECURSE CONFIGINPUTS5 test/*.in.h.cmake)

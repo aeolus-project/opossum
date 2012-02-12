@@ -51,12 +51,14 @@ unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* server
 ostream & FacilityNode::toDotty(ostream & out)
 {
 	out << getID();
-	out << "[label=\"" <<  getType()->getDemand() << "\"];" << endl;
+	//FIXME : Wait for the implementation of new methods : getTotalDemand and getTotalCapacity
+	//out << "[shape=record, label=\"{{" <<  getID() << "}|{" << getType()->getTotalDemand() << "|" << getType()->getTotalCapacity() << "}}\"];" << endl;
+	out << "[shape=record, label=\"{{" <<  getID() << "}}\"];" << endl;
 	if(! isRoot()) {
-		toFather()->toDotty(out);
+		   toFather()->toDotty(out);
 	}
 	for ( size_t i = 0; i < children.size(); ++i ) {
-		children[i]->getDestination()->toDotty(out);
+		   children[i]->getDestination()->toDotty(out);
 	}
 	return out;
 }
@@ -89,14 +91,14 @@ void FacilityNode::printSubtree() {
 
 bool FacilityType::genRandomReliability()
 {
-	return randd() < reliabilityProbability;
+	return (*randd)() < reliabilityProbability;
 }
 
 
 unsigned int FacilityType::genRandomBandwidthIndex()
 {
 	double cum = 0;
-	const double p = randd();
+	const double p = (*randd)();
 	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
 		cum+= bandwidthProbabilities[i];
 		if(p <= cum) {return i;}
@@ -120,7 +122,7 @@ unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	}
 	//compute random values using normalized probabilities
 	double cum = 0;
-	const double p = randd();
+	const double p = (*randd)();
 	for (unsigned int i = 0; i <= maxIndex; ++i) {
 		cum+= bandwidthProbabilities[i]/tot;
 		if(p <= cum) { return i;}
@@ -129,14 +131,23 @@ unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	exit (1);
 }
 
-#ifdef NDEBUG
-mt19937 FacilityType::random_generator(static_cast<unsigned int>(std::time(0)));
-#else
-mt19937 FacilityType::random_generator;
+#ifdef NDEBUG //Mode Release
+mt19937 FacilityType::default_random_generator(static_cast<unsigned int>(std::time(NULL)));
+#else //Mode Debug
+mt19937 FacilityType::default_random_generator(SEED);
 #endif
+variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(default_random_generator, binomial_distribution<>(1,1));
 
-uniform_01< mt19937&, double > FacilityType::randd(FacilityType::random_generator);
-variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(random_generator, binomial_distribution<>(1,1));
+//Set a new seed for random generator
+void FacilityType::setSeed(int seed) {
+	random_generator.seed(seed);
+	delete randd;
+	randd = new uniform_01< mt19937&, double >(random_generator);
+	int t = binornd->distribution().t();
+	int p = binornd->distribution().p();
+	delete binornd;
+	binornd = new variate_generator<mt19937&, binomial_distribution<> >(random_generator, binomial_distribution<>(t,p));
+}
 
 istream & FacilityType::read(istream & in, const PSLProblem& problem)
 {
@@ -215,7 +226,7 @@ FacilityNode *PSLProblem::generateSubtree(FacilityNode *root)
 {
 	unsigned int idx = 0;
 	const unsigned int level = root->getType()->getLevel();
-	const unsigned int n = facilities.size();
+	const unsigned int n = facilities.size() - 1;
 	while(idx  < n && facilities[idx]->getLevel() <= level) {idx++;}
 	while(idx  < n && facilities[idx]->getLevel() == level + 1) {
 		const unsigned int nbc = facilities[idx]->genRandomFacilities();

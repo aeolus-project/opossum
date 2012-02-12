@@ -47,6 +47,8 @@ int main() {
 	int sum = 0;
 	ifstream in;
 
+	//FacilityType::setSeed(1000);
+
 	in.open("benchmarks/instances/sample-server.dat");
 	if (!in) {
 		cout << "Unable to open file";

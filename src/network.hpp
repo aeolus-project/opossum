@@ -40,6 +40,9 @@
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
 
+//Define the seed of random
+#define SEED 1000
+
 //
 //#include <boost/math/distributions/binomial.hpp>
 //using boost::math::binomial;
@@ -86,16 +89,22 @@ class PSLProblem;
 class FacilityType
 {
 
-
-
 public:
-	FacilityType() : level(0), demand(0), binornd(NULL), reliabilityProbability(1)
+	FacilityType() : level(0), demand(0), binornd(NULL), reliabilityProbability(1),
+					random_generator(default_random_generator), randd(NULL)
 	{
+		randd = new uniform_01< mt19937&, double >(random_generator);
 		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
 	}
 	virtual ~FacilityType() {
+		delete randd;
 		delete binornd;
 	}
+
+	inline double genRandd() {
+		return (*randd)();
+	}
+
 	inline unsigned int getLevel() const { return level; }
 	inline unsigned int getDemand() const { return demand; }
 	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
@@ -113,18 +122,22 @@ public:
 	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);
 	bool genRandomReliability();
 
+	void setSeed(int seed);
+
 	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
 protected:
 private:
-	static mt19937 random_generator;
-	static uniform_01< mt19937&, double > randd;
+	static mt19937 default_random_generator;
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
+
+	mt19937 random_generator;
+	variate_generator<mt19937&, binomial_distribution<> >* binornd;
+	uniform_01< mt19937&, double >* randd;
 
 	unsigned int level;
 	unsigned int demand;
 	vector<unsigned int> serverCapacities;
-	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 
