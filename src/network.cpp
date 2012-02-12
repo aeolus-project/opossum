@@ -282,7 +282,7 @@ FacilityNode *PSLProblem::generateNetwork(bool hierarchic) {
 	while (!queue.empty()) {
 		queue.pop(); //TODO how to clear a queue ?
 	}
-	assert(checkNetwork());
+	assert(checkNetwork() && ( !hierarchic || checkNetworkHierarchy() ));
 	return root;
 }
 
@@ -305,11 +305,11 @@ bool PSLProblem::checkNetwork()
 	if( sum != nodeCount) return false;
 
 	//TODO Test 2
-//	sum = 0;
-//	for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
-//		sum ++;
-//	}
-//	if( sum != nodeCount) return false;
+	//	sum = 0;
+	//	for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
+	//		sum ++;
+	//	}
+	//	if( sum != nodeCount) return false;
 
 	//Test 3
 	sum = 0;
@@ -318,6 +318,20 @@ bool PSLProblem::checkNetwork()
 	}
 	if( sum != getLinkCount()) return false;
 
+	return true;
+}
+
+bool PSLProblem::checkNetworkHierarchy()
+{
+	for (LinkIterator n = root->lbegin(); n != root->lend(); ++n) {
+		if(! n->getOrigin()->isRoot() && (
+			( n->isReliable() && ! n->getOrigin()->toFather()->isReliable()) ||
+			n->getBandwidth() > n->getOrigin()->toFather()->getBandwidth()
+		)
+			) {
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -373,7 +387,7 @@ NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
 		bandwidth = problem.getBandwidth(
 				child->getType()->genRandomBandwidthIndex(maxIndex));
 		reliable = father->toFather()->isReliable()
-								&& child->getType()->genRandomReliability();
+														&& child->getType()->genRandomReliability();
 	}
 }
 
@@ -434,75 +448,87 @@ ostream & NetworkLink::toGEXF(ostream & out) {
 }
 
 RankMapper::RankMapper(PSLProblem& problem) :
-						nodeCount(problem.getNodeCount()), stageCount(
-								problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
-	levelNodeCounts = problem.getLevelNodeCounts();
+												nodeCount(problem.getNodeCount()), stageCount(
+														problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
+	IntList levelNodeCounts = problem.getLevelNodeCounts();
+	levelCumulNodeCounts.push_back(0);
+	lengthCumulPathCounts.push_back(0);
+	for (unsigned int l = 0; l < levelNodeCounts.size(); ++l) {
+		levelCumulNodeCounts.push_back( levelCumulNodeCounts.back() + levelNodeCounts[l]);
+		lengthCumulPathCounts.push_back( lengthCumulPathCounts.back() + nodeCount - levelCumulNodeCounts.back());
+	}
 }
 
-int RankMapper::rankX(FacilityNode *node) {
+int RankMapper::rankX(FacilityNode *node) const {
 	return node->getID();
 }
 
-inline int RankMapper::offsetXk() {
+inline int RankMapper::offsetXk() const {
 	return nodeCount;
 }
 
-int RankMapper::rankX(FacilityNode *node, unsigned int stype) {
+int RankMapper::rankX(FacilityNode *node, unsigned int stype) const {
 	return offsetXk() + node->getID() * serverCount + stype;
 }
 
-inline int RankMapper::offsetYi() {
+inline int RankMapper::offsetYi() const {
 	return offsetXk() + nodeCount * serverCount;
 }
 
-int RankMapper::rankY(FacilityNode *node, unsigned int stage) {
+int RankMapper::rankY(FacilityNode *node, unsigned int stage) const {
 	return offsetYi() + node->getID() * stageCount + stage;
 }
 
-inline int RankMapper::offsetYij() {
+inline int RankMapper::offsetYij() const {
 	return offsetYi() + nodeCount * stageCount;
 }
 
-int RankMapper::rankY(NetworkLink *link, unsigned int stage) {
+int RankMapper::rankY(NetworkLink *link, unsigned int stage) const {
 	return offsetYij() + link->getID() * stageCount + stage;
 
 }
 
-inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination) {
-	int levelCumulNodeCount = 0;
-	int levelCumulPathCount = 0;
+inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination) const {
+	//	int levelCumulNodeCount = 0;
+	//	int levelCumulPathCount = 0;
 	int length = destination->getType()->getLevel() - source->getType()->getLevel();
-	for (int l = 0; l < length; ++l) {
-		levelCumulNodeCount += levelNodeCounts[l]; //number of nodes of level lower or equal than l;
-		levelCumulPathCount += nodeCount - levelCumulNodeCount; //number of path of length l
-	}
+	//	for (int l = 0; l < length; ++l) {
+	//		levelCumulNodeCount += levelNodeCounts[l]; //number of nodes of level lower or equal than l;
+	//		levelCumulPathCount += nodeCount - levelCumulNodeCount; //number of path of length l
+	//	}
 	//path are ranked by length and their index using the bread-first numbered tree.
-	return levelCumulPathCount + (destination->getID() - levelCumulNodeCount);
+	return lengthCumulPathCounts[length] + (destination->getID() - levelCumulNodeCounts[length]);
 }
 
 inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination,
-		unsigned int stage) {
+		unsigned int stage) const {
 
 	return rank(source, destination) * stageCount + stage;
 
 }
 
-inline int RankMapper::offsetZ() {
+inline int RankMapper::offsetZ() const {
 	return offsetYij() + linkCount() * stageCount;
 }
 
 int RankMapper::rankZ(FacilityNode *source, FacilityNode *destination,
-		unsigned int stage) {
+		unsigned int stage) const {
 	return offsetZ() + rank(source, destination, stage);
 }
 
-inline int RankMapper::offsetB() {
+
+inline int RankMapper::offsetB() const {
 	return offsetZ() + pathCount() * stageCount;
 }
 
 int RankMapper::rankB(FacilityNode *source, FacilityNode *destination,
-		unsigned int stage) {
+		unsigned int stage) const {
 	return offsetB() + rank(source, destination, stage);
+}
+
+int RankMapper::size() const
+{
+	return offsetB() + pathCount() * stageCount;
 }
 
 LinkIterator::LinkIterator(FacilityNode* p) {
@@ -549,3 +575,16 @@ NodeIterator& NodeIterator::operator++() {
 	}
 	return (*this);
 }
+
+ostream & operator <<(ostream & out, const RankMapper & r)
+{
+	out << "X=[0," << r.offsetXk() << "[" << endl;
+	out << "Xk=[" << r.offsetXk() << "," << r.offsetYi() << "[" << endl;
+	out << "Yi=[" << r.offsetYi() << "," << r.offsetYij() << "[" << endl;
+	out << "Yij=[" << r.offsetYij() << "," << r.offsetZ() << "[" << endl;
+	out << "Z=[" << r.offsetZ() << "," << r.offsetB() << "[" << endl;
+	out << "Z=[" << r.offsetB() << "," << r.size() << "[" << endl;
+	return cout;
+}
+
+

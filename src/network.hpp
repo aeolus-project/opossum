@@ -367,36 +367,41 @@ public:
 	RankMapper(PSLProblem& problem);
 	~RankMapper() {
 	}
-	int rankX(FacilityNode* node);
-	int rankX(FacilityNode* node, unsigned int stype);
-	int rankY(FacilityNode* node, unsigned int stage);
-	int rankY(NetworkLink* link, unsigned int stage);
+	int rankX(FacilityNode* node) const;
+	int rankX(FacilityNode* node, unsigned int stype) const;
+	int rankY(FacilityNode* node, unsigned int stage) const;
+	int rankY(NetworkLink* link, unsigned int stage) const;
 	int rankZ(FacilityNode* source, FacilityNode* destination,
-			unsigned int stage);
+			unsigned int stage) const;
 	int rankB(FacilityNode* source, FacilityNode* destination,
-			unsigned int stage);
+			unsigned int stage) const;
+	friend	ostream& operator<<(ostream& out, const RankMapper& r);
+	int size() const;
 private:
-	int offsetXk();
-	int offsetYi();
-	int offsetYij();
+	int offsetXk() const;
+	int offsetYi() const;
+	int offsetYij() const;
 
-	int rank(FacilityNode* source, FacilityNode* destination);
+	int rank(FacilityNode* source, FacilityNode* destination) const;
 	int rank(FacilityNode* source, FacilityNode* destination,
-			unsigned int stage);
+			unsigned int stage) const;
 
-	int offsetZ();
-	int offsetB();
+	int offsetZ() const;
+	int offsetB() const;
 
-	inline int linkCount() {
+	inline int linkCount() const {
 		return nodeCount - 1;
 	}
-	inline int pathCount() {
-		return 0;
+	inline int pathCount() const {
+		return lengthCumulPathCounts.back();
 	}
 	unsigned int nodeCount;
 	unsigned int stageCount;
 	unsigned int serverCount;
-	IntList levelNodeCounts;
+	//number of nodes of level lower or equal than l;
+	IntList levelCumulNodeCounts;
+	//number of path of length lower or equal than l
+	IntList lengthCumulPathCounts;
 
 };
 
@@ -428,12 +433,17 @@ public:
 		return facilities.size();
 	}
 
+	inline unsigned int getNetworkDepth() const {
+		return levelNodeCounts.size();
+	}
+
 	FacilityNode* generateNetwork();
 
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
 
 	bool checkNetwork();
+	bool checkNetworkHierarchy();
 	inline FacilityNode* getRoot() const {
 		return root;
 	}
@@ -442,6 +452,7 @@ public:
 	}
 
 	inline IntList getLevelNodeCounts() const {
+		//TODO return pointer or reference ?
 		return levelNodeCounts;
 	}
 
@@ -476,5 +487,7 @@ ostream& operator<<(ostream& out, const FacilityType& f);
 
 ostream& operator<<(ostream& out, const FacilityNode& n);
 ostream& operator<<(ostream& out, const NetworkLink& l);
+
+ostream& operator<<(ostream& out, const RankMapper& r);
 
 #endif /* NETWORK_HPP_ */
