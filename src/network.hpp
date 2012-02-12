@@ -119,18 +119,17 @@ class FacilityType
 {
 
 public:
-	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1),
-					random_generator(default_random_generator), randd(NULL)
+	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1)
 	{
-		randd = new uniform_01< mt19937&, double >(random_generator);
 		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
 	}
 	virtual ~FacilityType() {
-		delete randd;
 		delete binornd;
 	}
 
-	void setSeed(int seed);
+	static void setStaticSeed(const unsigned int seed);
+	void setSeed(const unsigned int seed);
+	void setBinomial(unsigned int n, double p);
 
 	inline unsigned int getLevel() const {
 		return level;
@@ -158,10 +157,6 @@ public:
 
 	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
 
-	inline double genRandd() {
-		return (*randd)();
-	}
-
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidthIndex();
 	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);
@@ -173,17 +168,15 @@ public:
 protected:
 private:
 	static mt19937 default_random_generator;
+	static uniform_01< mt19937&, double > randd;
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
-
-	mt19937 random_generator;
-	variate_generator<mt19937&, binomial_distribution<> >* binornd;
-	uniform_01< mt19937&, double >* randd;
 
 	unsigned int level;
 	IntList demands;
 	IntList serverCapacities;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
+	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 
 };
 
@@ -458,6 +451,7 @@ public:
 		return levelNodeCounts.size();
 	}
 
+	void setSeed(const unsigned int seed);
 	FacilityNode* generateNetwork();
 
 	//generate Breadth-First Numbered Tree

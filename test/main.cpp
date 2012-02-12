@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 #include <exception>
 
+#include <stdio.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -28,47 +29,72 @@ BOOST_AUTO_TEST_SUITE(Tests)
 
 BOOST_AUTO_TEST_CASE(networkGeneration)
 {
-	//FIXME Tests does not compile !?
-		ifstream in;
+	ifstream in;
 
-		in.open("benchmarks/instances/sample-server.dat");
-		if (!in) {
-			BOOST_ERROR("Unable to open file");
+	in.open("benchmarks/instances/sample-server.dat");
+	if (!in) {
+		BOOST_ERROR("Unable to open file");
+	}
+	PSLProblem* problem = new PSLProblem();
+	in >> *problem;
+	in.close();
+
+	IntList level1, level2; //,*level2;
+
+	for (int i = 0; i < 2; ++i) {
+		problem->setSeed(10);
+		problem->generateNetwork(true);
+#ifndef NDEBUG //Mode Debug
+		cout << *problem << endl << endl;
+#endif
+		BOOST_CHECK(problem->checkNetwork());
+		BOOST_CHECK(problem->checkNetworkHierarchy());
+		if(i==0) {
+			IntList level1(problem->getLevelNodeCounts());
+		} else {
+			IntList level2(problem->getLevelNodeCounts());
 		}
-		PSLProblem* problem = new PSLProblem();
-		in >> *problem;
-	//	in.close();
-	//		problem->generateNetwork();
-	//		cout << *problem;
-	//		ofstream myfile;
-	//		myfile.open ("/tmp/pserver.dot");
-	//		problem->toDotty(myfile);
-	//		myfile.close();
+	}
+	BOOST_CHECK(level1.size() == level2.size());
+	for (int i = 0; i < level1.size(); ++i) {
+		BOOST_CHECK(level1[i] == level2[i]);
+	}
 
-	//	FILE * pFile;
-	//	pFile = tmpfile ();
-	//	// temporary file created. code here.
-	//	fclose (pFile);
+}
+
+BOOST_AUTO_TEST_CASE(networkExample)
+{
+	ifstream in;
+
+	in.open("benchmarks/instances/sample-server.dat");
+	if (!in) {
+		BOOST_ERROR("Unable to open file");
+	}
+	PSLProblem* problem = new PSLProblem();
+	in >> *problem;
+	in.close();
+	problem->setSeed(1000);
+	problem->generateNetwork(true);
+#ifndef NDEBUG //Mode Debug
+	cout << *problem << endl << endl;
+#endif
+	BOOST_CHECK(problem->checkNetwork());
+	BOOST_CHECK(problem->checkNetworkHierarchy());
+
+	ofstream myfile;
+	char* name = tmpnam(NULL);
+	myfile.open (name);
+	//myfile.open ("/tmp/pserver.dot");
+	problem->toDotty(myfile);
+	myfile.close();
+
+
 }
 
 
 BOOST_AUTO_TEST_CASE(simplePass)
 {
-	FacilityType* ftype = new FacilityType();
 
-	cout << "Seed: " << 1000 << endl;
-	ftype->setSeed(1000);
-	cout << "Nb Random Facilities: " << ftype->genRandd() << endl;
-
-	cout << "Seed: " << 3000 << endl;
-	ftype->setSeed(3000);
-	cout << "Nb Random Facilities: " << ftype->genRandd() << endl;
-
-	cout << "Seed: " << 1000 << endl;
-	ftype->setSeed(1000);
-	cout << "Nb Random Facilities: " << ftype->genRandd() << endl;
-
-	delete ftype;
 }
 /*
 BOOST_AUTO_TEST_CASE(TestGexf)
@@ -112,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestGexf)
 	delete generatorGexf;
 
 }
-*/
+ */
 /*
 BOOST_AUTO_TEST_CASE(checkFailure)
 {
@@ -186,5 +212,5 @@ BOOST_AUTO_TEST_CASE(pass2)
 BOOST_AUTO_TEST_CASE(pass3)
 {
 }
-*/
+ */
 BOOST_AUTO_TEST_SUITE_END()

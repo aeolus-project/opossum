@@ -43,10 +43,7 @@ void print(FacilityNode* o, FacilityNode* d) {
 
 int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
-	//srand(1000);
 	ifstream in;
-
-	//FacilityType::setSeed(1000);
 
 	in.open("benchmarks/instances/sample-server.dat");
 	if (!in) {
@@ -59,14 +56,19 @@ int main() {
 	//	cout << *problem;
 	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
 	//
+	problem->setSeed(10);
 	problem->generateNetwork(true);
 	cout << *problem;
-
-
-	ofstream myfile;
-	myfile.open ("/tmp/pserver.dot");
-	problem->toDotty(myfile);
-	myfile.close();
+	problem->setSeed(10);
+	//TODO should delete old tree
+	problem->generateNetwork(true);
+	cout << *problem;
+//
+//
+//	ofstream myfile;
+//	myfile.open ("/tmp/pserver.dot");
+//	problem->toDotty(myfile);
+//	myfile.close();
 
 
 //	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
@@ -90,9 +92,9 @@ int main() {
 	cout << "ok: " << problem->checkNetwork() << endl;
 	cout << "hierarchic: " << problem->checkNetworkHierarchy() << endl;
 
-
-	RankMapper* rankM = new RankMapper((*problem));
-	cout << *rankM;
+//
+//	RankMapper* rankM = new RankMapper((*problem));
+//	cout << *rankM;
 //	cout << rankM->rankX(problem->getRoot())<< endl;
 //	FacilityNode* source = problem->getRoot()->getChild(1);
 //	cout << rankM->rankX(problem->getRoot(), 1) << endl;

@@ -104,18 +104,19 @@ LinkIterator FacilityNode::lend() {
 }
 
 bool FacilityType::genRandomReliability(){
-	return (*randd)() < reliabilityProbability;
+	return randd() < reliabilityProbability;
 }
 
 unsigned int FacilityType::genRandomBandwidthIndex() {
 	double cum = 0;
-	const double p = (*randd)();
+	const double p = randd();
 	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
 		cum += bandwidthProbabilities[i];
 		if (p <= cum) {
 			return i;
 		}
-	}assert(cum == 1);
+	}
+	assert(cum == 1);
 	exit(1);
 }
 
@@ -132,7 +133,7 @@ unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	}
 	//compute random values using normalized probabilities
 	double cum = 0;
-	const double p = (*randd)();
+	const double p = randd();
 	for (unsigned int i = 0; i <= maxIndex; ++i) {
 		cum += bandwidthProbabilities[i] / tot;
 		if (p <= cum) {
@@ -148,19 +149,27 @@ mt19937 FacilityType::default_random_generator(static_cast<unsigned int>(std::ti
 mt19937 FacilityType::default_random_generator(SEED);
 #endif
 
-//uniform_01<mt19937&, double> FacilityType::randd(default_random_generator);
+uniform_01<mt19937&, double> FacilityType::randd(default_random_generator);
 variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(default_random_generator, binomial_distribution<>(1,1));
 
 //Set a new seed for random generators
-void FacilityType::setSeed(int seed) {
-	random_generator.seed(seed);
-	delete randd;
-	randd = new uniform_01< mt19937&, double >(random_generator);
-	int t = binornd->distribution().t();
-	int p = binornd->distribution().p();
-	delete binornd;
-	binornd = new variate_generator<mt19937&, binomial_distribution<> >(random_generator, binomial_distribution<>(t,p));
+
+void FacilityType::setStaticSeed(const unsigned int seed) {
+	default_random_generator.seed(seed);
+	randd.base().seed(seed);
+
 }
+
+void FacilityType::setSeed(const unsigned int seed) {
+	binornd->engine().seed(seed);
+}
+
+void FacilityType::setBinomial(unsigned int n, double p) {
+	delete binornd;
+	binornd = new variate_generator<mt19937&, binomial_distribution<> >(
+			default_random_generator, binomial_distribution<>(n, p));
+}
+
 
 istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 	int tmp;
@@ -179,9 +188,7 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 	in >> t;
 	double p;
 	in >> p;
-	delete binornd;
-	binornd = new variate_generator<mt19937&, binomial_distribution<> >(
-			random_generator, binomial_distribution<>(t, p));
+	setBinomial(t, p);
 	n = problem.getNbBandwidths();
 	double d;
 	while (bandwidthProbabilities.size() < n) {
@@ -248,6 +255,7 @@ FacilityNode *PSLProblem::generateNetwork() {
 }
 
 FacilityNode *PSLProblem::generateNetwork(bool hierarchic) {
+	//FIXME should delete old tree.
 	levelNodeCounts.clear();
 	levelNodeCounts.push_back(1);
 	nodeCount = 0;
@@ -331,14 +339,22 @@ bool PSLProblem::checkNetworkHierarchy()
 {
 	for (LinkIterator n = root->lbegin(); n != root->lend(); ++n) {
 		if(! n->getOrigin()->isRoot() && (
-			( n->isReliable() && ! n->getOrigin()->toFather()->isReliable()) ||
-			n->getBandwidth() > n->getOrigin()->toFather()->getBandwidth()
+				( n->isReliable() && ! n->getOrigin()->toFather()->isReliable()) ||
+				n->getBandwidth() > n->getOrigin()->toFather()->getBandwidth()
 		)
-			) {
+		) {
 			return false;
 		}
 	}
 	return true;
+}
+
+void PSLProblem::setSeed(const unsigned int seed)
+{
+	FacilityType::setStaticSeed(seed);
+	for(FacilityTypeListIterator i=facilities.begin() ; i!=facilities.end() ; i++) {
+		(*i)->setSeed(seed);
+	}
 }
 
 istream & operator >>(istream & in, PSLProblem & problem) {
@@ -393,7 +409,7 @@ NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
 		bandwidth = problem.getBandwidth(
 				child->getType()->genRandomBandwidthIndex(maxIndex));
 		reliable = father->toFather()->isReliable()
-														&& child->getType()->genRandomReliability();
+																		&& child->getType()->genRandomReliability();
 	}
 }
 
@@ -454,8 +470,8 @@ ostream & NetworkLink::toGEXF(ostream & out) {
 }
 
 RankMapper::RankMapper(PSLProblem& problem) :
-												nodeCount(problem.getNodeCount()), stageCount(
-														problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
+																nodeCount(problem.getNodeCount()), stageCount(
+																		problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
 	IntList levelNodeCounts = problem.getLevelNodeCounts();
 	levelCumulNodeCounts.push_back(0);
 	lengthCumulPathCounts.push_back(0);
