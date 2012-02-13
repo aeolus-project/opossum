@@ -5,7 +5,7 @@ SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
 INCLUDE_DIRECTORIES("${MAINFOLDER}/src/mccs")
 
 #FORCE CXX COMPILATION FOR ALL SOURCES FILES
-FILE (GLOB_RECURSE project_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
+FILE (GLOB_RECURSE project_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hh *.hpp)
 FOREACH (SRC_FILE ${project_SRCS})
 	set_source_files_properties(${SRC_FILE} PROPERTIES LANGUAGE CXX)
 ENDFOREACH (SRC_FILE ${project_SRCS})
