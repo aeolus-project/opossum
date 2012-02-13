@@ -99,7 +99,6 @@ message(STATUS "LINKER_PATH: ${CMAKE_LINKER_PATH}" )
 INCLUDE_DIRECTORIES(${CMAKE_INCLUDE_PATH})
 LINK_DIRECTORIES(${CMAKE_LINKER_PATH})
 
-
 #################### CPLEX #################### 
 SET(CPLEX_ROOT_DIR "/opt/ibm/ILOG/CPLEX_Studio_Academic123")
 message(STATUS "CPLEX_ROOT_DIR: ${CPLEX_ROOT_DIR}" )
@@ -107,10 +106,16 @@ message(STATUS "CPLEX_ROOT_DIR: ${CPLEX_ROOT_DIR}" )
 INCLUDE_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/include ${CPLEX_ROOT_DIR}/concert/include)
 LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86_sles10_4.1/static_pic ${CPLEX_ROOT_DIR}/concert/lib/x86_sles10_4.1/static_pic)
 
+
+#################### COMPILER FLAGS #################### 
+#Set environment variables to use solvers
+#SET(USE_SOLVERS "-D USECPLEX -D USEGLPK -D USELPSOLVE -D USEGUROBI")
+SET(USE_SOLVERS "-D USECPLEX")
+
 #RESET DEFAULT FLAGS 
 SET(CMAKE_CXX_FLAGS "")
 #-Wall -Wstrict-aliasing
-SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fPIC -fexceptions -DIL_STD")
+SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fPIC -fexceptions -D IL_STD ${USE_SOLVERS}")
 
 IF(DEBUG_BUILD)
     SET(COMMON_FLAGS "-g -ggdb ${COMMON_FLAGS}")
@@ -152,14 +157,17 @@ FOREACH (CONFIGINPUT ${CONFIGINPUTS})
 ENDFOREACH (CONFIGINPUT ${CONFIGINPUTS})
 
 ADD_SUBDIRECTORY(src)
+
 #################### Add Build Targets #################### 
 #Build the test drivers if necessary
 if(BUILD_TESTS)
     FILE (GLOB_RECURSE CONFIGINPUTS5 test/*.in.h.cmake)
     FILE (GLOB_RECURSE CONFIGINPUTS6 test/*.h.in.cmake)
     ADD_SUBDIRECTORY(test)
+
     message(STATUS "Building Test")
 endif (BUILD_TESTS)
+
 
 #################### Add Install Targets #################### 
 IF (EXISTS "${MAINFOLDER}/include/${PROJECT_NAME}" AND IS_DIRECTORY "${MAINFOLDER}/include/${PROJECT_NAME}")
