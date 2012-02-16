@@ -44,6 +44,8 @@ BOOST_AUTO_TEST_CASE(networkGeneration)
 	for (int i = 0; i < 2; ++i) {
 		problem->setSeed(10);
 		problem->generateNetwork(true);
+		//FIXME problem->generateNetwork(false);
+		//Networks should only differ by their link attributes.
 #ifndef NDEBUG //Mode Debug
 		cout << *problem << endl << endl;
 #endif
@@ -73,7 +75,7 @@ BOOST_AUTO_TEST_CASE(networkExample)
 	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
 	in.close();
-	problem->setSeed(1000);
+	problem->setSeed(2000);
 	problem->generateNetwork(true);
 #ifndef NDEBUG //Mode Debug
 	cout << *problem << endl << endl;

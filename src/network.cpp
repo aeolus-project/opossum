@@ -27,7 +27,7 @@
 #include "network.hpp"
 
 FacilityNode::~FacilityNode() {
-	//FIXME ~NetworkLink()
+	//FIXME ~FacilityNode()
 	delete type;
 	delete father;
 	for_each(children.begin(), children.end(), Delete());
@@ -36,11 +36,9 @@ FacilityNode::~FacilityNode() {
 unsigned int FacilityNode::getMinIncomingConnections(ServerTypeList* servers) {
 	//FIXME Invalid computation of min incoming connections
 	const unsigned int capa = type->getConnexionCapacity(servers);
-	unsigned int res =
-			type->getTotalDemand() > capa ? type->getTotalDemand() - capa : 0;
+	unsigned int res = type->getTotalDemand() > capa ? type->getTotalDemand() - capa : 0;
 	for (size_t i = 0; i < children.size(); ++i) {
-		res += children[i]->getDestination()->getMinIncomingConnections(
-				servers);
+		res += children[i]->getDestination()->getMinIncomingConnections(servers);
 	}
 	return res;
 }
@@ -255,7 +253,7 @@ FacilityNode *PSLProblem::generateNetwork() {
 }
 
 FacilityNode *PSLProblem::generateNetwork(bool hierarchic) {
-	//FIXME should delete old tree.
+	//FIXME delete old tree.
 	levelNodeCounts.clear();
 	levelNodeCounts.push_back(1);
 	nodeCount = 0;
@@ -318,7 +316,7 @@ bool PSLProblem::checkNetwork()
 		sum += *j;
 	if( sum != nodeCount) return false;
 
-	//TODO Test 2
+	//TODO Test 2 (NodeIterator)
 	//	sum = 0;
 	//	for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
 	//		sum ++;
@@ -511,13 +509,7 @@ int RankMapper::rankY(NetworkLink *link, unsigned int stage) const {
 }
 
 inline int RankMapper::rank(FacilityNode* source, FacilityNode* destination) const {
-	//	int levelCumulNodeCount = 0;
-	//	int levelCumulPathCount = 0;
 	int length = destination->getType()->getLevel() - source->getType()->getLevel();
-	//	for (int l = 0; l < length; ++l) {
-	//		levelCumulNodeCount += levelNodeCounts[l]; //number of nodes of level lower or equal than l;
-	//		levelCumulPathCount += nodeCount - levelCumulNodeCount; //number of path of length l
-	//	}
 	//path are ranked by length and their index using the bread-first numbered tree.
 	return lengthCumulPathCounts[length] + (destination->getID() - levelCumulNodeCounts[length]);
 }
@@ -553,7 +545,7 @@ int RankMapper::size() const
 	return offsetB() + pathCount() * stageCount;
 }
 
-LinkIterator::LinkIterator(FacilityNode* p) {
+LinkIterator::LinkIterator(FacilityNode* p) : current(NULL), end(NULL) {
 	if (p && !p->isLeaf()) {
 		current = p->cbegin();
 		end = p->cend();
@@ -561,7 +553,7 @@ LinkIterator::LinkIterator(FacilityNode* p) {
 }
 LinkIterator::~LinkIterator() {
 	//delete current;
-	//TODO how to clear a queue ?
+	//FIXME ~LinkIterator() how to clear a queue ?
 	//for_each(queue.begin(), queue.end(), Delete());
 }
 
@@ -585,10 +577,12 @@ NodeIterator& NodeIterator::operator++() {
 		if (clink == NULL) {
 			clink = node->lbegin();
 			elink = node->lend();
+			for( LinkIterator i = clink ; i !=elink ; i++) {
+				cout << *i << endl;
+			}
 		}
 		if (clink != elink) {
 			//FIXME severe issue with node iterators
-			//node=  (**clink).getDestination();
 			node = clink->getDestination();
 			clink++;
 		} else {

@@ -261,6 +261,7 @@ public:
 	}
 
 	bool operator!=(const LinkIterator& other) {
+		//cout << *current << "!= " << (other.current) << endl;
 		return (current != other.current);
 	}
 
@@ -293,7 +294,7 @@ public:
 		node(p), clink(NULL), elink(NULL) {
 	}
 	~NodeIterator() {
-		delete node;
+		//delete node;
 	}
 
 	// The assignment and relational operators are straightforward
@@ -312,7 +313,7 @@ public:
 
 	NodeIterator& operator++();
 	NodeIterator& operator++(int) {
-		//FIXME Iterateurs
+		//FIXME Why do we create a new iterator ?
 		//Iterator tmp(*this);
 		++(*this);
 		return *this;

@@ -59,11 +59,7 @@ int main() {
 	problem->setSeed(10);
 	problem->generateNetwork(true);
 	cout << *problem;
-	problem->setSeed(10);
-	//TODO should delete old tree
-	problem->generateNetwork(true);
-	cout << *problem;
-//
+
 //
 //	ofstream myfile;
 //	myfile.open ("/tmp/pserver.dot");
@@ -82,15 +78,15 @@ int main() {
 	//	cout << "Nodes :";
 //	cout << endl;
 
-//	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
-//		cout << i->getID() << endl;
-//	}
-//	cout << endl;
+	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
+		cout << i->getID() << endl;
+	}
+	cout << endl;
 	//	cout << *problem;
 
 
-	cout << "ok: " << problem->checkNetwork() << endl;
-	cout << "hierarchic: " << problem->checkNetworkHierarchy() << endl;
+//	cout << "ok: " << problem->checkNetwork() << endl;
+//	cout << "hierarchic: " << problem->checkNetworkHierarchy() << endl;
 
 //
 //	RankMapper* rankM = new RankMapper((*problem));
