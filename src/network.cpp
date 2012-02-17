@@ -212,9 +212,7 @@ IntList& PSLProblem::getLevelNodeCounts() {
 FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 	//Delete old tree.
 	deleteTree(root);
-	levelNodeCounts.clear();
 	levelNodeCounts.push_back(1);
-	nodeCount = 0;
 	queue<FacilityNode*> queue;
 	root = new FacilityNode(nodeCount++, facilities[0]);
 	queue.push(root);

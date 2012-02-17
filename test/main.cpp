@@ -61,6 +61,11 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	LinkIterator itL_copy(itL);
 	BOOST_CHECK(itL == itL_copy);
 
+	//Operator =
+	LinkIterator itL_copy2 = problem->getRoot()->lbegin();
+	itL_copy2 = itL;
+	BOOST_CHECK(itL == itL_copy2);
+
 	//Operator ++
 	//	
 	itL++;
@@ -100,6 +105,11 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	//	
 	NodeIterator itN_copy(itN);
 	BOOST_CHECK(itN == itN_copy);
+
+	//Operator =
+	NodeIterator itN_copy2 = problem->getRoot()->nbegin();
+	itN_copy2 = itN;
+	BOOST_CHECK(itN == itN_copy2);
 
 	//Operator ++
 	//	

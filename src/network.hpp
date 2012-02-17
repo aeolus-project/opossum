@@ -561,6 +561,8 @@ private:
 	//Delete tree from root node
 	//
 	void deleteTree(FacilityNode* node) {
+		levelNodeCounts.clear();
+		nodeCount = 0;
 		if(node != NULL) {		
 			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
 				deleteTree(node->toChild(i)->getDestination());
