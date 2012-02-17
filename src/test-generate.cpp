@@ -43,11 +43,7 @@ void print(FacilityNode* o, FacilityNode* d) {
 
 int main() {
 	cout << "Hello World!!!" << endl; // prints Hello World!!!
-	//srand(1000);
-	int sum = 0;
 	ifstream in;
-
-	//FacilityType::setSeed(1000);
 
 	in.open("benchmarks/instances/sample-server.dat");
 	if (!in) {
@@ -57,24 +53,59 @@ int main() {
 	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
 	in.close();
-	cout << "Sum = " << sum << endl;
-	cout << *problem;
-
+	//	cout << *problem;
 	//FacilityNode* root = new FacilityNode(problem->facilities[0]);
+	//
+	problem->setSeed(10);
+	problem->generateNetwork(true);
+	cout << *problem;
+	/* refreshTree TESTED
+	problem->generateNetwork(true);
+	cout << *problem;
+	*/
 //
-	FacilityNode* root = problem->generateNetwork();
-//	generateSubtree(root, *problem);
-	ofstream myfile;
-	myfile.open ("test.dot");
-	myfile << "digraph G {\n";
-	root->toDotty(myfile);
-	myfile << "}\n";
-	myfile.close();
+//	ofstream myfile;
+//	myfile.open ("/tmp/pserver.dot");
+//	problem->toDotty(myfile);
+//	myfile.close();
 
 
-	AbstractGexfGen* generatorGexf = new InstanceGexfGen(root);
-	generatorGexf->writeToFile("test.gexf");
-	delete generatorGexf;
+//	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
+//		//cout << i->getID() << " ";
+//		cout << *i << endl;
+//	}
+//	cout << endl;
+
+
+	//Bad test
+	//	cout << "Nodes :";
+//	cout << endl;
+
+	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
+		cout << i->getID() << endl;
+	}
+	cout << endl;
+	//	cout << *problem;
+
+
+//	cout << "ok: " << problem->checkNetwork() << endl;
+//	cout << "hierarchic: " << problem->checkNetworkHierarchy() << endl;
+
+//
+//	RankMapper* rankM = new RankMapper((*problem));
+//	cout << *rankM;
+//	cout << rankM->rankX(problem->getRoot())<< endl;
+//	FacilityNode* source = problem->getRoot()->getChild(1);
+//	cout << rankM->rankX(problem->getRoot(), 1) << endl;
+//	FacilityNode* destination = source->getChild(0)->getChild(0);
+//	cout << rankM->rankZ(source, destination,1) << endl;
+
+
+
+//	AbstractGexfGen* generatorGexf = new InstanceGexfGen(root);
+//	generatorGexf->writeToFile("test.gexf");
+//	delete generatorGexf;
+
 
 	return 0;
 }

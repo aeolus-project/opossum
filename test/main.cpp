@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 #include <exception>
 
+#include <stdio.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -17,31 +18,153 @@
 #include "../src/network.cpp"
 #include "../src/GexfGen.cpp"
 
+
 int add(int i, int j)
 {
-    return i + j;
+	return i + j;
+}
+
+PSLProblem* initProblem() {
+	ifstream in;
+
+	in.open("benchmarks/instances/sample-server.dat");
+	if (!in) {
+		cout << "Unable to open file";
+		exit(1); // terminate with error
+	}
+	PSLProblem* problem = new PSLProblem();
+	in >> *problem;
+	in.close();
+
+	problem->setSeed(SEED);
+	problem->generateNetwork(true);
+//#ifndef NDEBUG //Mode Debug
+//	cout << *problem << endl << endl;
+//#endif
+	return problem;
+
 }
 
 BOOST_AUTO_TEST_SUITE(Tests)
 
-BOOST_AUTO_TEST_CASE(TestFacilityTypeSetSeed)
+BOOST_AUTO_TEST_CASE(NetworkIterators)
 {
-	FacilityType* ftype = new FacilityType();
 
-	cout << "Seed: " << 1000 << endl;
-	ftype->setSeed(1000);
-	cout << "Nb Random Facilities: " << ftype->genRandd() << endl;
+	PSLProblem* problem = initProblem();
+	/////////////////////////////////////////////////
+	//		UnitTest LinkIterator
+	////////////////////////////////////////////////
 
-	cout << "Seed: " << 3000 << endl;
-	ftype->setSeed(3000);
-	cout << "Nb Random Facilities: " << ftype->genRandd() << endl;
+	LinkIterator itL = problem->getRoot()->lbegin();
+	//Copy ctor
+	//	
+	LinkIterator itL_copy(itL);
+	BOOST_CHECK(itL == itL_copy);
 
-	cout << "Seed: " << 1000 << endl;
-	ftype->setSeed(1000);
-	cout << "Nb Random Facilities: " << ftype->genRandd() << endl;
+	//Operator ++
+	//	
+	itL++;
+	itL_copy++;
+	BOOST_CHECK(itL == itL_copy);
 
-	delete ftype;
+	//Operator !=	
+	//	
+	BOOST_CHECK(itL != problem->getRoot()->lbegin());
+	BOOST_CHECK(itL_copy != problem->getRoot()->lbegin());
+
+	//Operator *
+	//
+	BOOST_CHECK(*itL == *itL_copy);
+	BOOST_CHECK(*itL != *(problem->getRoot()->lbegin()));
+
+	//Operator ->
+	//
+	BOOST_CHECK(itL->getID() == itL_copy->getID());
+	BOOST_CHECK(itL->getID() != problem->getRoot()->lbegin()->getID());
+
+	//Count Links
+	//	
+	int count_links = 0;
+	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
+		count_links++;	
+	}
+	BOOST_CHECK(count_links == problem->getLinkCount());
+
+
+	/////////////////////////////////////////////////
+	//		UnitTest NodeIterator
+	////////////////////////////////////////////////
+
+	NodeIterator itN = problem->getRoot()->nbegin();
+	//Copy ctor
+	//	
+	NodeIterator itN_copy(itN);
+	BOOST_CHECK(itN == itN_copy);
+
+	//Operator ++
+	//	
+	itN++;
+	itN_copy++;
+	BOOST_CHECK(itN == itN_copy);
+
+	//Operator !=	
+	//	
+	BOOST_CHECK(itN != problem->getRoot()->nbegin());
+	BOOST_CHECK(itN_copy != problem->getRoot()->nbegin());
+
+	//Operator *
+	//
+	BOOST_CHECK(*itN == *itN_copy);
+	BOOST_CHECK(*itN != *(problem->getRoot()->nbegin()));
+
+	//Operator ->
+	//
+	BOOST_CHECK(itN->getID() == itN_copy->getID());
+	BOOST_CHECK(itN->getID() != problem->getRoot()->nbegin()->getID());
+
+	//Count nodes
+	//	
+	int count_nodes = 0;
+	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
+		count_nodes++;
+	}
+	BOOST_CHECK(count_nodes == problem->getNodeCount());
+
 }
+
+BOOST_AUTO_TEST_CASE(networkGeneration)
+{
+
+	PSLProblem* problem = initProblem();
+	IntList level1(problem->getLevelNodeCounts());
+	problem->setSeed(SEED);
+	problem ->generateNetwork(true);
+	//FIXME problem->generateNetwork(false);
+	cout << *problem;
+	IntList level2(problem->getLevelNodeCounts());
+	BOOST_CHECK_EQUAL_COLLECTIONS(level1.begin(), level1.end(), level2.begin(), level2.end());
+//	BOOST_CHECK(level1.size() == level2.size());
+//	for (int i = 0; i < level1.size(); ++i) {
+//		BOOST_CHECK(level1[i] == level2[i]);
+//	}
+
+}
+
+BOOST_AUTO_TEST_CASE(networkExample)
+{
+	PSLProblem* problem = initProblem();
+	ofstream myfile;
+	char* name = tmpnam(NULL);
+	myfile.open (name);
+	//myfile.open ("/tmp/pserver.dot");
+	problem->toDotty(myfile);
+	myfile.close();
+
+
+}
+
+
+
 /*
 BOOST_AUTO_TEST_CASE(TestGexf)
 {
@@ -84,64 +207,64 @@ BOOST_AUTO_TEST_CASE(TestGexf)
 	delete generatorGexf;
 
 }
-*/
+ */
 /*
 BOOST_AUTO_TEST_CASE(checkFailure)
 {
-    BOOST_CHECK(add(2, 2) == 5);
+	BOOST_CHECK(add(2, 2) == 5);
 }
 
 BOOST_AUTO_TEST_CASE(multipleCheckFailures)
 {
-    BOOST_CHECK(add(2, 2) == 1);
-    BOOST_CHECK(add(2, 2) == 2);
-    BOOST_CHECK(add(2, 2) == 3);
+	BOOST_CHECK(add(2, 2) == 1);
+	BOOST_CHECK(add(2, 2) == 2);
+	BOOST_CHECK(add(2, 2) == 3);
 }
 
 BOOST_AUTO_TEST_CASE(requireFailure)
 {
-    BOOST_REQUIRE(add(2, 2) == 5);
+	BOOST_REQUIRE(add(2, 2) == 5);
 }
 
 BOOST_AUTO_TEST_CASE(explicitError)
 {
-    BOOST_ERROR("Error message");
+	BOOST_ERROR("Error message");
 }
 
 BOOST_AUTO_TEST_CASE(explicitFailure)
 {
-    BOOST_FAIL("Failure message");
+	BOOST_FAIL("Failure message");
 }
 
 BOOST_AUTO_TEST_CASE(errorThenFailure)
 {
-    BOOST_FAIL("Error message");
-    BOOST_FAIL("Failure message");
+	BOOST_FAIL("Error message");
+	BOOST_FAIL("Failure message");
 }
 
 BOOST_AUTO_TEST_CASE(uncaughtException)
 {
-    throw "Catch me if you can!";
+	throw "Catch me if you can!";
 }
 
 BOOST_AUTO_TEST_CASE(stdException)
 {
-    throw new std::exception();
+	throw new std::exception();
 }
 
 BOOST_AUTO_TEST_CASE(checkMessageFailure)
 {
-    BOOST_CHECK_MESSAGE(add(2, 2) == 5, "add(..) result: " << add(2, 2));
+	BOOST_CHECK_MESSAGE(add(2, 2) == 5, "add(..) result: " << add(2, 2));
 }
 
 BOOST_AUTO_TEST_CASE(checkEqualFailure)
 {
-    BOOST_CHECK_EQUAL(add( 2,2 ), 5);
+	BOOST_CHECK_EQUAL(add( 2,2 ), 5);
 }
 
 BOOST_AUTO_TEST_CASE(threeSeconds)
 {
-    sleep(3);
+	sleep(3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -158,5 +281,5 @@ BOOST_AUTO_TEST_CASE(pass2)
 BOOST_AUTO_TEST_CASE(pass3)
 {
 }
-*/
+ */
 BOOST_AUTO_TEST_SUITE_END()
