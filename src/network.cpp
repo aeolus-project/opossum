@@ -55,15 +55,6 @@ LinkIterator FacilityNode::lend() {
 	return LinkIterator(NULL);
 }
 
-unsigned int FacilityNode::getMinIncomingConnections(ServerTypeList* servers) {
-	//FIXME Invalid computation of min incoming connections
-	const unsigned int capa = type->getConnexionCapacity(servers);
-	unsigned int res = type->getTotalDemand() > capa ? type->getTotalDemand() - capa : 0;
-	for (size_t i = 0; i < children.size(); ++i) {
-		res += children[i]->getDestination()->getMinIncomingConnections(servers);
-	}
-	return res;
-}
 
 ostream & FacilityNode::toDotty(ostream & out) {
 	out << getID();
@@ -221,7 +212,6 @@ IntList& PSLProblem::getLevelNodeCounts() {
 FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 	//Delete old tree.
 	deleteTree(root);
-	
 	levelNodeCounts.clear();
 	levelNodeCounts.push_back(1);
 	nodeCount = 0;
@@ -288,12 +278,11 @@ bool PSLProblem::checkNetwork()
 		sum += *j;
 	if( sum != nodeCount) return false;
 
-	//TODO Test 2 (NodeIterator)
-	//	sum = 0;
-	//	for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
-	//		sum ++;
-	//	}
-	//	if( sum != nodeCount) return false;
+		sum = 0;
+		for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
+			sum ++;
+		}
+		if( sum != nodeCount) return false;
 
 	//Test 3
 	sum = 0;
@@ -449,14 +438,8 @@ NodeIterator& NodeIterator::operator++() {
 		if (clink == NULL) {
 			clink = node->lbegin();
 			elink = node->lend();
-			/*				
-			for( LinkIterator i = clink; i != elink ; i++) {
-				cout << *i << endl;
-			}
-			*/
 		}
 		if (clink != elink) {
-			//FIXME severe issue with node iterators
 			node = clink->getDestination();
 			clink++;
 		} else {

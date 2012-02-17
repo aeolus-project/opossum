@@ -24,10 +24,7 @@ int add(int i, int j)
 	return i + j;
 }
 
-BOOST_AUTO_TEST_SUITE(Tests)
-
-BOOST_AUTO_TEST_CASE(NetworkIterators)
-{
+PSLProblem* initProblem() {
 	ifstream in;
 
 	in.open("benchmarks/instances/sample-server.dat");
@@ -38,11 +35,22 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	PSLProblem* problem = new PSLProblem();
 	in >> *problem;
 	in.close();
-	
-	problem->setSeed(10);
+
+	problem->setSeed(SEED);
 	problem->generateNetwork(true);
-	cout << *problem;
-	
+//#ifndef NDEBUG //Mode Debug
+//	cout << *problem << endl << endl;
+//#endif
+	return problem;
+
+}
+
+BOOST_AUTO_TEST_SUITE(Tests)
+
+BOOST_AUTO_TEST_CASE(NetworkIterators)
+{
+
+	PSLProblem* problem = initProblem();
 	/////////////////////////////////////////////////
 	//		UnitTest LinkIterator
 	////////////////////////////////////////////////
@@ -52,18 +60,18 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	//	
 	LinkIterator itL_copy(itL);
 	BOOST_CHECK(itL == itL_copy);
-	
+
 	//Operator ++
 	//	
 	itL++;
 	itL_copy++;
 	BOOST_CHECK(itL == itL_copy);
-	
+
 	//Operator !=	
 	//	
 	BOOST_CHECK(itL != problem->getRoot()->lbegin());
 	BOOST_CHECK(itL_copy != problem->getRoot()->lbegin());
-	
+
 	//Operator *
 	//
 	BOOST_CHECK(*itL == *itL_copy);
@@ -73,7 +81,7 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	//
 	BOOST_CHECK(itL->getID() == itL_copy->getID());
 	BOOST_CHECK(itL->getID() != problem->getRoot()->lbegin()->getID());
-	
+
 	//Count Links
 	//	
 	int count_links = 0;
@@ -82,7 +90,7 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	}
 	BOOST_CHECK(count_links == problem->getLinkCount());
 
-	
+
 	/////////////////////////////////////////////////
 	//		UnitTest NodeIterator
 	////////////////////////////////////////////////
@@ -92,18 +100,18 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	//	
 	NodeIterator itN_copy(itN);
 	BOOST_CHECK(itN == itN_copy);
-	
+
 	//Operator ++
 	//	
 	itN++;
 	itN_copy++;
 	BOOST_CHECK(itN == itN_copy);
-	
+
 	//Operator !=	
 	//	
 	BOOST_CHECK(itN != problem->getRoot()->nbegin());
 	BOOST_CHECK(itN_copy != problem->getRoot()->nbegin());
-	
+
 	//Operator *
 	//
 	BOOST_CHECK(*itN == *itN_copy);
@@ -113,7 +121,7 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	//
 	BOOST_CHECK(itN->getID() == itN_copy->getID());
 	BOOST_CHECK(itN->getID() != problem->getRoot()->nbegin()->getID());
-	
+
 	//Count nodes
 	//	
 	int count_nodes = 0;
@@ -126,60 +134,25 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 
 BOOST_AUTO_TEST_CASE(networkGeneration)
 {
-	ifstream in;
 
-	in.open("benchmarks/instances/sample-server.dat");
-	if (!in) {
-		BOOST_ERROR("Unable to open file");
-	}
-	PSLProblem* problem = new PSLProblem();
-	in >> *problem;
-	in.close();
-
-	IntList level1, level2; //,*level2;
-
-	for (int i = 0; i < 2; ++i) {
-		problem->setSeed(10);
-		problem->generateNetwork(true);
-		//FIXME problem->generateNetwork(false);
-		//Networks should only differ by their link attributes.
-#ifndef NDEBUG //Mode Debug
-		cout << *problem << endl << endl;
-#endif
-		BOOST_CHECK(problem->checkNetwork());
-		BOOST_CHECK(problem->checkNetworkHierarchy());
-		if(i==0) {
-			IntList level1(problem->getLevelNodeCounts());
-		} else {
-			IntList level2(problem->getLevelNodeCounts());
-		}
-	}
-	BOOST_CHECK(level1.size() == level2.size());
-	for (int i = 0; i < level1.size(); ++i) {
-		BOOST_CHECK(level1[i] == level2[i]);
-	}
+	PSLProblem* problem = initProblem();
+	IntList level1(problem->getLevelNodeCounts());
+	problem->setSeed(SEED);
+	problem ->generateNetwork(true);
+	//FIXME problem->generateNetwork(false);
+	cout << *problem;
+	IntList level2(problem->getLevelNodeCounts());
+	BOOST_CHECK_EQUAL_COLLECTIONS(level1.begin(), level1.end(), level2.begin(), level2.end());
+//	BOOST_CHECK(level1.size() == level2.size());
+//	for (int i = 0; i < level1.size(); ++i) {
+//		BOOST_CHECK(level1[i] == level2[i]);
+//	}
 
 }
 
 BOOST_AUTO_TEST_CASE(networkExample)
 {
-	ifstream in;
-
-	in.open("benchmarks/instances/sample-server.dat");
-	if (!in) {
-		BOOST_ERROR("Unable to open file");
-	}
-	PSLProblem* problem = new PSLProblem();
-	in >> *problem;
-	in.close();
-	problem->setSeed(2000);
-	problem->generateNetwork(true);
-#ifndef NDEBUG //Mode Debug
-	cout << *problem << endl << endl;
-#endif
-	BOOST_CHECK(problem->checkNetwork());
-	BOOST_CHECK(problem->checkNetworkHierarchy());
-
+	PSLProblem* problem = initProblem();
 	ofstream myfile;
 	char* name = tmpnam(NULL);
 	myfile.open (name);
@@ -191,10 +164,7 @@ BOOST_AUTO_TEST_CASE(networkExample)
 }
 
 
-BOOST_AUTO_TEST_CASE(simplePass)
-{
 
-}
 /*
 BOOST_AUTO_TEST_CASE(TestGexf)
 {

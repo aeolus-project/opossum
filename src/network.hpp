@@ -236,7 +236,6 @@ public:
 	}
 
 	bool isReliableFromRoot();
-	unsigned int getMinIncomingConnections(ServerTypeList* servers);
 	ostream& toDotty(ostream& out);
 	ostream& toGEXF(ostream& out);
 	void print(ostream& out);
