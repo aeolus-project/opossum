@@ -99,8 +99,8 @@ void InstanceGexfGen::initFacilityNode(FacilityNode* node) {
 	libgexf::Data& data = _gexf->getData();
 	data.setNodeLabel(convert2str(node->getID()), convert2str(node->getID()));
 
-	data.setNodeValue(convert2str(node->getID()), convert2str(MaxNumberOfServers), convert2str(node->getType()->getMaxServerCapacities()));
-	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getDemand()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(MaxNumberOfServers), convert2str(node->getType()->getTotalCapacity()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getTotalDemand()));
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfConnexions), "10");
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfLocalConnexions), "10");
 
@@ -170,8 +170,8 @@ void FlowConnectionsGexfGen::initFacilityNode(FacilityNode* node) {
 	libgexf::Data& data = _gexf->getData();
 	data.setNodeLabel(convert2str(node->getID()), convert2str(node->getID()));
 
-	data.setNodeValue(convert2str(node->getID()), convert2str(MaxNumberOfServers), convert2str(node->getType()->getMaxServerCapacities()));
-	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getDemand()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(MaxNumberOfServers), convert2str(node->getType()->getTotalCapacity()));
+	data.setNodeValue(convert2str(node->getID()), convert2str(Demands), convert2str(node->getType()->getTotalDemand()));
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfConnexions), "10");
 	data.setNodeValue(convert2str(node->getID()), convert2str(NumberOfLocalConnexions), "10");
 

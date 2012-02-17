@@ -27,11 +27,14 @@
 #ifndef NETWORK_HPP_
 #define NETWORK_HPP_
 
+#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <iterator>
 #include <algorithm>
 #include <vector>
+#include <queue>
+#include <assert.h>
 #include <cassert>
 #include <boost/random/variate_generator.hpp>
 #include <boost/generator_iterator.hpp>
@@ -40,229 +43,546 @@
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
 
+
 //Define the seed of random
 #define SEED 1000
-
-//
-//#include <boost/math/distributions/binomial.hpp>
-//using boost::math::binomial;
 
 using namespace boost::random;
 using namespace std;
 
-// Foncteur servant à libérer un pointeur - applicable à n'importe quel type
-struct Delete
-{
-	template <class T> void operator ()(T*& p) const
-	{
+// class predeclarations
+class ServerType;
+class FacilityType;
+class FacilityNode;
+class NetworkLink;
+class LinkIterator;
+class NodeIterator;
+class PSLProblem;
+
+typedef vector<unsigned int> IntList;
+typedef vector<unsigned int>::iterator IntListIterator;
+
+typedef vector<ServerType*> ServerTypeList;
+typedef vector<ServerType*>::iterator ServerTypeListIterator;
+
+typedef vector<FacilityType*> FacilityTypeList;
+typedef vector<FacilityType*>::iterator FacilityTypeListIterator;
+
+typedef vector<FacilityNode*> FacilityList;
+typedef vector<FacilityNode*>::iterator FacilityListIterator;
+
+typedef vector<NetworkLink*> LinkList;
+typedef vector<NetworkLink*>::iterator LinkListIterator;
+
+//Functors and templates
+
+//Fonctor to delete an object in any type
+struct FonctorDeletePtr {
+	template<class T> void operator ()(T* p) const {
 		delete p;
 		p = NULL;
 	}
 };
 
-template <typename T>
-T& dereference(T* ptr) { return *ptr; }
 
-class ServerType
-{
+template<typename T>
+T& dereference(T* ptr) {
+	return *ptr;
+}
+
+//---------------------------------------- 
+//	ServerType Declaration
+//----------------------------------------
+
+class ServerType {
 public:
-	ServerType() : capacity(0), cost(0) {
+	ServerType() : capacity(0), cost(0) {}
+	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {}
+
+	virtual ~ServerType() {}
+	
+	inline unsigned int getCost() const {
+		return cost;
 	}
-	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {
+	inline unsigned int getMaxConnections() const {
+		return capacity;
 	}
-	virtual ~ServerType() {};
-	inline unsigned int getCost() const { return cost; }
-	inline unsigned int getMaxConnections() const { return capacity; }
 
 	friend istream& operator>>(istream& in, ServerType& f);
-protected:
+
 private:
 	unsigned int capacity;
 	unsigned int cost;
 
 };
 
+//---------------------------------------- 
+//	FacilityType Declaration
+//----------------------------------------
 
-
-class PSLProblem;
-
-class FacilityType
-{
-
+class FacilityType {
 public:
-	FacilityType() : level(0), demand(0), binornd(NULL), reliabilityProbability(1),
-					random_generator(default_random_generator), randd(NULL)
-	{
-		randd = new uniform_01< mt19937&, double >(random_generator);
+	FacilityType() : level(0), binornd(NULL), reliabilityProbability(1) {
 		binornd = new variate_generator<mt19937&, binomial_distribution<> >(fake_binornd);
 	}
+
+	//Destructor of FacilityType
+	//Delete the generator of binomial distribution
+	//	
 	virtual ~FacilityType() {
-		delete randd;
 		delete binornd;
 	}
 
-	inline double genRandd() {
-		return (*randd)();
+	static void setStaticSeed(const unsigned int seed);
+	void setSeed(const unsigned int seed);
+	void setBinomial(unsigned int n, double p);
+
+	inline unsigned int getLevel() const {
+		return level;
+	}
+	inline unsigned int getDemand(unsigned int stage) const {
+		return demands[stage];
+	}
+	inline unsigned int getTotalDemand() {
+		unsigned int sum = 0;
+		for (IntListIterator j = demands.begin(); j != demands.end(); ++j)
+			sum += *j;
+		return sum;
+	}
+	inline unsigned int getServerCapacity(const unsigned int stype) const {
+		return serverCapacities[stype];
+	}
+	inline unsigned int getTotalCapacity() {
+		unsigned int sum = 0;
+		for (IntListIterator j = serverCapacities.begin();
+				j != serverCapacities.end(); ++j)
+			sum += *j;
+		return sum;
 	}
 
-	inline unsigned int getLevel() const { return level; }
-	inline unsigned int getDemand() const { return demand; }
-	inline unsigned int getServerCapacity(const unsigned int stype) const {return serverCapacities[stype];
-	}
+
 	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
-	inline unsigned int getMaxServerCapacities() const {
-		int maxCap = 0;
-		for(int i = 0; i < serverCapacities.size(); i++) {
-			maxCap += serverCapacities[i];
-		}
-		return maxCap;
-	}
+
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidthIndex();
 	unsigned int genRandomBandwidthIndex(unsigned int maxBandwidth);
 	bool genRandomReliability();
 
-	void setSeed(int seed);
 
 	istream& read(istream& in, const PSLProblem& problem);
 	friend ostream& operator<<(ostream& out, const FacilityType& f);
-protected:
+
 private:
 	static mt19937 default_random_generator;
+	static uniform_01< mt19937&, double > randd;
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
 
-	mt19937 random_generator;
-	variate_generator<mt19937&, binomial_distribution<> >* binornd;
-	uniform_01< mt19937&, double >* randd;
-
 	unsigned int level;
-	unsigned int demand;
-	vector<unsigned int> serverCapacities;
+	IntList demands;
+	IntList serverCapacities;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
+	variate_generator<mt19937&, binomial_distribution<> >* binornd;
 
 };
 
+//---------------------------------------- 
+//	FacilityNode Declaration
+//----------------------------------------
 
-
-class NetworkLink;
-
-
-class FacilityNode
-{
+class FacilityNode {
 	friend class NetworkLink;
-	static unsigned int NEXT_ID;
 
 public:
-	FacilityNode(FacilityType* type) : id(NEXT_ID++), type(type), father(NULL) {
+	FacilityNode(unsigned int id, FacilityType* type) : id(id), type(type), father(NULL) {
 	}
-	~FacilityNode();
-	inline unsigned int getID() const { return id; }
-	inline FacilityType* getType() const { return type; }
-	inline NetworkLink* toFather() const { return father; }
+	
+	//Destructor of FacilityNode
+	//Do not delete type and father
+	//Delete all children
+	//	
+	~FacilityNode() {
+		for_each(children.begin(), children.end(), FonctorDeletePtr());
+	}
+
+	//the keyword inline is used only on header file
+	//
+	inline unsigned int getID() const {
+		return id;
+	}
+	inline FacilityType* getType() const {
+		return type;
+	}
+	inline NetworkLink* toFather() const {
+		return father;
+	}
 	FacilityNode* getFather() const;
-	inline unsigned int getChildrenCount() const {return children.size();}
-	inline NetworkLink* toChild(unsigned int i) const { return children[i]; }
-	inline FacilityNode* getChild(unsigned int i) const;
-	inline bool isRoot() const { return father == NULL; }
+	inline unsigned int getChildrenCount() const {
+		return children.size();
+	}
+	inline NetworkLink* toChild(unsigned int i) const {
+		return children[i];
+	}
+	FacilityNode* getChild(unsigned int i) const;
+
+	inline bool isRoot() const {
+		return father == NULL;
+	}
 	inline bool isInternalNode() const {
 		return !isRoot() && !isLeaf();
 	}
 	inline bool isLeaf() const {
 		return children.empty();
 	}
-	unsigned int getMinIncomingConnections(vector<ServerType*>* servers);
+
+	bool isReliableFromRoot();
 	ostream& toDotty(ostream& out);
-	void printSubtree();
-protected:
+	ostream& toGEXF(ostream& out);
+	void print(ostream& out);
+
+	//For LinkListIterator
+	LinkListIterator cbegin() {
+		return children.begin();
+	}
+
+	LinkListIterator cend() {
+		return children.end();
+	}
+
+	//For NodeIterator
+	NodeIterator nbegin();
+	NodeIterator nend();
+	
+	//For LinkIterator
+	LinkIterator lbegin();
+
+	LinkIterator lend();
+
 private:
 	unsigned int id;
 	FacilityType* type;
 	NetworkLink* father;
-	vector<NetworkLink*> children;
-
-
+	LinkList children;
 };
 
 
-class PSLProblem {
+//---------------------------------------- 
+//	LinkIterator Declaration
+//----------------------------------------
 
-
+class LinkIterator : public std::iterator<std::forward_iterator_tag, FacilityNode> {
 public:
+	LinkIterator(FacilityNode* p);
+	
+	//Destructor of LinkIterator
+	//Do not delete pointers of iterator
+	//	
+	~LinkIterator() {}
 
-	PSLProblem() {
+	LinkIterator(const LinkIterator& other) : current(other.current), end(other.end), queue(other.queue)  {}	
+
+	// The assignment and relational operators are straightforward
+	LinkIterator& operator=(const LinkIterator& other) {
+		if(*this != other) {		
+			current = other.current;
+			end = other.end;
+			queue = other.queue;
+		}
+		return *this;
 	}
-	~PSLProblem() {
-		for_each(servers.begin(), servers.end(), Delete());
-		for_each(facilities.begin(), facilities.end(), Delete());
+
+	bool operator==(const LinkIterator& other) {
+		return current == other.current;
 	}
-	inline unsigned int getBandwidth(unsigned int idx) const { return bandwidths[idx];}
-	inline unsigned int getNbBandwidths() const { return bandwidths.size();}
-	inline unsigned int getNbServers() const { return servers.size();}
-	inline unsigned int getNbFacilities() const { return facilities.size();}
 
-	FacilityNode* generateNetwork();
+	bool operator!=(const LinkIterator& other) {
+		//cout << *current << "!= " << (other.current) << endl;
+		return current != other.current;
+	}
 
-	friend ostream& operator<<(ostream& out, const PSLProblem& f);
-	friend istream& operator>>(istream& in, PSLProblem& problem);
-protected:
-	FacilityNode* generateSubtree(FacilityNode* root);
+	LinkIterator& operator++();
+
+	LinkIterator& operator++(int) {
+		++(*this);
+		return *this;
+	}
+
+	NetworkLink* operator*() {
+		return *current;
+	}
+
+	NetworkLink* operator->() {
+		return *current;
+	}
+
 private:
-	vector<unsigned int> bandwidths;
-	vector<ServerType*> servers;
-	vector<FacilityType*> facilities;
+	LinkListIterator current;
+	LinkListIterator end;
+	deque<FacilityNode*> queue;
+};
+
+//---------------------------------------- 
+//	NodeIterator Declaration
+//----------------------------------------
+
+class NodeIterator : public std::iterator<std::forward_iterator_tag, FacilityNode> {
+public:	
+	NodeIterator(FacilityNode* p) : node(p), clink(NULL), elink(NULL) {}
+	
+	//Destructor of NodeIterator
+	//Do not delete pointers of iterator
+	//	
+	~NodeIterator() {}
+
+	NodeIterator(const NodeIterator& other) : node(other.node), clink(other.clink), elink(other.elink) {}
+
+	// The assignment and relational operators are straightforward
+	NodeIterator& operator=(const NodeIterator& other) {
+		if(*this != other) {		
+			node = other.node;
+			clink = other.clink;
+			elink = other.elink;
+		}		
+		return *this;
+	}
+
+	bool operator==(const NodeIterator& other) {
+		return (node == other.node);
+	}
+
+	bool operator!=(const NodeIterator& other) {
+		return (node != other.node);
+	}
+
+	NodeIterator& operator++();
+
+	NodeIterator& operator++(int) {
+		++(*this);
+		return *this;
+	}
+
+	FacilityNode* operator*() {
+		return node;
+	}
+
+	FacilityNode* operator->() {
+		return node;
+	}
+
+private:
+	FacilityNode* node;
+	LinkIterator clink;
+	LinkIterator elink;
 
 };
+
+//---------------------------------------- 
+//	NetworkLink Declaration
+//----------------------------------------
 
 class NetworkLink {
-
 public:
-	NetworkLink(FacilityNode* father, FacilityNode* child, vector<int>* bandwidths) : origin(father), destination(child), bandwidth(0),reliable(0)
-	{
-		father->children.push_back(this);
-		child->father=this;
-		bandwidth = (*bandwidths)[child->getType()->genRandomBandwidthIndex()];
-		reliable = child->getType()->genRandomReliability();
-	}
 
-	NetworkLink(FacilityNode* father, FacilityNode* child, PSLProblem& problem, bool ignoreHierarchy) : origin(father), destination(child), bandwidth(0),reliable(0)
-	{
-		father->children.push_back(this);
-		child->father=this;
-		if( father->isRoot() || ignoreHierarchy) {
-			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex());
-			reliable = child->getType()->genRandomReliability();
-		} else {
-			unsigned int fbandw = father->toFather()->getBandwidth();
-			int maxIndex = problem.getNbBandwidths();
-			while( maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {maxIndex--;}
-			bandwidth = problem.getBandwidth(child->getType()->genRandomBandwidthIndex(maxIndex));
-			reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
-		}
-	}
+	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child,
+			PSLProblem& problem, bool hierarchic);
+	
+	//Destructor of NetworkLink
+	//Do not delete origin and destination 
+	//because these nodes are deleted in the destructor of PSLProblem
+	//
+	~NetworkLink() {}
 
-	~NetworkLink() {
-		delete origin;
-		delete destination;
+	inline unsigned int getID() const {
+		return id;
 	}
-	inline FacilityNode* getOrigin() const { return origin; }
-	inline FacilityNode* getDestination() const { return destination; }
-	inline bool isReliable() const { return reliable; }
-	inline unsigned int getBandwidth() const { return bandwidth; }
+	inline FacilityNode* getOrigin() const {
+		return origin;
+	}
+	inline FacilityNode* getDestination() const {
+		return destination;
+	}
+	inline bool isReliable() const {
+		return reliable;
+	}
+	inline unsigned int getBandwidth() const {
+		return bandwidth;
+	}
 	void forEachPath() const;
-	void forEachPath(void (*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+	void forEachPath(void(*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
 	ostream& toDotty(ostream& out);
-protected:
+
 private:
+	unsigned int id;
 	FacilityNode *origin;
 	FacilityNode *destination;
 	unsigned int bandwidth;
 	bool reliable;
 };
 
+//---------------------------------------- 
+//	RankMapper Declaration
+//----------------------------------------
 
+class RankMapper {
+public:
+	RankMapper(PSLProblem& problem);
+	~RankMapper() {}
 
+	int rankX(FacilityNode *node) const {
+		return node->getID();
+	}
+	int rankX(FacilityNode *node, unsigned int stype) const {
+		return offsetXk() + node->getID() * serverCount + stype;
+	}
+	int rankY(FacilityNode *node, unsigned int stage) const {
+		return offsetYi() + node->getID() * stageCount + stage;
+	}
+	int rankY(NetworkLink *link, unsigned int stage) const {
+		return offsetYij() + link->getID() * stageCount + stage;
+	}
+	int rankZ(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
+		return offsetZ() + rank(source, destination, stage);
+	}	
+	int rankB(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
+		return offsetB() + rank(source, destination, stage);
+	}
+	int size() const {
+		return offsetB() + pathCount() * stageCount;
+	}
 
+	friend	ostream& operator<<(ostream& out, const RankMapper& r);
+	
+private:
+	inline int offsetXk() const {
+		return nodeCount;
+	}
+	inline int offsetYi() const {
+		return offsetXk() + nodeCount * serverCount;
+	}
+	inline int offsetYij() const {
+		return offsetYi() + nodeCount * stageCount;
+	}
+	inline int rank(FacilityNode* source, FacilityNode* destination) const {
+		int length = destination->getType()->getLevel() - source->getType()->getLevel();
+		//path are ranked by length and their index using the bread-first numbered tree.
+		return lengthCumulPathCounts[length] + (destination->getID() - levelCumulNodeCounts[length]);
+	}
+	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage) const {
+		return rank(source, destination) * stageCount + stage;
+	}
+	inline int offsetZ() const {
+		return offsetYij() + linkCount() * stageCount;
+	}
+	inline int offsetB() const {
+		return offsetZ() + pathCount() * stageCount;
+	}
+	inline int linkCount() const {
+		return nodeCount - 1;
+	}
+	inline int pathCount() const {
+		return lengthCumulPathCounts.back();
+	}
+	unsigned int nodeCount;
+	unsigned int stageCount;
+	unsigned int serverCount;
+	//number of nodes of level lower or equal than l;
+	IntList levelCumulNodeCounts;
+	//number of path of length lower or equal than l
+	IntList lengthCumulPathCounts;
+
+};
+
+//---------------------------------------- 
+//	PSLProblem Declaration
+//----------------------------------------
+
+class PSLProblem {
+public:
+	PSLProblem() : numberOfGroups(0), root(NULL), nodeCount(0) {}
+	
+	//Destructor of PSLProblem
+	//Delete all nodes of the tree
+	//Delete all servers
+	//Delete all facilities
+	//
+	~PSLProblem() {
+		deleteTree(root);		
+		for_each(servers.begin(), servers.end(), FonctorDeletePtr());
+		for_each(facilities.begin(), facilities.end(), FonctorDeletePtr());
+	}
+
+	inline unsigned int getBandwidth(unsigned int idx) const {
+		return bandwidths[idx];
+	}
+	inline unsigned int getNbBandwidths() const {
+		return bandwidths.size();
+	}
+	inline unsigned int getNbServers() const {
+		return servers.size();
+	}
+	inline unsigned int getNbGroups() const {
+		return numberOfGroups;
+	}
+	inline unsigned int getNbFacilities() const {
+		return facilities.size();
+	}
+
+	inline unsigned int getNetworkDepth() const {
+		return levelNodeCounts.size();
+	}
+
+	void setSeed(const unsigned int seed);
+	FacilityNode* generateNetwork();
+
+	//generate Breadth-First Numbered Tree
+	FacilityNode* generateNetwork(bool hierarchic);
+
+	bool checkNetwork();
+	bool checkNetworkHierarchy();
+	inline FacilityNode* getRoot() const {
+		return root;
+	}
+	inline unsigned int getNodeCount() const {
+		return nodeCount;
+	}
+
+	IntList& getLevelNodeCounts();
+
+	inline unsigned int getLinkCount() const {
+		return nodeCount - 1;
+	}
+
+	ostream& toDotty(ostream& out);
+
+	friend ostream& operator<<(ostream& out, const PSLProblem& f);
+	friend istream& operator>>(istream& in, PSLProblem& problem);
+
+private:
+	//Delete tree from root node
+	//
+	void deleteTree(FacilityNode* node) {
+		if(node != NULL) {		
+			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
+				deleteTree(node->toChild(i)->getDestination());
+			}		
+			delete node;
+			node = NULL;
+		}
+	}
+
+	IntList bandwidths;
+	ServerTypeList servers;
+	unsigned int numberOfGroups;
+	FacilityTypeList facilities;
+	FacilityNode* root;
+	IntList levelNodeCounts;
+	unsigned int nodeCount;
+
+};
+
+//---------------------------------------- 
+//	ostream and istream Declaration
+//----------------------------------------
 
 ostream& operator<<(ostream& out, const PSLProblem& f);
 istream& operator>>(istream& in, PSLProblem& s);
@@ -272,9 +592,9 @@ istream& operator>>(istream& in, ServerType& s);
 
 ostream& operator<<(ostream& out, const FacilityType& f);
 
-
 ostream& operator<<(ostream& out, const FacilityNode& n);
 ostream& operator<<(ostream& out, const NetworkLink& l);
 
+ostream& operator<<(ostream& out, const RankMapper& r);
 
 #endif /* NETWORK_HPP_ */

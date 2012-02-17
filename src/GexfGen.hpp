@@ -29,7 +29,6 @@
 #define GEXFGEN_HPP_
 
 #include <libgexf/libgexf.h>
-
 #include "network.hpp"
 
 using namespace std;

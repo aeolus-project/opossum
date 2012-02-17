@@ -9,7 +9,7 @@
  *      * Redistributions in binary form must reproduce the above copyright
  *        notice, this list of conditions and the following disclaimer in the
  *        documentation and/or other materials provided with the distribution.
- *      * Neither the name of the Arnaud Malapert nor the
+ *      * Neither the name of Arnaud Malapert nor the
  *        names of its contributors may be used to endorse or promote products
  *        derived from this software without specific prior written permission.
  *
@@ -26,93 +26,93 @@
  */
 #include "network.hpp"
 
-#include "Utils.hpp"
+//---------------------------------------- 
+//	FacilityNode Implementation
+//----------------------------------------
 
-FacilityNode::~FacilityNode() {
-	delete type;
-	delete father;
-	for_each(children.begin(), children.end(), Delete());
+FacilityNode* FacilityNode::getFather() const {
+	return father->getOrigin();
+}
+
+FacilityNode* FacilityNode::getChild(unsigned int i) const {
+	return children[i]->getDestination();
+}
+
+//For NodeIterator
+NodeIterator FacilityNode::nbegin() {
+	return NodeIterator(this);
+}
+NodeIterator FacilityNode::nend() {
+	return NodeIterator(NULL);
+}
+
+//For LinkIterator
+LinkIterator FacilityNode::lbegin() {
+	return LinkIterator(this);
+}
+
+LinkIterator FacilityNode::lend() {
+	return LinkIterator(NULL);
 }
 
 
-unsigned int FacilityNode::NEXT_ID=0;
-
-
-unsigned int FacilityNode::getMinIncomingConnections(vector<ServerType*>* servers) {
-	const unsigned int capa = type->getConnexionCapacity(servers);
-	unsigned int res = type->getDemand() >  capa ? type->getDemand() -  capa : 0 ;
-	for ( size_t i = 0; i < children.size(); ++i ) {
-		res+= children[i]->getDestination()->getMinIncomingConnections(servers);
-	}
-	return res;
-}
-
-
-ostream & FacilityNode::toDotty(ostream & out)
-{
+ostream & FacilityNode::toDotty(ostream & out) {
 	out << getID();
-	//FIXME : Wait for the implementation of new methods : getTotalDemand and getTotalCapacity
-	//out << "[shape=record, label=\"{{" <<  getID() << "}|{" << getType()->getTotalDemand() << "|" << getType()->getTotalCapacity() << "}}\"];" << endl;
-	out << "[shape=record, label=\"{{" <<  getID() << "}}\"];" << endl;
-	if(! isRoot()) {
-		   toFather()->toDotty(out);
+	out << "[shape=record, label=\"{{" << getID() << "}|{"
+			<< getType()->getTotalDemand() << "|"
+			<< getType()->getTotalCapacity() << "}}\"];" << endl;
+	if (!isRoot()) {
+		toFather()->toDotty(out);
 	}
-	for ( size_t i = 0; i < children.size(); ++i ) {
-		   children[i]->getDestination()->toDotty(out);
+	for (size_t i = 0; i < children.size(); ++i) {
+		children[i]->getDestination()->toDotty(out);
 	}
 	return out;
 }
 
-
-
-FacilityNode *FacilityNode::getFather() const
-{
-	return father->getOrigin();
+bool FacilityNode::isReliableFromRoot() {
+	return isRoot() ? true : toFather()->isReliable() && getFather()->isReliableFromRoot();
 }
 
-inline FacilityNode *FacilityNode::getChild(unsigned int i) const
-{
-	return children[i]->getDestination();
-}
-
-void FacilityNode::printSubtree() {
-	string shift = string(2 * type->getLevel(),' ');
-	string sep = string(15,'-');
-	if(children.size() > 0) {
-		cout << shift << children.size() << " " << sep << endl;
-		for ( size_t i = 0; i < children.size(); ++i ) {
-			cout << shift <<  *children[i] << endl;
+void FacilityNode::print(ostream& out) {
+	string shift = string(2 * type->getLevel(), ' ');
+	string sep = string(15, '-');
+	if (children.size() > 0) {
+		out << shift << children.size() << " " << sep << endl;
+		for (size_t i = 0; i < children.size(); ++i) {
+			out << shift << *children[i] << endl;
 		}
-		for ( size_t i = 0; i < children.size(); ++i ) {
-			children[i]->getDestination()->printSubtree();
+		for (size_t i = 0; i < children.size(); ++i) {
+			children[i]->getDestination()->print(out);
 		}
 	}
 }
 
-bool FacilityType::genRandomReliability()
-{
-	return (*randd)() < reliabilityProbability;
+//---------------------------------------- 
+//	FacilityType Implementation
+//----------------------------------------
+
+bool FacilityType::genRandomReliability(){
+	return randd() < reliabilityProbability;
 }
 
-
-unsigned int FacilityType::genRandomBandwidthIndex()
-{
+unsigned int FacilityType::genRandomBandwidthIndex() {
 	double cum = 0;
-	const double p = (*randd)();
+	const double p = randd();
 	for (unsigned int i = 0; i < bandwidthProbabilities.size(); ++i) {
-		cum+= bandwidthProbabilities[i];
-		if(p <= cum) {return i;}
+		cum += bandwidthProbabilities[i];
+		if (p <= cum) {
+			return i;
+		}
 	}
 	assert(cum == 1);
-	exit (1);
+	exit(1);
 }
 
-unsigned int FacilityType::genRandomFacilities()
-{
-	cout << "B(" << binornd->distribution().t() <<  ", " << binornd->distribution().p() << ")" <<endl;
+unsigned int FacilityType::genRandomFacilities() {
+	//cout << "B(" << binornd->distribution().t() <<  ", " << binornd->distribution().p() << ")" <<endl;
 	return (*binornd)();
 }
-
 
 unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	double tot = 0;
@@ -122,13 +122,14 @@ unsigned int FacilityType::genRandomBandwidthIndex(unsigned int maxIndex) {
 	}
 	//compute random values using normalized probabilities
 	double cum = 0;
-	const double p = (*randd)();
+	const double p = randd();
 	for (unsigned int i = 0; i <= maxIndex; ++i) {
-		cum+= bandwidthProbabilities[i]/tot;
-		if(p <= cum) { return i;}
-	}
-	assert(cum == 1);
-	exit (1);
+		cum += bandwidthProbabilities[i] / tot;
+		if (p <= cum) {
+			return i;
+		}
+	}assert(cum == 1);
+	exit(1);
 }
 
 #ifdef NDEBUG //Mode Release
@@ -136,25 +137,37 @@ mt19937 FacilityType::default_random_generator(static_cast<unsigned int>(std::ti
 #else //Mode Debug
 mt19937 FacilityType::default_random_generator(SEED);
 #endif
+
+uniform_01<mt19937&, double> FacilityType::randd(default_random_generator);
 variate_generator<mt19937&, binomial_distribution<> > FacilityType::fake_binornd(default_random_generator, binomial_distribution<>(1,1));
 
-//Set a new seed for random generator
-void FacilityType::setSeed(int seed) {
-	random_generator.seed(seed);
-	delete randd;
-	randd = new uniform_01< mt19937&, double >(random_generator);
-	int t = binornd->distribution().t();
-	int p = binornd->distribution().p();
-	delete binornd;
-	binornd = new variate_generator<mt19937&, binomial_distribution<> >(random_generator, binomial_distribution<>(t,p));
+
+//Set a new seed for random generators
+void FacilityType::setStaticSeed(const unsigned int seed) {
+	default_random_generator.seed(seed);
+	randd.base().seed(seed);
 }
 
-istream & FacilityType::read(istream & in, const PSLProblem& problem)
-{
-	in >> level >> demand;
-	unsigned int n = problem.getNbServers();
+void FacilityType::setSeed(const unsigned int seed) {
+	binornd->engine().seed(seed);
+}
+
+void FacilityType::setBinomial(unsigned int n, double p) {
+	delete binornd;
+	binornd = new variate_generator<mt19937&, binomial_distribution<> >(
+			default_random_generator, binomial_distribution<>(n, p));
+}
+
+istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 	int tmp;
-	while(serverCapacities.size() < n) {
+	in >> level;
+	unsigned int n = problem.getNbGroups();
+	while (demands.size() < n) {
+		in >> tmp;
+		demands.push_back(tmp);
+	}
+	n = problem.getNbServers();
+	while (serverCapacities.size() < n) {
 		in >> tmp;
 		serverCapacities.push_back(tmp);
 	}
@@ -162,11 +175,10 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem)
 	in >> t;
 	double p;
 	in >> p;
-	delete binornd;
-	binornd = new variate_generator<mt19937&, binomial_distribution<> >(random_generator, binomial_distribution<>(t,p));
+	setBinomial(t, p);
 	n = problem.getNbBandwidths();
 	double d;
-	while(bandwidthProbabilities.size() < n) {
+	while (bandwidthProbabilities.size() < n) {
 		in >> d;
 		bandwidthProbabilities.push_back(d);
 	}
@@ -174,80 +186,281 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem)
 	return in;
 }
 
-unsigned int FacilityType::getConnexionCapacity(const vector<ServerType*>* servers) const
-{
+unsigned int FacilityType::getConnexionCapacity(const ServerTypeList* servers) const {
 	unsigned int tot = 0;
 	for (unsigned int i = 0; i < servers->size(); ++i) {
-		tot+= serverCapacities[i] *  (*servers)[i]->getMaxConnections();
+		tot += serverCapacities[i] * (*servers)[i]->getMaxConnections();
 	}
 	return tot;
 }
 
-ostream& operator<<(ostream& out, const FacilityType& f) {
+//---------------------------------------- 
+//	PSLProblem Implementation
+//----------------------------------------
 
-	out << "Level:" << f.getLevel() << "\tDemand:" << f.getDemand() << "\tCapacities:{ ";
-	copy(f.serverCapacities.begin(), f.serverCapacities.end(), ostream_iterator<int>(out, " "));
-	out << "}" << endl << "Probabilities -> Facilities:B(" << f.binornd->distribution().t() << "," << f.binornd->distribution().p() <<")\tBandwidths:{ ";
-	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(), ostream_iterator<double>(out, " "));
-	out << "}\tReliability:" << f.reliabilityProbability;
-	return out;
-
+FacilityNode* PSLProblem::generateNetwork() {
+	return generateNetwork(true);
 }
 
-ostream& operator<<(ostream& out, const ServerType& f) {
-	return out << "Capacity:" << f.getMaxConnections() << "\tCost:" << f.getCost();
+//return a reference
+//Warning : it can be modified by the user
+IntList& PSLProblem::getLevelNodeCounts() {
+	//return a reference
+	return levelNodeCounts;
 }
 
-
-istream & operator >>(istream & in, ServerType & s)
-{
-	in >> s.capacity >> s.cost;
-	return in;
-}
-
-
-ostream & operator <<(ostream & out, const PSLProblem & f)
-{
-	cout << "Bandwidths: {";
-	copy(f.bandwidths.begin(), f.bandwidths.end(), ostream_iterator<int>(out, " "));
-	cout << "}" << endl ;
-	transform(f.servers.begin(), f.servers.end(), ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
-	transform(f.facilities.begin(), f.facilities.end(), ostream_iterator<FacilityType>(out, "\n"), dereference<FacilityType>);
-	return out;
-}
-
-FacilityNode *PSLProblem::generateNetwork()
-{
-	FacilityNode* root = new FacilityNode(facilities[0]);
-	return generateSubtree(root);
-}
-
-FacilityNode *PSLProblem::generateSubtree(FacilityNode *root)
-{
-	unsigned int idx = 0;
-	const unsigned int level = root->getType()->getLevel();
-	const unsigned int n = facilities.size() - 1;
-	while(idx  < n && facilities[idx]->getLevel() <= level) {idx++;}
-	while(idx  < n && facilities[idx]->getLevel() == level + 1) {
-		const unsigned int nbc = facilities[idx]->genRandomFacilities();
-		for (unsigned int i = 0; i < nbc; ++i) {
-			FacilityNode* child = new FacilityNode(facilities[idx]);
-			new NetworkLink(root, child, *this, false);
-			generateSubtree(child);
+FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
+	//Delete old tree.
+	deleteTree(root);
+	levelNodeCounts.clear();
+	levelNodeCounts.push_back(1);
+	nodeCount = 0;
+	queue<FacilityNode*> queue;
+	root = new FacilityNode(nodeCount++, facilities[0]);
+	queue.push(root);
+	unsigned int ftype = 1, clevel = 0, idx = 0;
+	FacilityNode* current = queue.front();
+	do {
+		queue.pop();
+		idx = ftype;
+		while (idx < facilities.size()
+				&& facilities[idx]->getLevel() == clevel + 1) {
+			//number of children
+			const unsigned int nbc = facilities[idx]->genRandomFacilities();
+			//generate children
+			for (unsigned int i = 0; i < nbc; ++i) {
+				FacilityNode* child = new FacilityNode(nodeCount,
+						facilities[idx]);
+				new NetworkLink(nodeCount - 1, current, child, *this,
+						hierarchic);
+				queue.push(child);
+				nodeCount++;
+			}
+			idx++;
 		}
-		idx++;
+		if (queue.empty()) {
+			break;
+		}
+		current = queue.front();
+		if (current->getType()->getLevel() == clevel + 1) {
+			levelNodeCounts.push_back(queue.size()); //Add number of facilities at level clevel
+			clevel = current->getType()->getLevel();
+			ftype = idx;
+		} else
+			assert(current->getType()->getLevel() == clevel);
+	} while (ftype < facilities.size());
+	
+	//clear queue
+	//class std::queue has no clear method
+	while (!queue.empty()) {
+		queue.pop();
 	}
+
+	assert(checkNetwork() && ( !hierarchic || checkNetworkHierarchy() ));
 	return root;
 }
 
-istream & operator >>(istream & in, PSLProblem & problem)
+ostream& PSLProblem::toDotty(ostream & out) {
+	if (root) {
+		out << "digraph G {\n";
+		root->toDotty(out);
+		out << "}\n";
+	}
+	return out;
+}
+
+bool PSLProblem::checkNetwork()
 {
+	unsigned int sum = 0;
+	//Test 1
+	for (IntListIterator j = levelNodeCounts.begin();
+			j != levelNodeCounts.end(); ++j)
+		sum += *j;
+	if( sum != nodeCount) return false;
+
+		sum = 0;
+		for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
+			sum ++;
+		}
+		if( sum != nodeCount) return false;
+
+	//Test 3
+	sum = 0;
+	for (LinkIterator n = root->lbegin(); n != root->lend(); ++n) {
+		sum ++;
+	}
+	if( sum != getLinkCount()) return false;
+
+	return true;
+}
+
+bool PSLProblem::checkNetworkHierarchy()
+{
+	for (LinkIterator n = root->lbegin(); n != root->lend(); ++n) {
+		if(! n->getOrigin()->isRoot() && (
+				( n->isReliable() && ! n->getOrigin()->toFather()->isReliable()) ||
+				n->getBandwidth() > n->getOrigin()->toFather()->getBandwidth()
+		)
+		) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void PSLProblem::setSeed(const unsigned int seed)
+{
+	FacilityType::setStaticSeed(seed);
+	for(FacilityTypeListIterator i=facilities.begin() ; i!=facilities.end() ; i++) {
+		(*i)->setSeed(seed);
+	}
+}
+
+//---------------------------------------- 
+//	NetworkLink Implementation
+//----------------------------------------
+
+NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
+		FacilityNode* child, PSLProblem& problem, bool hierarchic) :
+		id(id), origin(father), destination(child), bandwidth(0), reliable(0) {
+	father->children.push_back(this);
+	child->father = this;
+	if (father->isRoot() || !hierarchic) {
+		bandwidth = problem.getBandwidth(
+				child->getType()->genRandomBandwidthIndex());
+		reliable = child->getType()->genRandomReliability();
+	} else {
+		unsigned int fbandw = father->toFather()->getBandwidth();
+		int maxIndex = problem.getNbBandwidths() - 1;
+		while (maxIndex >= 0 && problem.getBandwidth(maxIndex) > fbandw) {
+			maxIndex--;
+		}
+		bandwidth = problem.getBandwidth(
+				child->getType()->genRandomBandwidthIndex(maxIndex));
+		reliable = father->toFather()->isReliable() && child->getType()->genRandomReliability();
+	}
+}
+
+void NetworkLink::forEachPath() const {
+	FacilityNode* ancestor = getDestination();
+	FacilityList successors;
+	do {
+		ancestor = ancestor->getFather();
+		successors.push_back(getDestination());
+		while (!successors.empty()) {
+			FacilityNode* successor = successors.back();
+			successors.pop_back();
+			cout << *ancestor << " -> " << *successor << endl;
+			if (!successor->isLeaf()) {
+				for (unsigned int i = 0; i < successor->getChildrenCount();
+						++i) {
+					successors.push_back(successor->getChild(i));
+				}
+			}
+		}
+	} while (!ancestor->isRoot());
+
+}
+
+ostream& NetworkLink::toDotty(ostream & out) {
+	out << origin->getID() << " -> " << destination->getID();
+	out << "[label=\"" << getBandwidth() << "\"";
+	if (isReliable()) {
+		out << ", style=bold ";
+	}
+	out << "];" << endl;
+	return out;
+}
+
+void NetworkLink::forEachPath(
+		void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const {
+	FacilityNode* ancestor = getDestination();
+	FacilityList successors;
+	do {
+		ancestor = ancestor->getFather();
+		successors.push_back(getDestination());
+		while (!successors.empty()) {
+			FacilityNode* successor = successors.back();
+			successors.pop_back();
+			(*ptr)(ancestor, successor);
+			if (!successor->isLeaf()) {
+				for (unsigned int i = 0; i < successor->getChildrenCount();
+						++i) {
+					successors.push_back(successor->getChild(i));
+				}
+			}
+		}
+	} while (!ancestor->isRoot());
+}
+
+//---------------------------------------- 
+//	RankMapper Implementation
+//----------------------------------------
+
+RankMapper::RankMapper(PSLProblem& problem) : nodeCount(problem.getNodeCount()), stageCount(problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
+	IntList levelNodeCounts = problem.getLevelNodeCounts();
+	levelCumulNodeCounts.push_back(0);
+	lengthCumulPathCounts.push_back(0);
+	for (unsigned int l = 0; l < levelNodeCounts.size(); ++l) {
+		levelCumulNodeCounts.push_back( levelCumulNodeCounts.back() + levelNodeCounts[l]);
+		lengthCumulPathCounts.push_back( lengthCumulPathCounts.back() + nodeCount - levelCumulNodeCounts.back());
+	}
+}
+
+//---------------------------------------- 
+//	LinkIterator Implementation
+//----------------------------------------
+
+LinkIterator::LinkIterator(FacilityNode* p) : current(NULL), end(NULL) {
+	if (p && !p->isLeaf()) {
+		current = p->cbegin();
+		end = p->cend();
+	}
+}
+
+LinkIterator& LinkIterator::operator ++() {
+	queue.push_back((*current)->getDestination());
+	current++;
+	while (current == end && !queue.empty()) {
+		current = queue.front()->cbegin();
+		end = queue.front()->cend();
+		queue.pop_front();
+	}
+	return (*this);
+}
+
+//---------------------------------------- 
+//	NodeIterator Implementation
+//----------------------------------------
+
+NodeIterator& NodeIterator::operator++() {
+	if (node != NULL) {
+		if (clink == NULL) {
+			clink = node->lbegin();
+			elink = node->lend();
+		}
+		if (clink != elink) {
+			node = clink->getDestination();
+			clink++;
+		} else {
+			node = NULL;
+		}
+	}
+	return (*this);
+}
+
+
+//---------------------------------------- 
+//	istream methods Implementation
+//----------------------------------------
+
+istream& operator >>(istream & in, PSLProblem & problem) {
 	int n;
 	in >> n;
 	for (int i = 0; i < n; ++i) {
 		int bandwidth;
 		in >> bandwidth;
-		problem.bandwidths.push_back( bandwidth);
+		problem.bandwidths.push_back(bandwidth);
 	}
 	in >> n;
 	for (int i = 0; i < n; ++i) {
@@ -255,6 +468,7 @@ istream & operator >>(istream & in, PSLProblem & problem)
 		in >> *stype;
 		problem.servers.push_back(stype);
 	}
+	in >> problem.numberOfGroups;
 	in >> n;
 	for (int i = 0; i < n; ++i) {
 		FacilityType* ftype = new FacilityType();
@@ -264,85 +478,70 @@ istream & operator >>(istream & in, PSLProblem & problem)
 	return in;
 }
 
-ostream & operator <<(ostream& out, const NetworkLink& l)
-{
-	return out << *l.getOrigin() << " -> " << *l.getDestination() <<" (" << l.getBandwidth() << ", " << l.isReliable() <<")";
-
+istream& operator >>(istream & in, ServerType & s) {
+	in >> s.capacity >> s.cost;
+	return in;
 }
 
-ostream & operator <<(ostream& out, const FacilityNode& n)
-{
-	return out << n.getID(); // << " " << n.getChildrenCount();
+//---------------------------------------- 
+//	ostream methods Implementation
+//----------------------------------------
 
-}
-
-
-
-
-void NetworkLink::forEachPath() const
-{
-	FacilityNode* ancestor = getDestination();
-	vector<FacilityNode*> successors;
-	do {
-		ancestor= ancestor->getFather();
-		successors.push_back(getDestination());
-		while( ! successors.empty() ) {
-			FacilityNode* successor= successors.back();
-			successors.pop_back();
-			cout << *ancestor << " -> " << *successor<< endl;
-			if(! successor->isLeaf()) {
-				for (unsigned int i = 0; i < successor->getChildrenCount(); ++i) {
-					successors.push_back(successor->getChild(i));
-				}
-			}
-		}
-	} while(! ancestor->isRoot());
-
-}
-
-ostream & NetworkLink::toDotty(ostream & out)
-{
-	out << origin->getID() << " -> " << destination->getID();
-	out << "[label=\"" << getBandwidth() << "\"";
-	if(isReliable()) {
-		out << ", style=bold ";
-	}
-	out << "];" <<endl;
+ostream& operator <<(ostream & out, const PSLProblem & f) {
+	cout << "Bandwidths: {";
+	copy(f.bandwidths.begin(), f.bandwidths.end(),
+			ostream_iterator<int>(out, " "));
+	cout << "}" << endl;
+	transform(f.servers.begin(), f.servers.end(),
+			ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
+	transform(f.facilities.begin(), f.facilities.end(),
+			ostream_iterator<FacilityType>(out, "\n"),
+			dereference<FacilityType>);
+	if (f.root)
+		f.root->print(out);
 	return out;
 }
 
+ostream& operator <<(ostream& out, const NetworkLink& l) {
+	return out << *l.getOrigin() << " -> " << *l.getDestination() << " ("
+			<< l.getBandwidth() << ", " << l.isReliable() << ")";
 
-void NetworkLink::forEachPath(void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const
-{
-	FacilityNode* ancestor = getDestination();
-	vector<FacilityNode*> successors;
-	do {
-		ancestor= ancestor->getFather();
-		successors.push_back(getDestination());
-		while( ! successors.empty() ) {
-			FacilityNode* successor= successors.back();
-			successors.pop_back();
-			(*ptr)(ancestor, successor);
-			if(! successor->isLeaf()) {
-				for (unsigned int i = 0; i < successor->getChildrenCount(); ++i) {
-					successors.push_back(successor->getChild(i));
-				}
-			}
-		}
-	} while(! ancestor->isRoot());
+}
+
+ostream& operator <<(ostream& out, const FacilityNode& n) {
+	return out << n.getID(); // << " " << n.getChildrenCount();
 }
 
 
+ostream& operator<<(ostream& out, const FacilityType& f) {
 
+	out << "Level:" << f.getLevel() << "\tDemand:{ ";
+	copy(f.demands.begin(), f.demands.end(), ostream_iterator<int>(out, " "));
+	out << "}\tCapacities:{ ";
+	copy(f.serverCapacities.begin(), f.serverCapacities.end(),
+			ostream_iterator<int>(out, " "));
+	out << "}" << endl << "Probabilities -> Facilities:B("
+			<< f.binornd->distribution().t() << ","
+			<< f.binornd->distribution().p() << ")\tBandwidths:{ ";
+	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(),
+			ostream_iterator<double>(out, " "));
+	out << "}\tReliability:" << f.reliabilityProbability;
+	return out;
 
+}
 
+ostream& operator<<(ostream& out, const ServerType& f) {
+	return out << "Capacity:" << f.getMaxConnections() << "\tCost:" << f.getCost();
+}
 
-
-
-
-
-
-
-
+ostream& operator <<(ostream & out, const RankMapper & r) {
+	out << "X=[0," << r.offsetXk() << "[" << endl;
+	out << "Xk=[" << r.offsetXk() << "," << r.offsetYi() << "[" << endl;
+	out << "Yi=[" << r.offsetYi() << "," << r.offsetYij() << "[" << endl;
+	out << "Yij=[" << r.offsetYij() << "," << r.offsetZ() << "[" << endl;
+	out << "Z=[" << r.offsetZ() << "," << r.offsetB() << "[" << endl;
+	out << "Z=[" << r.offsetB() << "," << r.size() << "[" << endl;
+	return cout;
+}
 
 
