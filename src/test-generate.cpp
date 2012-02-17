@@ -59,7 +59,10 @@ int main() {
 	problem->setSeed(10);
 	problem->generateNetwork(true);
 	cout << *problem;
-
+	/* refreshTree TESTED
+	problem->generateNetwork(true);
+	cout << *problem;
+	*/
 //
 //	ofstream myfile;
 //	myfile.open ("/tmp/pserver.dot");

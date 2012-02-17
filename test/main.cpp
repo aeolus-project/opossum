@@ -26,6 +26,103 @@ int add(int i, int j)
 
 BOOST_AUTO_TEST_SUITE(Tests)
 
+BOOST_AUTO_TEST_CASE(NetworkIterators)
+{
+	ifstream in;
+
+	in.open("benchmarks/instances/sample-server.dat");
+	if (!in) {
+		cout << "Unable to open file";
+		exit(1); // terminate with error
+	}
+	PSLProblem* problem = new PSLProblem();
+	in >> *problem;
+	in.close();
+	
+	problem->setSeed(10);
+	problem->generateNetwork(true);
+	cout << *problem;
+	
+	/////////////////////////////////////////////////
+	//		UnitTest LinkIterator
+	////////////////////////////////////////////////
+
+	LinkIterator itL = problem->getRoot()->lbegin();
+	//Copy ctor
+	//	
+	LinkIterator itL_copy(itL);
+	BOOST_CHECK(itL == itL_copy);
+	
+	//Operator ++
+	//	
+	itL++;
+	itL_copy++;
+	BOOST_CHECK(itL == itL_copy);
+	
+	//Operator !=	
+	//	
+	BOOST_CHECK(itL != problem->getRoot()->lbegin());
+	BOOST_CHECK(itL_copy != problem->getRoot()->lbegin());
+	
+	//Operator *
+	//
+	BOOST_CHECK(*itL == *itL_copy);
+	BOOST_CHECK(*itL != *(problem->getRoot()->lbegin()));
+
+	//Operator ->
+	//
+	BOOST_CHECK(itL->getID() == itL_copy->getID());
+	BOOST_CHECK(itL->getID() != problem->getRoot()->lbegin()->getID());
+	
+	//Count Links
+	//	
+	int count_links = 0;
+	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
+		count_links++;	
+	}
+	BOOST_CHECK(count_links == problem->getLinkCount());
+
+	
+	/////////////////////////////////////////////////
+	//		UnitTest NodeIterator
+	////////////////////////////////////////////////
+
+	NodeIterator itN = problem->getRoot()->nbegin();
+	//Copy ctor
+	//	
+	NodeIterator itN_copy(itN);
+	BOOST_CHECK(itN == itN_copy);
+	
+	//Operator ++
+	//	
+	itN++;
+	itN_copy++;
+	BOOST_CHECK(itN == itN_copy);
+	
+	//Operator !=	
+	//	
+	BOOST_CHECK(itN != problem->getRoot()->nbegin());
+	BOOST_CHECK(itN_copy != problem->getRoot()->nbegin());
+	
+	//Operator *
+	//
+	BOOST_CHECK(*itN == *itN_copy);
+	BOOST_CHECK(*itN != *(problem->getRoot()->nbegin()));
+
+	//Operator ->
+	//
+	BOOST_CHECK(itN->getID() == itN_copy->getID());
+	BOOST_CHECK(itN->getID() != problem->getRoot()->nbegin()->getID());
+	
+	//Count nodes
+	//	
+	int count_nodes = 0;
+	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
+		count_nodes++;
+	}
+	BOOST_CHECK(count_nodes == problem->getNodeCount());
+
+}
 
 BOOST_AUTO_TEST_CASE(networkGeneration)
 {
