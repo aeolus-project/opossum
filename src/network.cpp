@@ -342,28 +342,7 @@ ostream& NetworkLink::toDotty(ostream & out) {
 	return out;
 }
 
-template <typename FuncType>
-inline void NetworkLink::forEachPath(FuncType func) const {
-	//void NetworkLink::forEachPath(
-	//void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const {
-		FacilityNode* ancestor = getDestination();
-		FacilityList successors;
-		do {
-			ancestor = ancestor->getFather();
-			successors.push_back(getDestination());
-			while (!successors.empty()) {
-				FacilityNode* successor = successors.back();
-				successors.pop_back();
-				func(ancestor, successor);
-				if (!successor->isLeaf()) {
-					for (unsigned int i = 0; i < successor->getChildrenCount();
-							++i) {
-						successors.push_back(successor->getChild(i));
-					}
-				}
-			}
-		} while (!ancestor->isRoot());
-	}
+
 
 	//----------------------------------------
 	//	RankMapper Implementation

@@ -135,8 +135,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 			setPC.setVarType(false);
 			solver.new_constraint();
 			solver.set_constraint_coeff(rankM->rankY(*l, s), 1);
-			//FIXME l->forEachPath(getV);
-			//l->forEachPath(setPC);
+			l->forEachPath(setPC);
 			solver.add_constraint_eq(0);
 		}
 	}
