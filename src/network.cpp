@@ -186,13 +186,6 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 	return in;
 }
 
-unsigned int FacilityType::getConnexionCapacity(const ServerTypeList* servers) const {
-	unsigned int tot = 0;
-	for (unsigned int i = 0; i < servers->size(); ++i) {
-		tot += serverCapacities[i] * (*servers)[i]->getMaxConnections();
-	}
-	return tot;
-}
 
 //---------------------------------------- 
 //	PSLProblem Implementation

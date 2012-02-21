@@ -20,17 +20,14 @@
 #include <string>
 #include <iostream>
 
-#include <cudf_types.h>
 #include "network.hpp"
 
 
 using namespace std;
 
-typedef vector<CUDFcoefficient> CUDFCoefficientList;
-typedef vector<CUDFcoefficient>::iterator CUDFCoefficientIterator;
-
 // current CUDF problem
 extern PSLProblem *the_problem;
+extern PSLProblem *current_problem;
 //
 // parse the CUDF problem from input_file
 extern int parse_pslp(istream& in);
@@ -41,14 +38,11 @@ extern int parse_pslp(istream& in);
 extern int verbosity;
 
 // Print out a CUDF problem
-// requires the file descriptor of the targetted file and a pointer to the CUDF problem
+// requires the file descriptor of the targeted file and a pointer to the PSL problem
 extern void print_problem(ostream& in, PSLProblem *pbs);
 
 //cudf.y
 //------------------------------------------------------------------
-
-extern PSLProblem *current_problem;
-//PSLProblem *the_problem = (PSLProblem *)NULL;              /* the CUDF problem to solve */
 
 
 

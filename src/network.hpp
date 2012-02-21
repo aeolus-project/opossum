@@ -43,6 +43,7 @@
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/binomial_distribution.hpp>
 
+#include "cudf_types.h"
 
 //Define the seed of random
 #define SEED 1000
@@ -61,6 +62,9 @@ class PSLProblem;
 
 typedef vector<unsigned int> IntList;
 typedef vector<unsigned int>::iterator IntListIterator;
+
+typedef vector<CUDFcoefficient> CUDFcoefficientList;
+typedef vector<CUDFcoefficient>::iterator CUDFcoefficientListIterator;
 
 typedef vector<ServerType*> ServerTypeList;
 typedef vector<ServerType*>::iterator ServerTypeListIterator;
@@ -142,28 +146,26 @@ public:
 	inline unsigned int getLevel() const {
 		return level;
 	}
-	inline unsigned int getDemand(unsigned int stage) const {
+	inline CUDFcoefficient getDemand(unsigned int stage) const {
 		return demands[stage];
 	}
-	inline unsigned int getTotalDemand() {
-		unsigned int sum = 0;
-		for (IntListIterator j = demands.begin(); j != demands.end(); ++j)
+	inline CUDFcoefficient getTotalDemand() {
+		CUDFcoefficient sum = 0;
+		for (CUDFcoefficientListIterator j = demands.begin(); j != demands.end(); ++j)
 			sum += *j;
 		return sum;
 	}
-	inline unsigned int getServerCapacity(const unsigned int stype) const {
+	inline CUDFcoefficient getServerCapacity(const unsigned int stype) const {
 		return serverCapacities[stype];
 	}
-	inline unsigned int getTotalCapacity() {
-		unsigned int sum = 0;
-		for (IntListIterator j = serverCapacities.begin();
-				j != serverCapacities.end(); ++j)
+
+	inline CUDFcoefficient getTotalCapacity() {
+		CUDFcoefficient sum = 0;
+		for (CUDFcoefficientListIterator j = serverCapacities.begin(); j != serverCapacities.end(); ++j)
 			sum += *j;
 		return sum;
 	}
 
-
-	unsigned int getConnexionCapacity(const vector<ServerType*>* servers) const;
 
 	unsigned int genRandomFacilities();
 	unsigned int genRandomBandwidthIndex();
@@ -180,8 +182,8 @@ private:
 	static variate_generator<mt19937&, binomial_distribution<> > fake_binornd;
 
 	unsigned int level;
-	IntList demands;
-	IntList serverCapacities;
+	CUDFcoefficientList demands;
+	CUDFcoefficientList serverCapacities;
 	vector<double> bandwidthProbabilities;
 	double reliabilityProbability;
 	variate_generator<mt19937&, binomial_distribution<> >* binornd;
