@@ -247,7 +247,7 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 		} else
 			assert(current->getType()->getLevel() == clevel);
 	} while (ftype < facilities.size());
-	
+
 	//clear queue
 	//class std::queue has no clear method
 	while (!queue.empty()) {
@@ -276,11 +276,11 @@ bool PSLProblem::checkNetwork()
 		sum += *j;
 	if( sum != nodeCount) return false;
 
-		sum = 0;
-		for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
-			sum ++;
-		}
-		if( sum != nodeCount) return false;
+	sum = 0;
+	for (NodeIterator n = root->nbegin(); n != root->nend(); ++n) {
+		sum ++;
+	}
+	if( sum != nodeCount) return false;
 
 	//Test 3
 	sum = 0;
@@ -339,27 +339,6 @@ NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
 	}
 }
 
-void NetworkLink::forEachPath() const {
-	FacilityNode* ancestor = getDestination();
-	FacilityList successors;
-	do {
-		ancestor = ancestor->getFather();
-		successors.push_back(getDestination());
-		while (!successors.empty()) {
-			FacilityNode* successor = successors.back();
-			successors.pop_back();
-			cout << *ancestor << " -> " << *successor << endl;
-			if (!successor->isLeaf()) {
-				for (unsigned int i = 0; i < successor->getChildrenCount();
-						++i) {
-					successors.push_back(successor->getChild(i));
-				}
-			}
-		}
-	} while (!ancestor->isRoot());
-
-}
-
 ostream& NetworkLink::toDotty(ostream & out) {
 	out << origin->getID() << " -> " << destination->getID();
 	out << "[label=\"" << getBandwidth() << "\"";
@@ -370,176 +349,178 @@ ostream& NetworkLink::toDotty(ostream & out) {
 	return out;
 }
 
-void NetworkLink::forEachPath(
-		void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const {
-	FacilityNode* ancestor = getDestination();
-	FacilityList successors;
-	do {
-		ancestor = ancestor->getFather();
-		successors.push_back(getDestination());
-		while (!successors.empty()) {
-			FacilityNode* successor = successors.back();
-			successors.pop_back();
-			(*ptr)(ancestor, successor);
-			if (!successor->isLeaf()) {
-				for (unsigned int i = 0; i < successor->getChildrenCount();
-						++i) {
-					successors.push_back(successor->getChild(i));
+template <typename FuncType>
+inline void NetworkLink::forEachPath(FuncType func) const {
+	//void NetworkLink::forEachPath(
+	//void(*ptr)(FacilityNode *n1, FacilityNode *n2)) const {
+		FacilityNode* ancestor = getDestination();
+		FacilityList successors;
+		do {
+			ancestor = ancestor->getFather();
+			successors.push_back(getDestination());
+			while (!successors.empty()) {
+				FacilityNode* successor = successors.back();
+				successors.pop_back();
+				func(ancestor, successor);
+				if (!successor->isLeaf()) {
+					for (unsigned int i = 0; i < successor->getChildrenCount();
+							++i) {
+						successors.push_back(successor->getChild(i));
+					}
 				}
 			}
-		}
-	} while (!ancestor->isRoot());
-}
-
-//---------------------------------------- 
-//	RankMapper Implementation
-//----------------------------------------
-
-RankMapper::RankMapper(PSLProblem& problem) : nodeCount(problem.getNodeCount()), stageCount(problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
-	IntList levelNodeCounts = problem.getLevelNodeCounts();
-	levelCumulNodeCounts.push_back(0);
-	lengthCumulPathCounts.push_back(0);
-	for (unsigned int l = 0; l < levelNodeCounts.size(); ++l) {
-		levelCumulNodeCounts.push_back( levelCumulNodeCounts.back() + levelNodeCounts[l]);
-		lengthCumulPathCounts.push_back( lengthCumulPathCounts.back() + nodeCount - levelCumulNodeCounts.back());
+		} while (!ancestor->isRoot());
 	}
-}
 
-//---------------------------------------- 
-//	LinkIterator Implementation
-//----------------------------------------
+	//----------------------------------------
+	//	RankMapper Implementation
+	//----------------------------------------
 
-LinkIterator::LinkIterator(FacilityNode* p) : current(NULL), end(NULL) {
-	if (p && !p->isLeaf()) {
-		current = p->cbegin();
-		end = p->cend();
-	}
-}
-
-LinkIterator& LinkIterator::operator ++() {
-	queue.push_back((*current)->getDestination());
-	current++;
-	while (current == end && !queue.empty()) {
-		current = queue.front()->cbegin();
-		end = queue.front()->cend();
-		queue.pop_front();
-	}
-	return (*this);
-}
-
-//---------------------------------------- 
-//	NodeIterator Implementation
-//----------------------------------------
-
-NodeIterator& NodeIterator::operator++() {
-	if (node != NULL) {
-		if (clink == NULL) {
-			clink = node->lbegin();
-			elink = node->lend();
-		}
-		if (clink != elink) {
-			node = clink->getDestination();
-			clink++;
-		} else {
-			node = NULL;
+	RankMapper::RankMapper(PSLProblem& problem) : nodeCount(problem.getNodeCount()), stageCount(problem.getNbGroups() + 1), serverCount(problem.getNbServers()) {
+		IntList levelNodeCounts = problem.getLevelNodeCounts();
+		levelCumulNodeCounts.push_back(0);
+		lengthCumulPathCounts.push_back(0);
+		for (unsigned int l = 0; l < levelNodeCounts.size(); ++l) {
+			levelCumulNodeCounts.push_back( levelCumulNodeCounts.back() + levelNodeCounts[l]);
+			lengthCumulPathCounts.push_back( lengthCumulPathCounts.back() + nodeCount - levelCumulNodeCounts.back());
 		}
 	}
-	return (*this);
-}
 
+	//----------------------------------------
+	//	LinkIterator Implementation
+	//----------------------------------------
 
-//---------------------------------------- 
-//	istream methods Implementation
-//----------------------------------------
-
-istream& operator >>(istream & in, PSLProblem & problem) {
-	int n;
-	in >> n;
-	for (int i = 0; i < n; ++i) {
-		int bandwidth;
-		in >> bandwidth;
-		problem.bandwidths.push_back(bandwidth);
+	LinkIterator::LinkIterator(FacilityNode* p) : current(NULL), end(NULL) {
+		if (p && !p->isLeaf()) {
+			current = p->cbegin();
+			end = p->cend();
+		}
 	}
-	in >> n;
-	for (int i = 0; i < n; ++i) {
-		ServerType* stype = new ServerType();
-		in >> *stype;
-		problem.servers.push_back(stype);
+
+	LinkIterator& LinkIterator::operator ++() {
+		queue.push_back((*current)->getDestination());
+		current++;
+		while (current == end && !queue.empty()) {
+			current = queue.front()->cbegin();
+			end = queue.front()->cend();
+			queue.pop_front();
+		}
+		return (*this);
 	}
-	in >> problem.numberOfGroups;
-	in >> n;
-	for (int i = 0; i < n; ++i) {
-		FacilityType* ftype = new FacilityType();
-		ftype->read(in, problem);
-		problem.facilities.push_back(ftype);
+
+	//----------------------------------------
+	//	NodeIterator Implementation
+	//----------------------------------------
+
+	NodeIterator& NodeIterator::operator++() {
+		if (node != NULL) {
+			if (clink == NULL) {
+				clink = node->lbegin();
+				elink = node->lend();
+			}
+			if (clink != elink) {
+				node = clink->getDestination();
+				clink++;
+			} else {
+				node = NULL;
+			}
+		}
+		return (*this);
 	}
-	return in;
-}
-
-istream& operator >>(istream & in, ServerType & s) {
-	in >> s.capacity >> s.cost;
-	return in;
-}
-
-//---------------------------------------- 
-//	ostream methods Implementation
-//----------------------------------------
-
-ostream& operator <<(ostream & out, const PSLProblem & f) {
-	cout << "Bandwidths: {";
-	copy(f.bandwidths.begin(), f.bandwidths.end(),
-			ostream_iterator<int>(out, " "));
-	cout << "}" << endl;
-	transform(f.servers.begin(), f.servers.end(),
-			ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
-	transform(f.facilities.begin(), f.facilities.end(),
-			ostream_iterator<FacilityType>(out, "\n"),
-			dereference<FacilityType>);
-	if (f.root)
-		f.root->print(out);
-	return out;
-}
-
-ostream& operator <<(ostream& out, const NetworkLink& l) {
-	return out << *l.getOrigin() << " -> " << *l.getDestination() << " ("
-			<< l.getBandwidth() << ", " << l.isReliable() << ")";
-
-}
-
-ostream& operator <<(ostream& out, const FacilityNode& n) {
-	return out << n.getID(); // << " " << n.getChildrenCount();
-}
 
 
-ostream& operator<<(ostream& out, const FacilityType& f) {
+	//----------------------------------------
+	//	istream methods Implementation
+	//----------------------------------------
 
-	out << "Level:" << f.getLevel() << "\tDemand:{ ";
-	copy(f.demands.begin(), f.demands.end(), ostream_iterator<int>(out, " "));
-	out << "}\tCapacities:{ ";
-	copy(f.serverCapacities.begin(), f.serverCapacities.end(),
-			ostream_iterator<int>(out, " "));
-	out << "}" << endl << "Probabilities -> Facilities:B("
-			<< f.binornd->distribution().t() << ","
-			<< f.binornd->distribution().p() << ")\tBandwidths:{ ";
-	copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(),
-			ostream_iterator<double>(out, " "));
-	out << "}\tReliability:" << f.reliabilityProbability;
-	return out;
+	istream& operator >>(istream & in, PSLProblem & problem) {
+		int n;
+		in >> n;
+		for (int i = 0; i < n; ++i) {
+			int bandwidth;
+			in >> bandwidth;
+			problem.bandwidths.push_back(bandwidth);
+		}
+		in >> n;
+		for (int i = 0; i < n; ++i) {
+			ServerType* stype = new ServerType();
+			in >> *stype;
+			problem.servers.push_back(stype);
+		}
+		in >> problem.numberOfGroups;
+		in >> n;
+		for (int i = 0; i < n; ++i) {
+			FacilityType* ftype = new FacilityType();
+			ftype->read(in, problem);
+			problem.facilities.push_back(ftype);
+		}
+		return in;
+	}
 
-}
+	istream& operator >>(istream & in, ServerType & s) {
+		in >> s.capacity >> s.cost;
+		return in;
+	}
 
-ostream& operator<<(ostream& out, const ServerType& f) {
-	return out << "Capacity:" << f.getMaxConnections() << "\tCost:" << f.getCost();
-}
+	//----------------------------------------
+	//	ostream methods Implementation
+	//----------------------------------------
 
-ostream& operator <<(ostream & out, const RankMapper & r) {
-	out << "X=[0," << r.offsetXk() << "[" << endl;
-	out << "Xk=[" << r.offsetXk() << "," << r.offsetYi() << "[" << endl;
-	out << "Yi=[" << r.offsetYi() << "," << r.offsetYij() << "[" << endl;
-	out << "Yij=[" << r.offsetYij() << "," << r.offsetZ() << "[" << endl;
-	out << "Z=[" << r.offsetZ() << "," << r.offsetB() << "[" << endl;
-	out << "Z=[" << r.offsetB() << "," << r.size() << "[" << endl;
-	return cout;
-}
+	ostream& operator <<(ostream & out, const PSLProblem & f) {
+		cout << "Bandwidths: {";
+		copy(f.bandwidths.begin(), f.bandwidths.end(),
+				ostream_iterator<int>(out, " "));
+		cout << "}" << endl;
+		transform(f.servers.begin(), f.servers.end(),
+				ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
+		transform(f.facilities.begin(), f.facilities.end(),
+				ostream_iterator<FacilityType>(out, "\n"),
+				dereference<FacilityType>);
+		if (f.root)
+			f.root->print(out);
+		return out;
+	}
+
+	ostream& operator <<(ostream& out, const NetworkLink& l) {
+		return out << *l.getOrigin() << " -> " << *l.getDestination() << " ("
+				<< l.getBandwidth() << ", " << l.isReliable() << ")";
+
+	}
+
+	ostream& operator <<(ostream& out, const FacilityNode& n) {
+		return out << n.getID(); // << " " << n.getChildrenCount();
+	}
+
+
+	ostream& operator<<(ostream& out, const FacilityType& f) {
+
+		out << "Level:" << f.getLevel() << "\tDemand:{ ";
+		copy(f.demands.begin(), f.demands.end(), ostream_iterator<int>(out, " "));
+		out << "}\tCapacities:{ ";
+		copy(f.serverCapacities.begin(), f.serverCapacities.end(),
+				ostream_iterator<int>(out, " "));
+		out << "}" << endl << "Probabilities -> Facilities:B("
+				<< f.binornd->distribution().t() << ","
+				<< f.binornd->distribution().p() << ")\tBandwidths:{ ";
+		copy(f.bandwidthProbabilities.begin(), f.bandwidthProbabilities.end(),
+				ostream_iterator<double>(out, " "));
+		out << "}\tReliability:" << f.reliabilityProbability;
+		return out;
+
+	}
+
+	ostream& operator<<(ostream& out, const ServerType& f) {
+		return out << "Capacity:" << f.getMaxConnections() << "\tCost:" << f.getCost();
+	}
+
+	ostream& operator <<(ostream & out, const RankMapper & r) {
+		out << "X=[0," << r.offsetXk() << "[" << endl;
+		out << "Xk=[" << r.offsetXk() << "," << r.offsetYi() << "[" << endl;
+		out << "Yi=[" << r.offsetYi() << "," << r.offsetYij() << "[" << endl;
+		out << "Yij=[" << r.offsetYij() << "," << r.offsetZ() << "[" << endl;
+		out << "Z=[" << r.offsetZ() << "," << r.offsetB() << "[" << endl;
+		out << "Z=[" << r.offsetB() << "," << r.size() << "[" << endl;
+		return cout;
+	}
 
 

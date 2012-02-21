@@ -8,8 +8,26 @@ bool generate_desagregate_constraints = true;
 bool generate_agregate_constraints = false;
 
 int new_var = 0;
+CUDFcoefficient min_bandwidth = 2; //TODO change value of min_bandwidth
 
+struct GetVar {
 
+public:
+	GetVar(RankMapper* rankM, abstract_solver* solver) : rankM(rankM), solver(solver) {
+
+	}
+	~GetVar() {
+		rankM = NULL;
+		solver = NULL;
+	}
+	void operator()(FacilityNode* s, FacilityNode* d) {
+		int rank = rankM->rankB(s, d, 0);
+		solver->set_constraint_coeff(rank, 1);;
+	}
+private :
+	RankMapper* rankM;
+	abstract_solver* solver;
+};
 
 // Generate MILP objective function(s) and constraints for a given solver
 // and a given criteria combination
@@ -49,15 +67,9 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 			solver.set_constraint_coeff( rankM->rankX(*i, k), 1);
 			solver.add_constraint_leq(i->getType()->getServerCapacity(k));
 		}
-
-
 		///////////
 		//limit the number of connections provided by facilities for a given stage
-
-		//TODO special case: initial broadcast (s=0)
-
-		//standard case: groups of clients
-		for (int s = 1; s < problem->getNbGroups() + 1; ++s) {
+		for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
 			solver.new_constraint();
 			solver.set_constraint_coeff( rankM->rankY(*i, s), -1);
 			for (int k = 0; k < problem->getNbServers(); ++k) {
@@ -67,6 +79,8 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		}
 		///////////
 		//connections flow conservation
+		//TODO special case: initial broadcast (s=0)
+		//standard case: groups of clients
 		for (int s = 1; s < problem->getNbGroups() + 1; ++s) {
 			solver.new_constraint();
 			if(! i->isRoot()) {
@@ -79,18 +93,20 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		}
 
 	}
+
+	GetVar getV(rankM, &solver);
 	///////////////////////
 	//for each link ...
 	///////////////////////
 	for(LinkIterator l = problem->getRoot()->lbegin() ; l!=  problem->getRoot()->lend() ; l++) {
 		///////////
-		//for each stage
+		//for each stage ...
 		for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
 			///////////
 			//number of connections passing through the link
 			solver.new_constraint();
 			solver.set_constraint_coeff(rankM->rankY(*l, s), 1);
-			// TODO l->forEachPath();
+			//FIXME l->forEachPath(getV);
 			//solver.set_constraint_coeff(rankM->rankZ(source, dest, s), -1);
 			solver.add_constraint_eq(0);
 
@@ -108,13 +124,25 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	///////////////////////
 	//for each path ...
 	///////////////////////
-
-	///////////
-	//minimal bandwidth for a connection
-
+	for(NodeIterator i = problem->getRoot()->nbegin() ; i!=  problem->getRoot()->nend() ; i++) {
+		if( ! i->isLeaf()) {
+			for(NodeIterator j = (i->nbegin()) ; j !=  i->nend() ; j++) {
+				///////////
+				//for each stage ...
+				for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
+					///////////
+					//minimal bandwidth for a connection
+					solver.new_constraint();
+					solver.set_constraint_coeff(rankM->rankB(*i, *j, s), 1);
+					solver.set_constraint_coeff(rankM->rankZ(*i, *j, s), - min_bandwidth);
+					solver.add_constraint_geq(0);
+				}
+			}
+		}
+	}
 	solver.end_add_constraints();
-	//	char* str = "/tmp/test.lp";
-	//	solver.writelp(str);
+	//char* str = "/tmp/test.lp";
+	//solver.writelp(str);
 	return 0;
 }
 

@@ -19,11 +19,7 @@
 #include "../src/GexfGen.cpp"
 
 
-int add(int i, int j)
-{
-	return i + j;
-}
-
+//TODO Add test void forEachPath(FuncType functor) const;
 PSLProblem* initProblem() {
 	ifstream in;
 

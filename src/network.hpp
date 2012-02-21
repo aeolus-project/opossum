@@ -299,8 +299,10 @@ public:
 	inline unsigned int getBandwidth() const {
 		return bandwidth;
 	}
-	void forEachPath() const;
-	void forEachPath(void(*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+	//void forEachPath(void(*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+	template <typename FuncType>
+	void forEachPath(FuncType functor) const;
+
 	ostream& toDotty(ostream& out);
 
 private:

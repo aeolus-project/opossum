@@ -21,6 +21,7 @@ extern bool generate_agregate_constraints;
 
 
 extern int new_var;
+extern CUDFcoefficient min_bandwidth;
 
 
 // available criteria
@@ -36,6 +37,7 @@ extern int new_var;
 #define CRIT_LEXPARANOID  9
 #define CRIT_LEXTRENDY   10
 #define CRIT_LEXTRENDY2  11
+
 
 // main function for constraint generation (translate a CUDF problem into MILP problem for a given solver and a given criteria)
 extern int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_combiner &combiner);
