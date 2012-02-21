@@ -94,6 +94,8 @@ T& dereference(T* ptr) {
 //	ServerType Declaration
 //----------------------------------------
 
+//TODO add costs as parameters to criteria and replace server types by a coefficients list;
+
 class ServerType {
 public:
 	ServerType() : capacity(0), cost(0) {}
@@ -267,6 +269,49 @@ private:
 
 
 //---------------------------------------- 
+//	NetworkLink Declaration
+//----------------------------------------
+
+class NetworkLink {
+public:
+
+	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child,
+			PSLProblem& problem, bool hierarchic);
+
+	//Destructor of NetworkLink
+	//Do not delete origin and destination
+	//because these nodes are deleted in the destructor of PSLProblem
+	//
+	~NetworkLink() {}
+
+	inline unsigned int getID() const {
+		return id;
+	}
+	inline FacilityNode* getOrigin() const {
+		return origin;
+	}
+	inline FacilityNode* getDestination() const {
+		return destination;
+	}
+	inline bool isReliable() const {
+		return reliable;
+	}
+	inline unsigned int getBandwidth() const {
+		return bandwidth;
+	}
+	void forEachPath() const;
+	void forEachPath(void(*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
+	ostream& toDotty(ostream& out);
+
+private:
+	unsigned int id;
+	FacilityNode *origin;
+	FacilityNode *destination;
+	unsigned int bandwidth;
+	bool reliable;
+};
+
+//----------------------------------------
 //	LinkIterator Declaration
 //----------------------------------------
 
@@ -376,48 +421,6 @@ private:
 
 };
 
-//---------------------------------------- 
-//	NetworkLink Declaration
-//----------------------------------------
-
-class NetworkLink {
-public:
-
-	NetworkLink(unsigned int id, FacilityNode* father, FacilityNode* child,
-			PSLProblem& problem, bool hierarchic);
-	
-	//Destructor of NetworkLink
-	//Do not delete origin and destination 
-	//because these nodes are deleted in the destructor of PSLProblem
-	//
-	~NetworkLink() {}
-
-	inline unsigned int getID() const {
-		return id;
-	}
-	inline FacilityNode* getOrigin() const {
-		return origin;
-	}
-	inline FacilityNode* getDestination() const {
-		return destination;
-	}
-	inline bool isReliable() const {
-		return reliable;
-	}
-	inline unsigned int getBandwidth() const {
-		return bandwidth;
-	}
-	void forEachPath() const;
-	void forEachPath(void(*ptr)(FacilityNode* n1, FacilityNode* n2)) const;
-	ostream& toDotty(ostream& out);
-
-private:
-	unsigned int id;
-	FacilityNode *origin;
-	FacilityNode *destination;
-	unsigned int bandwidth;
-	bool reliable;
-};
 
 //---------------------------------------- 
 //	RankMapper Declaration
@@ -517,6 +520,9 @@ public:
 	inline unsigned int getNbBandwidths() const {
 		return bandwidths.size();
 	}
+	inline ServerType* getServer(int idx) {
+		return servers[idx];
+	}
 	inline unsigned int getNbServers() const {
 		return servers.size();
 	}
@@ -530,6 +536,7 @@ public:
 	inline unsigned int getNetworkDepth() const {
 		return levelNodeCounts.size();
 	}
+	//TODO inline bool isValid();
 
 	void setSeed(const unsigned int seed);
 	FacilityNode* generateNetwork();
