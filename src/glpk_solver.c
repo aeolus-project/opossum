@@ -113,13 +113,8 @@ int glpk_solver::begin_objectives(void) {
 }
 
 // return the package coefficient of the objective function 
-//CUDFcoefficient glpk_solver::get_obj_coeff(CUDFVersionedPackage *package) { return (CUDFcoefficient)get_coeff(package); }
-
-// return the package coefficient of the objective function 
 CUDFcoefficient glpk_solver::get_obj_coeff(int rank) { return (CUDFcoefficient)get_coeff(rank); }
 
-// set package coefficient to a value
-//int glpk_solver::set_obj_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) { set_coeff(package, value); return 0; }
 // set column coefficient to a value
 int glpk_solver::set_obj_coeff(int rank, CUDFcoefficient value) { set_coeff(rank, value); return 0; }
 

@@ -276,8 +276,7 @@ int cplex_solver::init_solutions() {
   return 0; 
 }
 
-// get the computed status of a package (0 = uninstalled, 1 = installed)
-//CUDFcoefficient cplex_solver::get_solution(CUDFVersionedPackage *package) {  return (CUDFcoefficient)nearbyint(solution[package->rank]); }
+
 CUDFcoefficient cplex_solver::get_solution(int k) {  return (CUDFcoefficient)nearbyint(solution[k]); }
 
 // initialize the objective function
@@ -288,14 +287,10 @@ int cplex_solver::begin_objectives(void) {
   return 0; 
 }
 
-// return the objective function coefficient of a package
-//CUDFcoefficient cplex_solver::get_obj_coeff(CUDFVersionedPackage *package) { return (CUDFcoefficient)get_coeff(package); }
 
 // return the objective function coefficient of a rank
 CUDFcoefficient cplex_solver::get_obj_coeff(int rank) { return (CUDFcoefficient)get_coeff(rank); }
 
-// set the objective function coefficient of a package
-//int cplex_solver::set_obj_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) { set_coeff(package, value); return 0; }
 
 // set the objective function coefficient of a ranked variable 
 int cplex_solver::set_obj_coeff(int rank, CUDFcoefficient value) { set_coeff(rank, value); return 0; };

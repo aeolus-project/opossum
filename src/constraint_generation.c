@@ -10,23 +10,35 @@ bool generate_agregate_constraints = false;
 int new_var = 0;
 CUDFcoefficient min_bandwidth = 2; //TODO change value of min_bandwidth
 
-struct GetVar {
+struct SetPathCoeff {
 
 public:
-	GetVar(RankMapper* rankM, abstract_solver* solver) : rankM(rankM), solver(solver) {
+
+	SetPathCoeff(RankMapper* rankM, abstract_solver* solver) : rankM(rankM), solver(solver), stage(0) {
 
 	}
-	~GetVar() {
+
+	~SetPathCoeff() {
 		rankM = NULL;
 		solver = NULL;
 	}
+	inline unsigned int getStage() const { return stage; }
+	inline void setStage(unsigned int stage) { this->stage = stage; };
+
+	inline unsigned int getVarType() const { return varBorZ; }
+	inline void setVarType(bool varBorZ) { this->varBorZ = varBorZ; };
 	void operator()(FacilityNode* s, FacilityNode* d) {
-		int rank = rankM->rankB(s, d, 0);
-		solver->set_constraint_coeff(rank, 1);;
+		int rank = varBorZ ? rankM->rankB(s, d, stage) : rankM->rankZ(s, d, stage);
+		solver->set_constraint_coeff(rank, 1);
+		;
 	}
-private :
-	RankMapper* rankM;
-	abstract_solver* solver;
+
+private:
+	RankMapper *rankM;
+	abstract_solver *solver;
+	unsigned int stage;
+	bool varBorZ;
+
 };
 
 // Generate MILP objective function(s) and constraints for a given solver
@@ -80,6 +92,14 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		///////////
 		//connections flow conservation
 		//TODO special case: initial broadcast (s=0)
+		solver.new_constraint();
+		if(! i->isRoot()) {
+			solver.set_constraint_coeff( rankM->rankY(i->toFather(), 0), 1);
+		}
+		for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
+			solver.set_constraint_coeff( rankM->rankY(*l, 0), -1);
+		}
+		//solver.add_constraint_eq(i->getType()->getDemand(s - 1)); //TODO define Xi or set directly coeffs of Xik ?
 		//standard case: groups of clients
 		for (int s = 1; s < problem->getNbGroups() + 1; ++s) {
 			solver.new_constraint();
@@ -89,35 +109,34 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 			for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
 				solver.set_constraint_coeff( rankM->rankY(*l, s), -1);
 			}
-			solver.add_constraint_eq(i->getType()->getDemand(s - 1)); //TODO check demand index
+			solver.add_constraint_eq(i->getType()->getDemand(s - 1));
 		}
 
 	}
 
-	GetVar getV(rankM, &solver);
+	SetPathCoeff setPC(rankM, &solver);
 	///////////////////////
 	//for each link ...
 	///////////////////////
-	for(LinkIterator l = problem->getRoot()->lbegin() ; l!=  problem->getRoot()->lend() ; l++) {
-		///////////
-		//for each stage ...
-		for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
+	///////////
+	//for each stage ...
+	for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
+		setPC.setStage(s);
+		for(LinkIterator l = problem->getRoot()->lbegin() ; l!=  problem->getRoot()->lend() ; l++) {
+			///////////
+			//bandwidth passing through the link
+			setPC.setVarType(true);
+			solver.new_constraint();
+			// TODO l->forEachPath();
+			solver.add_constraint_leq(l->getBandwidth());
+
 			///////////
 			//number of connections passing through the link
+			setPC.setVarType(false);
 			solver.new_constraint();
 			solver.set_constraint_coeff(rankM->rankY(*l, s), 1);
 			//FIXME l->forEachPath(getV);
-			//solver.set_constraint_coeff(rankM->rankZ(source, dest, s), -1);
 			solver.add_constraint_eq(0);
-
-			///////////
-			//bandwidth passing through the link
-			solver.new_constraint();
-			// TODO l->forEachPath();
-			//solver.set_constraint_coeff(rankM->rankB(source, dest, s), -1);
-			solver.add_constraint_leq(l->getBandwidth());
-
-
 		}
 	}
 
@@ -131,7 +150,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 				//for each stage ...
 				for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
 					///////////
-					//minimal bandwidth for a connection
+					//minimal bandwidth for a single connection
 					solver.new_constraint();
 					solver.set_constraint_coeff(rankM->rankB(*i, *j, s), 1);
 					solver.set_constraint_coeff(rankM->rankZ(*i, *j, s), - min_bandwidth);

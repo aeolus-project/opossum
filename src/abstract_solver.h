@@ -33,13 +33,9 @@ class abstract_solver {
   // called before objective definitions
   virtual int begin_objectives(void) { return 0; };
 
-  // get the current coefficient value of the objective function for parameter package
-  //FIXME virtual CUDFcoefficient get_obj_coeff(CUDFVersionedPackage *package) { return 0; };
   // get the current coefficient value of the objective function for variable rank
   virtual CUDFcoefficient get_obj_coeff(int rank) { return 0; };
 
-  // set objective coefficient value according to a package
-  //FIXME virtual int set_obj_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) { return 0; };
   // set objective coefficient value according to a rank (column number)
   virtual int set_obj_coeff(int rank, CUDFcoefficient value) { return 0; };
 
@@ -61,13 +57,9 @@ class abstract_solver {
   // called before the definition of a new constraint
   virtual int new_constraint(void) { return 0; };
 
-  // get current constraint coefficient according to a package
-  //FIXME virtual CUDFcoefficient get_constraint_coeff(CUDFVersionedPackage *package) { return 0; };
   // get current constraint coefficient according to a rank
   virtual CUDFcoefficient get_constraint_coeff(int rank) { return 0; };
 
-  // set constraint coefficient of a package
-  //FIXME virtual int set_constraint_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) { return 0; };
   // set constraint coefficient of a rank (i.e. column number)
   virtual int set_constraint_coeff(int rank, CUDFcoefficient value) { return 0; };
 
@@ -97,8 +89,7 @@ class abstract_solver {
   // get the objective value at the end of solving
   virtual CUDFcoefficient objective_value() { return 0; };
 
-  // get the status of a package in the final configuration
-  //FIXME virtual CUDFcoefficient get_solution(CUDFVersionedPackage *package) { return 0; };
+  // get the status of a rank in the final configuration
   virtual CUDFcoefficient get_solution(int k) { return 0; };
 
   // ******************************************************************

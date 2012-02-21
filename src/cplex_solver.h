@@ -27,12 +27,8 @@ class cplex_solver: public abstract_solver, public scoeff_solver<double, 0, 0> {
 
   // Init the objective function definitions
   int begin_objectives(void);
-  // Get current objective coefficient of package 
-  //FIXME  CUDFcoefficient get_obj_coeff(CUDFVersionedPackage *package);
   // Get current objective coefficient of a column
   CUDFcoefficient get_obj_coeff(int rank);
-  // Set current objective coefficient of package 
-  //FIXME int set_obj_coeff(CUDFVersionedPackage *package, CUDFcoefficient value);
   // Set current objective coefficient of column
   int set_obj_coeff(int rank, CUDFcoefficient value);
   // Begin the definition of a new objective
@@ -46,12 +42,8 @@ class cplex_solver: public abstract_solver, public scoeff_solver<double, 0, 0> {
   int begin_add_constraints(void);
   // Begin the definition of a new constraint
   int new_constraint(void);
-  // Get current constraint coefficient of a package
-  //FIXME CUDFcoefficient get_constraint_coeff(CUDFVersionedPackage *package);
   // Get current constraint coefficient of a column
   CUDFcoefficient get_constraint_coeff(int rank);
-  // Set current constraint coefficient of a package
-  //FIXME int set_constraint_coeff(CUDFVersionedPackage *package, CUDFcoefficient value);
   // Set current constraint coefficient of a column
   int set_constraint_coeff(int rank, CUDFcoefficient value);
   // Add current constraint as a more or equal constraint
@@ -73,7 +65,6 @@ class cplex_solver: public abstract_solver, public scoeff_solver<double, 0, 0> {
   // Init solutions (required before calling get_solution)
   int init_solutions();
   // Get the solution for a package
-  //FIXME CUDFcoefficient get_solution(CUDFVersionedPackage *package);
   // Get the solution for a column
   CUDFcoefficient get_solution(int k);
 

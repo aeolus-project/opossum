@@ -241,23 +241,14 @@ int lp_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient
   return 0; 
 }
 
-// return the status of a package within the final configuration
-//CUDFcoefficient lp_solver::get_solution(CUDFVersionedPackage *package) { return solution[package->rank]; }
 
 // initialize objective function
 int lp_solver::begin_objectives(void) { return 0; }
 
-// return the package coefficient of the objective function 
-//CUDFcoefficient lp_solver::get_obj_coeff(CUDFVersionedPackage *package) { return get_coeff(package); }
 
 // return the package coefficient of the objective function 
 CUDFcoefficient lp_solver::get_obj_coeff(int rank) { return get_coeff(rank); }
 
-// set the package coefficient of the objective function 
-//int lp_solver::set_obj_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) {
-//  set_coeff(package, value);
-//  return 0;
-//}
 
 // set the column coefficient of the objective function 
 int lp_solver::set_obj_coeff(int rank, CUDFcoefficient value) { 
@@ -288,17 +279,9 @@ int lp_solver::new_constraint(void) {
   return 0; 
 }
 
-// get the package coefficient of the current constraint
-//CUDFcoefficient lp_solver::get_constraint_coeff(CUDFVersionedPackage *package) { return get_coeff(package); }
 
 // get the package coefficient of the current constraint
 CUDFcoefficient lp_solver::get_constraint_coeff(int rank) { return get_coeff(rank); }
-
-// set package coefficient of the current constraint
-//int lp_solver::set_constraint_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) {
-//  set_coeff(package, value);
-//  return 0;
-//}
 
 // set column coefficient of the current constraint
 int lp_solver::set_constraint_coeff(int rank, CUDFcoefficient value) { 

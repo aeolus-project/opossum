@@ -435,17 +435,17 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 
 			// handle criteria
 			if (strncmp(crit_descr+crit_name, "removed", crit_name_length) == 0) {
-				; //FIXME criteria->push_back(new removed_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
+				; // criteria->push_back(new removed_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
 			} else if (strncmp(crit_descr+crit_name, "changed", crit_name_length) == 0) {
-				; //FIXME criteria->push_back(new changed_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
+				; // criteria->push_back(new changed_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
 			} else if (strncmp(crit_descr+crit_name, "new", crit_name_length) == 0) {
 				criteria->push_back(new new_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
-				; //FIXME criteria->push_back(new notuptodate_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
+				; // criteria->push_back(new notuptodate_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
 			} else if (strncmp(crit_descr+crit_name, "nunsat", crit_name_length) == 0) {
 				bool with_providers = true;
 				char *property_name = get_criteria_property_name_and_bool(crit_descr, pos, with_providers);
 				if (property_name != (char *)NULL) {
-					; //FIXME 	abstract_criteria *crit = new nunsat_criteria(property_name, with_providers, get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
+					; //abstract_criteria *crit = new nunsat_criteria(property_name, with_providers, get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
 					//criteria_with_property->push_back(crit);
 					//criteria->push_back(crit);
 				}
@@ -453,7 +453,7 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 				bool onlynew = false;
 				char *property_name = get_criteria_property_name_and_bool(crit_descr, pos, onlynew);
 				if (property_name != (char *)NULL) {
-					; //FIXME abstract_criteria *crit = new count_criteria(property_name, onlynew, get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
+					; //abstract_criteria *crit = new count_criteria(property_name, onlynew, get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
 					//criteria_with_property->push_back(crit);
 					//criteria->push_back(crit);
 				}
@@ -517,7 +517,7 @@ int main(int argc, char *argv[]) {
 	bool fulloutput = false;
 	PSLProblem *problem;
 	vector<abstract_criteria *> criteria_with_property;
-
+	//TODO remove useless options;
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
@@ -548,6 +548,7 @@ int main(int argc, char *argv[]) {
 						exit(-1);
 					}
 				}
+
 			} else if (strcmp(argv[i], "-fo") == 0) {
 				fulloutput = true;
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
@@ -564,7 +565,7 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "-cov") == 0) {
 				criteria_opt_var = true;
 			} else if (strcmp(argv[i], "-noreduce") == 0) {
-				; 	//FIXME use_reduced = false;
+				;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+4, true, &criteria_with_property);
 				if (criteria->size() > 0)
@@ -736,15 +737,6 @@ int main(int argc, char *argv[]) {
 		//criteria->push_back(new removed_criteria());
 		combiner = new lexicographic_combiner(criteria);
 	}
-
-	// reduce the problem (if use_reduced is true)
-	//		if (combiner->can_reduce()) {
-	//			if (verbosity > 0) fprintf(stdout, "Can reduce graph.\n");
-	//		} else {
-	//			// FIXME use_reduced = false;
-	//			if (verbosity > 0) fprintf(stdout, "Can NOT reduce graph.\n");
-	//		}
-	//FIXME problem = compute_reduced_CUDF(the_problem);
 
 	problem = the_problem;
 	// combiner initialization

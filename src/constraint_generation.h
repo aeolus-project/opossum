@@ -42,5 +42,6 @@ extern CUDFcoefficient min_bandwidth;
 // main function for constraint generation (translate a CUDF problem into MILP problem for a given solver and a given criteria)
 extern int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_combiner &combiner);
 
+
 #endif
 
