@@ -107,18 +107,18 @@ public:
 
 	virtual ~ServerType() {}
 	
-	inline unsigned int getCost() const {
+	inline CUDFcoefficient getCost() const {
 		return cost;
 	}
-	inline unsigned int getMaxConnections() const {
+	inline CUDFcoefficient getMaxConnections() const {
 		return capacity;
 	}
 
 	friend istream& operator>>(istream& in, ServerType& f);
 
 private:
-	unsigned int capacity;
-	unsigned int cost;
+	CUDFcoefficient capacity;
+	CUDFcoefficient cost;
 
 };
 
