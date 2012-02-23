@@ -137,7 +137,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 			//bandwidth passing through the link
 			setPC.setVarType(true);
 			solver.new_constraint();
-			// TODO l->forEachPath();
+			l->forEachPath(setPC);
 			solver.add_constraint_leq(l->getBandwidth());
 
 			///////////
