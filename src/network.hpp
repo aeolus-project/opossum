@@ -259,7 +259,6 @@ public:
 	
 	//For LinkIterator
 	LinkIterator lbegin();
-
 	LinkIterator lend();
 
 private:
@@ -434,7 +433,6 @@ class RankMapper {
 public:
 	RankMapper(PSLProblem& problem);
 	~RankMapper() {}
-	//TODO remove Xi ?
 	//TODO Separate boolean, integer and real variables
 	int rankX(FacilityNode *node) const {
 		return node->getID();
@@ -563,6 +561,14 @@ public:
 	inline unsigned int getLinkCount() const {
 		return nodeCount - 1;
 	}
+
+	//For NodeIterator
+	inline NodeIterator nbegin() { return root->nbegin();}
+	NodeIterator nend() { return root->nend();}
+
+	//For LinkIterator
+	LinkIterator lbegin() { return root->lbegin();}
+	LinkIterator lend() { return root->lend();}
 
 	ostream& toDotty(ostream& out);
 

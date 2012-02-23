@@ -56,7 +56,6 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	nb_vars = combiner.column_allocation(nb_vars);
 	int other_vars=nb_vars - rankM->size();
 	solver.init_solver(problem, other_vars);
-	//TODO set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 	solver.begin_objectives();
 	combiner.objective_generation();
 	solver.end_objectives();
@@ -71,9 +70,8 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	///////////////////////
 	//for each facility ...
 	///////////////////////
-	for(NodeIterator i = problem->getRoot()->nbegin() ; i!=  problem->getRoot()->nend() ; i++) {
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		///////////
-
 		//compute the total number of servers at facilities
 		solver.new_constraint();
 		solver.set_constraint_coeff( rankM->rankX(*i), -1);
@@ -81,7 +79,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 			solver.set_constraint_coeff( rankM->rankX(*i, k), 1);
 		}
 		solver.add_constraint_eq(0);
-
+		///////////
 		//limit the number of servers of a given type at facilities
 		for (int k = 0; k < problem->getNbServers(); ++k) {
 			solver.new_constraint();
@@ -90,6 +88,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		}
 		///////////
 		//limit the number of connections provided by facilities for a given stage
+		//FIXME I believe that stage are false
 		for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
 			solver.new_constraint();
 			solver.set_constraint_coeff( rankM->rankY(*i, s), -1);
@@ -132,7 +131,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	//for each stage ...
 	for (int s = 0; s < problem->getNbGroups() + 1; ++s) {
 		setPC.setStage(s);
-		for(LinkIterator l = problem->getRoot()->lbegin() ; l!=  problem->getRoot()->lend() ; l++) {
+		for(LinkIterator l = problem->lbegin() ; l!=  problem->lend() ; l++) {
 			///////////
 			//bandwidth passing through the link
 			setPC.setVarType(true);
@@ -153,7 +152,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	///////////////////////
 	//for each path ...
 	///////////////////////
-	for(NodeIterator i = problem->getRoot()->nbegin() ; i!=  problem->getRoot()->nend() ; i++) {
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		if( ! i->isLeaf()) {
 			for(NodeIterator j = (i->nbegin()) ; j !=  i->nend() ; j++) {
 				///////////

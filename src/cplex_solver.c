@@ -20,7 +20,7 @@ abstract_solver *new_cplex_solver() { return new cplex_solver(); }
 int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
   int status;
 
-  nb_packages = 1000;
+  nb_packages = 1000; //FIXME number of variables
 
   // Coefficient initialization
   initialize_coeffs(nb_packages + other_vars);

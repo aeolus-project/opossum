@@ -818,7 +818,7 @@ int parse_pslp(istream& in)
 	if(the_problem) delete the_problem;
 	the_problem = new PSLProblem();
 	in >> *the_problem;
-	//TODO the_problem->setSeed(seed);
+	//TODO add option for the_problem->setSeed(seed);
 	//TODO add option for hierarchical network
 	bool hierarchical=true;
 	the_problem->generateNetwork(hierarchical);
