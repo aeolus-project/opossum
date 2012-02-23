@@ -52,9 +52,9 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	//----------------------------------------------------------------------------------------------------
 	// Objective function
 	RankMapper* rankM = new RankMapper(*problem);
-	int nb_vars=rankM->size();//TODO   nb_vars = nb_packages + new_var;
+	int nb_vars=rankM->size();
 	nb_vars = combiner.column_allocation(nb_vars);
-	int other_vars=nb_vars - rankM->size();//TODO other_vars=nb_vars - nb_packages
+	int other_vars=nb_vars - rankM->size();
 	solver.init_solver(problem, other_vars);
 	//TODO set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 	solver.begin_objectives();
@@ -73,7 +73,16 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	///////////////////////
 	for(NodeIterator i = problem->getRoot()->nbegin() ; i!=  problem->getRoot()->nend() ; i++) {
 		///////////
-		//limit the number of servers at facilities
+
+		//compute the total number of servers at facilities
+		solver.new_constraint();
+		solver.set_constraint_coeff( rankM->rankX(*i), -1);
+		for (int k = 0; k < problem->getNbServers(); ++k) {
+			solver.set_constraint_coeff( rankM->rankX(*i, k), 1);
+		}
+		solver.add_constraint_eq(0);
+
+		//limit the number of servers of a given type at facilities
 		for (int k = 0; k < problem->getNbServers(); ++k) {
 			solver.new_constraint();
 			solver.set_constraint_coeff( rankM->rankX(*i, k), 1);
@@ -91,7 +100,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		}
 		///////////
 		//connections flow conservation
-		//TODO special case: initial broadcast (s=0)
+		//special case: initial broadcast (s=0)
 		solver.new_constraint();
 		if(! i->isRoot()) {
 			solver.set_constraint_coeff( rankM->rankY(i->toFather(), 0), 1);
@@ -99,7 +108,8 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
 			solver.set_constraint_coeff( rankM->rankY(*l, 0), -1);
 		}
-		//solver.add_constraint_eq(i->getType()->getDemand(s - 1)); //TODO define Xi or set directly coeffs of Xik ?
+		solver.set_constraint_coeff( rankM->rankX(*i), -1); //the pserver demand
+		solver.add_constraint_eq(0);
 		//standard case: groups of clients
 		for (int s = 1; s < problem->getNbGroups() + 1; ++s) {
 			solver.new_constraint();
@@ -160,8 +170,6 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		}
 	}
 	solver.end_add_constraints();
-	//char* str = "/tmp/test.lp";
-	//solver.writelp(str);
 	return 0;
 }
 

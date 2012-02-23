@@ -434,7 +434,8 @@ class RankMapper {
 public:
 	RankMapper(PSLProblem& problem);
 	~RankMapper() {}
-
+	//TODO remove Xi ?
+	//TODO Separate boolean, integer and real variables
 	int rankX(FacilityNode *node) const {
 		return node->getID();
 	}
@@ -537,7 +538,7 @@ public:
 		return facilities.size();
 	}
 
-	inline unsigned int getNetworkDepth() const {
+	inline unsigned int getNbLevels() const {
 		return levelNodeCounts.size();
 	}
 	//TODO inline bool isValid();
