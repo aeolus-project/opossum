@@ -50,6 +50,24 @@ int glpk_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficie
   return 0; 
 }
 
+int glpk_solver::set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) {
+	return 0;
+}
+
+// set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
+int glpk_solver::set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
+	return 0;
+}
+// set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
+int glpk_solver::set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
+	return 0;
+}
+// set variable type to bool and its name to name (must be used before end_objectives)
+int glpk_solver::set_boolvar(int rank, char* name) {
+	return 0;
+}
+
+
 // write the problem into a file
 int glpk_solver::writelp(char *filename) { glp_write_lp(lp, NULL, filename); return 0; }
 

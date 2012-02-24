@@ -547,20 +547,22 @@ public:
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
 
+	//TODO change visibility to network
 	bool checkNetwork();
 	bool checkNetworkHierarchy();
 	inline FacilityNode* getRoot() const {
 		return root;
 	}
-	inline unsigned int getNodeCount() const {
+	inline
+	unsigned int getNodeCount() const {
 		return nodeCount;
 	}
-
-	IntList& getLevelNodeCounts();
 
 	inline unsigned int getLinkCount() const {
 		return nodeCount - 1;
 	}
+
+	IntList& getLevelNodeCounts();
 
 	//For NodeIterator
 	inline NodeIterator nbegin() { return root->nbegin();}

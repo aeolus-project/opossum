@@ -33,6 +33,14 @@ class lp_solver: public abstract_solver, public scoeff_solver<CUDFcoefficient, 0
   bool has_intvars();
   // Allocate some columns for integer variables
   int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
+  //set variable type to int and its range to [lower, upper] (must be used before end_objectives)
+  int set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
+  // set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
+  int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
+  // set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
+  int set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
+  // set variable type to bool and its name to name (must be used before end_objectives)
+  int set_boolvar(int rank, char* name); //TODO
 
   // Init the objective function definitions
   int begin_objectives(void);

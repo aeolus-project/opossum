@@ -25,6 +25,15 @@ class cplex_solver: public abstract_solver, public scoeff_solver<double, 0, 0> {
   // Allocate some columns for integer variables
   int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 
+  //set variable type to int and its range to [lower, upper] (must be used before end_objectives)
+  int set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
+  // set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
+  int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper);
+  // set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
+  int set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper);
+  // set variable type to bool and its name to name (must be used before end_objectives)
+  int set_boolvar(int rank, char* name);
+
   // Init the objective function definitions
   int begin_objectives(void);
   // Get current objective coefficient of a column
@@ -77,6 +86,7 @@ class cplex_solver: public abstract_solver, public scoeff_solver<double, 0, 0> {
   int first_objective;
 
   double *cplex_coeff; // cplex coefficients are doubles ...
+  //TODO pourquoi des double et pas des CUDFcoefficient ?
   double *lb;          // array of lower bounds
   double *ub;          // array of upper bounds
   char *vartype;       // array of variable types
