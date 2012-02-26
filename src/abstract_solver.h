@@ -12,7 +12,7 @@
 #define _ABSTRACT_SOLVER_H
 
 #include <cudf.h>
-//#include <cudf_types.h>
+#include <stdarg.h>
 
 
 // provide an abstraction of the underlying solvers
@@ -43,10 +43,12 @@ public:
 	// set variable type to bool and its name to name (must be used before end_objectives)
 	virtual int set_boolvar(int rank, char* name) { return 0; }
 
-	//TODO add varargs ?
-	inline char* sprintName(const char * format, unsigned idx1) { //TODO copy ?
-		char buffer[20];
-		sprintf(buffer, format, idx1);
+	inline char* sprint_var(const char * format, ...) { //TODO copy ?
+		char buffer[16];
+		va_list args;
+		va_start(args, format);
+		vsprintf(buffer, format, args);
+		va_end(args);
 		char *name;
 		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
 			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
@@ -56,29 +58,6 @@ public:
 		return name;
 	}
 
-	inline char* sprintName(const char * format, unsigned idx1, unsigned int idx2) { //TODO copy ?
-		char buffer[16];
-		sprintf(buffer, format, idx1, idx2);
-		char *name;
-		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
-			exit(-1);
-		}
-		strcpy(name, buffer);
-		return name;
-	}
-
-	inline char* sprintName(const char * format, unsigned idx1, unsigned int idx2, unsigned int idx3) { //TODO copy ?
-		char buffer[16];
-		sprintf(buffer, format, idx1, idx2, idx3);
-		char *name;
-		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
-			exit(-1);
-		}
-		strcpy(name, buffer);
-		return name;
-	}
 	// ******************************************************************
 	// called before objective definitions
 	virtual int begin_objectives(void) { return 0; };
