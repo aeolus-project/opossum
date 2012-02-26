@@ -23,10 +23,8 @@ class new_criteria: public abstract_criteria {
   // list of all uninstalled virtual packaged with at list a versionned package
   //CUDFVirtualPackageList all_uninstalled_versioned_virtual_packages;
 
-  // range of the criteria
-  int range;
-  // column of the first variable used by the criteria
-  int first_free_var;
+  // upper bound of the criteria
+  int _upper_bound;
 
   // Allocate some columns for the criteria
   int set_variable_range(int first_free_var);

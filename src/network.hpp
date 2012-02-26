@@ -547,6 +547,8 @@ private:
 	//
 	void deleteTree(FacilityNode* node) {
 		levelNodeCounts.clear();
+		levelCumulNodeCounts.clear();
+		lengthCumulPathCounts.clear();
 		_nodeCount = 0;
 		if(node != NULL) {		
 			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {

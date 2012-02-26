@@ -822,10 +822,14 @@ int parse_pslp(istream& in)
 	//TODO add option for hierarchical network
 	bool hierarchical=true;
 	the_problem->generateNetwork(hierarchical);
+
+	ofstream myfile;
+	myfile.open ("graphpbs.dot");
+	//myfile.open ("/tmp/pserver.dot");
+	the_problem->toDotty(myfile);
+
 	return 0;
 }
-
-
 
 void print_problem(ostream& out, PSLProblem *pbs)
 {
@@ -833,3 +837,16 @@ void print_problem(ostream& out, PSLProblem *pbs)
 }
 
 
+void print_solution(ostream& out, PSLProblem *problem, abstract_solver solver) {
+//	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+//
+//	}
+}
+
+void flow2dotty(PSLProblem *problem, abstract_solver solver, unsigned int stage) {
+
+}
+
+void path2dotty(PSLProblem *problem, abstract_solver solver, unsigned int stage) {
+
+}

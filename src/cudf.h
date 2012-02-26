@@ -39,10 +39,7 @@ extern int verbosity;
 
 // Print out a CUDF problem
 // requires the file descriptor of the targeted file and a pointer to the PSL problem
-extern void print_problem(ostream& in, PSLProblem *pbs);
-
-//cudf.y
-//------------------------------------------------------------------
+extern void print_problem(ostream& out, PSLProblem *pbs);
 
 
 
