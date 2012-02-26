@@ -12,7 +12,7 @@
 void new_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
   this->problem = problem;
   this->solver = solver;
-//  range = 0;
+  range = 0;
 //  for (CUDFVirtualPackageListIterator ivpkg = problem->all_virtual_packages->begin(); ivpkg != problem->all_virtual_packages->end(); ivpkg++) {
 //    int size = (*ivpkg)->all_versions.size();
 //    if ((size > 0) && ((*ivpkg)->highest_installed == (CUDFVersionedPackage *)NULL)) {

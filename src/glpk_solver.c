@@ -62,6 +62,16 @@ int glpk_solver::set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoe
 int glpk_solver::set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
 	return 0;
 }
+
+// set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
+int glpk_solver::set_intvar(int rank, char* name){
+	return 0;
+}
+// set variable type to real and its range to [0, +inf[ and its name to name (must be used before end_objectives)
+int glpk_solver::set_realvar(int rank, char* name) {
+	return 0;
+}
+
 // set variable type to bool and its name to name (must be used before end_objectives)
 int glpk_solver::set_boolvar(int rank, char* name) {
 	return 0;

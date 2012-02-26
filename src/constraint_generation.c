@@ -87,7 +87,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		///////////
 		//limit the number of connections provided by facilities for a given stage
 		//FIXME I believe that stage are false
-		for (int s = 0; s < problem->groupCount() + 1; ++s) {
+		for (int s = 0; s < problem->stageCount(); ++s) {
 			solver.new_constraint();
 			solver.set_constraint_coeff( problem->rankY(*i, s), -1);
 			for (int k = 0; k < problem->serverTypeCount(); ++k) {
@@ -98,26 +98,26 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		///////////
 		//connections flow conservation
 		//special case: initial broadcast (s=0)
-		solver.new_constraint();
-		if(! i->isRoot()) {
-			solver.set_constraint_coeff( problem->rankY(i->toFather(), 0), 1);
-		}
-		for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
-			solver.set_constraint_coeff( problem->rankY(*l, 0), -1);
-		}
-		solver.set_constraint_coeff( problem->rankX(*i), -1); //the pserver demand
-		solver.add_constraint_eq(0);
-		//standard case: groups of clients
-		for (int s = 1; s < problem->groupCount() + 1; ++s) {
-			solver.new_constraint();
-			if(! i->isRoot()) {
-				solver.set_constraint_coeff( problem->rankY(i->toFather(), s), 1);
-			}
-			for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
-				solver.set_constraint_coeff( problem->rankY(*l, s), -1);
-			}
-			solver.add_constraint_eq(i->getType()->getDemand(s - 1));
-		}
+//		solver.new_constraint();
+//		if(! i->isRoot()) {
+//			solver.set_constraint_coeff( problem->rankY(i->toFather(), 0), 1);
+//		}
+//		for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
+//			solver.set_constraint_coeff( problem->rankY(*l, 0), -1);
+//		}
+//		solver.set_constraint_coeff( problem->rankX(*i), -1); //the pserver demand
+//		solver.add_constraint_eq(0);
+//		//standard case: groups of clients
+//		for (int s = 1; s < problem->groupCount() + 1; ++s) {
+//			solver.new_constraint();
+//			if(! i->isRoot()) {
+//				solver.set_constraint_coeff( problem->rankY(i->toFather(), s), 1);
+//			}
+//			for(LinkListIterator l = i->cbegin(); l != i->cend() ; l++) {
+//				solver.set_constraint_coeff( problem->rankY(*l, s), -1);
+//			}
+//			solver.add_constraint_eq(i->getType()->getDemand(s - 1));
+//		}
 
 	}
 
@@ -127,35 +127,38 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 	///////////////////////
 	///////////
 	//for each stage ...
-	for (int s = 0; s < problem->groupCount() + 1; ++s) {
-		setPC.setStage(s);
-		for(LinkIterator l = problem->lbegin() ; l!=  problem->lend() ; l++) {
-			///////////
-			//bandwidth passing through the link
-			setPC.setVarType(true);
-			solver.new_constraint();
-			l->forEachPath(setPC);
-			solver.add_constraint_leq(l->getBandwidth());
-
-			///////////
-			//number of connections passing through the link
-			setPC.setVarType(false);
-			solver.new_constraint();
-			solver.set_constraint_coeff(problem->rankY(*l, s), 1);
-			l->forEachPath(setPC);
-			solver.add_constraint_eq(0);
-		}
-	}
+//	for (int s = 0; s < problem->groupCount() + 1; ++s) {
+//		setPC.setStage(s);
+//		for(LinkIterator l = problem->lbegin() ; l!=  problem->lend() ; l++) {
+//			///////////
+//			//bandwidth passing through the link
+//			setPC.setVarType(true);
+//			solver.new_constraint();
+//			l->forEachPath(setPC);
+//			solver.add_constraint_leq(l->getBandwidth());
+//
+//			///////////
+//			//number of connections passing through the link
+//			setPC.setVarType(false);
+//			solver.new_constraint();
+//			solver.set_constraint_coeff(problem->rankY(*l, s), -1);
+//			l->forEachPath(setPC);
+//			solver.add_constraint_eq(0);
+//		}
+//	}
 
 	///////////////////////
 	//for each path ...
 	///////////////////////
+
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		if( ! i->isLeaf()) {
-			for(NodeIterator j = (i->nbegin()) ; j !=  i->nend() ; j++) {
+			NodeIterator j = i->nbegin();
+			j++;
+			while(j !=  i->nend()) {
 				///////////
 				//for each stage ...
-				for (int s = 0; s < problem->groupCount() + 1; ++s) {
+				for (int s = 0; s < problem->stageCount(); ++s) {
 					///////////
 					//minimal bandwidth for a single connection
 					solver.new_constraint();
@@ -163,6 +166,7 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 					solver.set_constraint_coeff(problem->rankZ(*i, *j, s), - min_bandwidth);
 					solver.add_constraint_geq(0);
 				}
+				j++;
 			}
 		}
 	}

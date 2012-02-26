@@ -316,7 +316,7 @@ ostream& PSLProblem::toRanks(ostream & out) {
 	out << "Yij=[" << offsetYij() << "," << offsetZ() << "[" << endl;
 	out << "Z=[" << offsetZ() << "," << offsetB() << "[" << endl;
 	out << "B=[" << offsetB() << "," << rankCount() << "[" << endl;
-	return cout;
+	return out;
 }
 
 

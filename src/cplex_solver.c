@@ -20,10 +20,9 @@ abstract_solver *new_cplex_solver() { return new cplex_solver(); }
 int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	int status;
 
-	nb_packages = 1000; //FIXME number of variables
 
 	// Coefficient initialization
-	initialize_coeffs(nb_packages + other_vars);
+	initialize_coeffs(problem->rankCount() + other_vars);
 
 	/* Initialize the CPLEX environment */
 	env = CPXopenCPLEX (&status);
@@ -99,6 +98,43 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	}
 
 	// TODO Set package variable names
+	///////////////////////
+	//for each facility ...
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		//char buffer[20];
+		set_intvar(problem->rankX(*i), sprintName("x%d", i->getID()));
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			set_intvar(problem->rankX(*i, k), sprintName("x%d_%d", i->getID(), k));
+		}
+		for (int s = 0; s < problem->stageCount(); ++s) {
+			set_intvar(problem->rankY(*i, s), sprintName("y%d'%d", i->getID(), s));
+		}
+	}
+
+	///////////////////////
+	//for each link ...
+	for(LinkIterator i = problem->lbegin() ; i!=  problem->lend() ; i++) {
+		for (int s = 0; s < problem->stageCount(); ++s) {
+			set_intvar(problem->rankY(*i, s), sprintName("y%d_%d'%d", i->getOrigin()->getID(), i->getDestination()->getID(), s));
+		}
+	}
+	///////////////////////
+	//for each path ...
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		if( ! i->isLeaf()) {
+			NodeIterator j = i->nbegin();
+			j++;
+			while(j !=  i->nend()) {
+				for (int s = 0; s < problem->stageCount(); ++s) {
+					set_intvar(problem->rankZ(*i, *j, s), sprintName("z%d_%d'%d", i->getID(), j->getID(), s));
+					set_realvar(problem->rankB(*i, *j, s), sprintName("b%d_%d'%d", i->getID(), j->getID(), s));
+				}
+				j++;
+			}
+		}
+	}
+
+
 	//  int i = 0;
 	//  for (CUDFVersionedPackageListIterator ipkg = all_versioned_packages->begin(); ipkg != all_versioned_packages->end(); ipkg++) {
 	//    lb[i] = 0;
@@ -121,25 +157,21 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	//  }
 
 	// Set additional variable names
-	for (int i = nb_packages; i < nb_vars; i++) {
+	for (int i = problem->rankCount(); i < nb_vars; i++) {
 		char *name;
 		char buffer[20];
-
-		sprintf(buffer, "x%d", i);
+		sprintf(buffer, "X%d", i);
 		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
 			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
 			exit(-1);
 		}
 		strcpy(name, buffer);
-
-		lb[i] = 0;
-		ub[i] = 1;
-		vartype[i] = 'B';
-		varname[i] = name;
+		set_boolvar(i, name); // Default Binary Variable
 	}
 
 	return 0;
 }
+
 
 // cplex can handle integer variables
 bool cplex_solver::has_intvars() { return true; }
@@ -148,14 +180,14 @@ bool cplex_solver::has_intvars() { return true; }
 int cplex_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 
 	lb[rank] = lower;
 	ub[rank] = upper;
-	vartype[rank] = 'I';
+	vartype[rank] = CPX_INTEGER;
 	return 0;
 };
 
 int cplex_solver::set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) {
 	lb[rank] = lower;
 	ub[rank] = upper;
-	vartype[rank] = 'R';
+	vartype[rank] = CPX_CONTINUOUS;
 	return 0;
 }
 
@@ -170,12 +202,30 @@ int cplex_solver::set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFc
 	varname[rank] = name;
 	return set_realvar_range(rank, lower, upper);
 }
+// set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
+int cplex_solver::set_intvar(int rank, char* name){
+	varname[rank] = name;
+	lb[rank] = 0;
+	ub[rank] = CPX_INFBOUND;
+	vartype[rank] = CPX_INTEGER;
+	return 0;
+}
+
+// set variable type to real and its range to [0, +inf[ and its name to name (must be used before end_objectives)
+int cplex_solver::set_realvar(int rank, char* name) {
+	varname[rank] = name;
+	lb[rank] = 0;
+	ub[rank] = CPX_INFBOUND;
+	vartype[rank] = CPX_CONTINUOUS;
+	return 0;
+}
+
 // set variable type to bool and its name to name (must be used before end_objectives)
 int cplex_solver::set_boolvar(int rank, char* name) {
 	varname[rank] = name;
 	lb[rank] = 0;
 	ub[rank] = 1;
-	vartype[rank] = 'B';
+	vartype[rank] = CPX_BINARY;
 	return 0;
 }
 

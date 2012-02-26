@@ -566,10 +566,11 @@ private:
 	inline int offsetYij() const {
 		return offsetYi() + _nodeCount * stageCount();
 	}
+
 	inline int rank(FacilityNode* source, FacilityNode* destination) const {
 		int length = destination->getType()->getLevel() - source->getType()->getLevel();
 		//path are ranked by length and their index using the bread-first numbered tree.
-		return lengthCumulPathCounts[length] + (destination->getID() - levelCumulNodeCounts[length]);
+		return lengthCumulPathCounts[length-1] + (destination->getID() - levelCumulNodeCounts[length]);
 	}
 	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage) const {
 		return rank(source, destination) * stageCount() + stage;

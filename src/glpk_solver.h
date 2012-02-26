@@ -31,6 +31,10 @@ public:
 	int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
 	// set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
 	int set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
+	// set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
+	int set_intvar(int rank, char* name);
+	// set variable type to real and its range to [0, +inf[ and its name to name (must be used before end_objectives)
+	int set_realvar(int rank, char* name);
 	// set variable type to bool and its name to name (must be used before end_objectives)
 	int set_boolvar(int rank, char* name); //TODO
 	// Write the lp on a file
