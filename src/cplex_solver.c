@@ -97,78 +97,7 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		exit(-1);
 	}
 
-	// TODO Set package variable names
-	///////////////////////
-	//for each facility ...
-	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-		//char buffer[20];
-		set_intvar(problem->rankX(*i), sprintName("x%d", i->getID()));
-		for (int k = 0; k < problem->serverTypeCount(); ++k) {
-			set_intvar(problem->rankX(*i, k), sprintName("x%d_%d", i->getID(), k));
-		}
-		for (int s = 0; s < problem->stageCount(); ++s) {
-			set_intvar(problem->rankY(*i, s), sprintName("y%d'%d", i->getID(), s));
-		}
-	}
-
-	///////////////////////
-	//for each link ...
-	for(LinkIterator i = problem->lbegin() ; i!=  problem->lend() ; i++) {
-		for (int s = 0; s < problem->stageCount(); ++s) {
-			set_intvar(problem->rankY(*i, s), sprintName("y%d_%d'%d", i->getOrigin()->getID(), i->getDestination()->getID(), s));
-		}
-	}
-	///////////////////////
-	//for each path ...
-	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-		if( ! i->isLeaf()) {
-			NodeIterator j = i->nbegin();
-			j++;
-			while(j !=  i->nend()) {
-				for (int s = 0; s < problem->stageCount(); ++s) {
-					set_intvar(problem->rankZ(*i, *j, s), sprintName("z%d_%d'%d", i->getID(), j->getID(), s));
-					set_realvar(problem->rankB(*i, *j, s), sprintName("b%d_%d'%d", i->getID(), j->getID(), s));
-				}
-				j++;
-			}
-		}
-	}
-
-
-	//  int i = 0;
-	//  for (CUDFVersionedPackageListIterator ipkg = all_versioned_packages->begin(); ipkg != all_versioned_packages->end(); ipkg++) {
-	//    lb[i] = 0;
-	//    ub[i] = 1;
-	//    vartype[i] = 'B';
-	//    if (USEXNAME) {
-	//      char *name;
-	//      char buffer[20];
-	//
-	//      sprintf(buffer, "x%d", i);
-	//      if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-	//	fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
-	//	exit(-1);
-	//      }
-	//      strcpy(name, buffer);
-	//      varname[(*ipkg)->rank] = name;
-	//    } else
-	//      varname[(*ipkg)->rank] = (*ipkg)->versioned_name;
-	//    i++;
-	//  }
-
-	// Set additional variable names
-	for (int i = problem->rankCount(); i < nb_vars; i++) {
-		char *name;
-		char buffer[20];
-		sprintf(buffer, "X%d", i);
-		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
-			exit(-1);
-		}
-		strcpy(name, buffer);
-		set_boolvar(i, name); // Default Binary Variable
-	}
-
+	init_vars(problem, nb_vars);
 	return 0;
 }
 

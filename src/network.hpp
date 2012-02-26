@@ -500,7 +500,7 @@ public:
 		return _groupCount + 1;
 	}
 
-	inline unsigned int rankCount() {
+	inline unsigned int rankCount() const {
 		return offsetB() + pathCount() * stageCount();
 	}
 

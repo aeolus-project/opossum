@@ -43,20 +43,6 @@ public:
 	// set variable type to bool and its name to name (must be used before end_objectives)
 	virtual int set_boolvar(int rank, char* name) { return 0; }
 
-	inline char* sprint_var(const char * format, ...) { //TODO copy ?
-		char buffer[16];
-		va_list args;
-		va_start(args, format);
-		vsprintf(buffer, format, args);
-		va_end(args);
-		char *name;
-		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
-			exit(-1);
-		}
-		strcpy(name, buffer);
-		return name;
-	}
 
 	// ******************************************************************
 	// called before objective definitions
@@ -125,6 +111,66 @@ public:
 	// abstract solver destructor
 	virtual ~abstract_solver() {};
 
+protected:
+
+	virtual int init_vars(PSLProblem *problem, int nb_vars) {
+		///////////////////////
+		//for each facility ...
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			//char buffer[20];
+			set_intvar(problem->rankX(*i), sprint_var("x%d", i->getID()));
+			for (int k = 0; k < problem->serverTypeCount(); ++k) {
+				set_intvar(problem->rankX(*i, k), sprint_var("x%d_%d", i->getID(), k));
+			}
+			for (int s = 0; s < problem->stageCount(); ++s) {
+				set_intvar(problem->rankY(*i, s), sprint_var("y%d'%d", i->getID(), s));
+			}
+		}
+
+		///////////////////////
+		//for each link ...
+		for(LinkIterator i = problem->lbegin() ; i!=  problem->lend() ; i++) {
+			for (int s = 0; s < problem->stageCount(); ++s) {
+				set_intvar(problem->rankY(*i, s), sprint_var("y%d_%d'%d", i->getOrigin()->getID(), i->getDestination()->getID(), s));
+			}
+		}
+		///////////////////////
+		//for each path ...
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			if( ! i->isLeaf()) {
+				NodeIterator j = i->nbegin();
+				j++;
+				while(j !=  i->nend()) {
+					for (int s = 0; s < problem->stageCount(); ++s) {
+						set_intvar(problem->rankZ(*i, *j, s), sprint_var("z%d_%d'%d", i->getID(), j->getID(), s));
+						set_realvar(problem->rankB(*i, *j, s), sprint_var("b%d_%d'%d", i->getID(), j->getID(), s));
+					}
+					j++;
+				}
+			}
+		}
+
+		// Set additional variable names
+		for (int i = problem->rankCount(); i < nb_vars; i++) {
+			set_intvar(i, sprint_var("X%d", i - problem->rankCount())); // Default Binary Variable
+		}
+		return 0;
+	}
+
+	inline char* sprint_var(const char * format, ...) {
+		char buffer[16];
+		va_list args;
+		va_start(args, format);
+		vsprintf(buffer, format, args);
+		va_end(args);
+		char *name;
+		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
+			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
+			exit(-1);
+		}
+		strcpy(name, buffer);
+		return name;
+	}
 };
 
 

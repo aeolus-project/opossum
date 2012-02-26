@@ -22,6 +22,7 @@ public:
 
 	// Does the solver use integer variables
 	bool has_intvars();
+
 	// Allocate some columns for integer variables
 	int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 
@@ -89,7 +90,7 @@ public:
 	int first_objective;
 
 	double *cplex_coeff; // cplex coefficients are doubles ...
-	//TODO pourquoi des double et pas des CUDFcoefficient ?
+	//TODO pourquoi des double et pas des CUDFcoefficient ? Pour cplex ...
 	double *lb;          // array of lower bounds
 	double *ub;          // array of upper bounds
 	char *vartype;       // array of variable types
