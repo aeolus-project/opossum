@@ -760,7 +760,7 @@ int main(int argc, char *argv[]) {
 
 			fprintf(output_file, "\n");
 		}
-		//TODO add solution graphics
+		//TODO set verbosity for solution graphics
 		//		ofstream myfile;
 		//		myfile.open ("solpbs.dot");
 		//		myfile << "digraph G {" <<endl;
@@ -819,12 +819,12 @@ int parse_pslp(istream& in)
 	bool hierarchical=true;
 	the_problem->generateNetwork(hierarchical);
 
-	//TODO add option for instance graphics
+	//TODO set verbosity for instance graphics
 	ofstream myfile;
 	myfile.open ("graphpbs.dot");
 	//myfile.open ("/tmp/pserver.dot");
 	the_problem->toDotty(myfile);
-
+	myfile.close();
 	return 0;
 }
 
