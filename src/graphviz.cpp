@@ -33,16 +33,19 @@
 void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_solver & solver, unsigned int stage) {
 	CUDFcoefficient demand = stage == 0 ?
 			solver.get_solution(problem.rankX(i)) : i->getType()->getDemand(stage-1);
-	CUDFcoefficient provide = solver.get_solution(problem.rankY(i, stage));
+	CUDFcoefficient servers = solver.get_solution(problem.rankX(i));
+	CUDFcoefficient connections = solver.get_solution(problem.rankY(i, stage));
 	out << i->getID();
-	out << "[shape=record,";
-	if(provide>0) {
-		out << "style=filled,";
+	out << "[shape=record, label=\"{{" << i->getID() << "}|";
+	if(stage == 0 || servers == 0 ) {
+		out << "{" << demand << "}";
+	} else {
+		out << "{" << demand << "|" << servers << "|" << connections << "}";
 	}
-	out << "label=\"{{" << i->getID() << "}|{"
-			<< demand << "|"
-			<< provide << "}}\"";
-
+	out << "}\"";
+	if(connections > 0) {
+		out << ",style=filled";
+	}
 	out << "];" << endl;
 }
 

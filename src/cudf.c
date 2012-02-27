@@ -507,13 +507,12 @@ CriteriaList *get_criteria(char *crit_descr, bool first_level, vector<abstract_c
 // main CUDF function
 
 int main(int argc, char *argv[]) {
-	FILE *output_file = (FILE *) NULL;
-	FILE *output_installed = (FILE *) NULL;
-	FILE *output_removed = (FILE *) NULL;
+	ofstream output_file;
 	abstract_solver *solver = (abstract_solver *) NULL;
 	abstract_combiner *combiner = (abstract_combiner *) NULL;
 	bool nosolve = false;
 	bool got_input = false;
+	bool got_output = false;
 	bool fulloutput = false;
 	PSLProblem *problem;
 	vector<abstract_criteria *> criteria_with_property;
@@ -543,12 +542,13 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "-o") == 0) {
 				i++;
 				if (i < argc) {
-					if ((output_file = fopen(argv[i], "w")) == (FILE *)NULL) {
+					output_file.open(argv[i],std::ios::out);
+					if ( !output_file) {
 						fprintf(stderr, "ERROR: cannot open file %s as ouput file.\n", argv[i]);
 						exit(-1);
 					}
+					got_output=true;
 				}
-
 			} else if (strcmp(argv[i], "-fo") == 0) {
 				fulloutput = true;
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
@@ -691,7 +691,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (output_file == (FILE *)NULL) output_file = stdout;
 	// if no input file defined, then use stdin
 	if (! got_input) {
 		switch (parse_pslp(cin)) {
@@ -701,13 +700,17 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	ostream& out = got_output ? output_file : cout;
 	// if whished, print out the read problem
 	if (verbosity > 2) {
-		fprintf(stdout, "================================================================\n");
-		print_problem(cout, the_problem);
-
-		fprintf(stdout, "================================================================\n");
+		out << "================================================================" << endl;
+		print_problem(out, the_problem);
+		out << "================================================================" << endl;
 	}
+	if(verbosity > 3) {
+		inst2dotty(*the_problem);
+	}
+
 
 	// choose the solver
 	if (solver == (abstract_solver *)NULL)
@@ -749,58 +752,30 @@ int main(int argc, char *argv[]) {
 
 		double obj = solver->objective_value();
 		if (verbosity > 2) {
-			fprintf(stdout, "================================================================\n");
-			printf("Objective value: %f\n", obj);
-
-			//				for (CUDFVersionedPackageListIterator ipkg = problem->all_packages->begin(); ipkg != problem->all_packages->end(); ipkg++)
-			//					printf("%s = "CUDFflags"\n", (*ipkg)->versioned_name, solver->get_solution(*ipkg));
-
-			fprintf(stdout, "================================================================\n");
-			fprintf(output_file, "\n");
-			//TODO set graphics of instance
+			out << "================================================================" << endl;
+			out << "Objective value: " << obj << endl <<  "Solution: ";
+						for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+				int servers = solver->get_solution(problem->rankX(*i));
+				if(servers > 0) {
+					out << i->getID() << ":" << servers << " ";
+				}
+			}
+			out << endl << "================================================================" << endl;
 		}
-		//TODO set verbosity for solution graphics
-		solution2dotty(*problem, *solver);
-		//		ofstream myfile;
-		//		myfile.open ("solpbs.dot");
-		//		myfile << "digraph G {" <<endl;
-		//		flow2dotty(myfile, problem, solver, 1);
-		//		myfile << "}" <<endl;
-
-		// printing out CUDF solution
-		//			int nb_installed = 0;
-		//			int nb_removed = 0;
-		//			int nb_newinstalled = 0;
-		//			for (CUDFVersionedPackageListIterator ipkg = problem->all_packages->begin(); ipkg != problem->all_packages->end(); ipkg++) {
-		//				if (solver->get_solution(*ipkg)) {
-		//					nb_installed++;
-		//					if (! (*ipkg)->installed) {
-		//						nb_newinstalled++;
-		//						if (output_installed != (FILE *)NULL) print_versioned_package_as_installed(output_installed, (*ipkg), true);
-		//					}
-		//					print_versioned_package_as_installed(output_file, (*ipkg), true);
-		//				} else {
-		//					if (fulloutput) print_versioned_package_with_install(output_file, (*ipkg), 0, true);
-		//					if ((*ipkg)->installed) {
-		//						nb_removed++;
-		//						if (output_removed != (FILE *)NULL) print_versioned_package(output_removed, (*ipkg), true);
-		//					}
-		//				}
-		//			}
-
-		//			if (verbosity > 2) {
-		//				fclose(output_installed);
-		//				fclose(output_removed);
-		//			}
+		if(verbosity > 3) {
+			solution2dotty(*problem, *solver);
+		}
 
 		// print out additional informations
-		fprintf(output_file, "# objective value = %f.\n", obj);
 		if (verbosity > 0) printf(">>>> Objective value = %f.\n", obj);
 	} else {
-		if (verbosity > 0) fprintf(stdout, "================================================================\n");
-		fprintf(stdout, "No solution found.\n");
-		fprintf(output_file, "FAIL\n");
-		fprintf(output_file, "No solution found.\n");
+		if (verbosity > 0)
+			cout << "No solution found." <<endl ;
+		out << "FAIL" << endl << "No solution found" << endl;
+	}
+
+	if (got_output) {
+		output_file.close();
 	}
 	exit(0);
 }
@@ -818,13 +793,6 @@ int parse_pslp(istream& in)
 	//TODO add option for hierarchical network
 	bool hierarchical=true;
 	the_problem->generateNetwork(hierarchical);
-
-	//TODO set verbosity for instance graphics
-	ofstream myfile;
-	myfile.open ("graphpbs.dot");
-	//myfile.open ("/tmp/pserver.dot");
-	the_problem->toDotty(myfile);
-	myfile.close();
 	return 0;
 }
 
