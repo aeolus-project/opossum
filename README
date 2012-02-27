@@ -39,16 +39,55 @@
  7. CONTRIBUTING
  
 == 1. PREREQUISITES ==
-
+ This project works on 32 bits and 64 bits environment. 
  This project requires:
-  * Cross-platform Make (CMake) v2.6.2+
-  * GNU Make or equivalent.
-  * GCC or an alternative, reasonably conformant C++ compiler.
-  * CPLEX [HEADERS and LIBRARIES] with licence (32 bits)
-  * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES] (32 bits)
-  * GEXF Library v0.1.2 (32 bits)
-  * XML2 Library v2.0+ (32 bits)
  
+  * Cross-platform Make (CMake) v2.6.2+
+  	> Fedora :
+	  	yum install cmake
+  	> Ubuntu :
+ 		apt-get install cmake
+  	
+  * GNU Make or equivalent.
+  	> Fedora :
+  		yum install make
+  	> Ubuntu :
+ 		apt-get install make	
+  	
+  * GCC or an alternative, reasonably conformant C++ compiler.
+  	> Fedora :
+  		yum groupinstall "Development Tools"
+  	> Ubuntu :
+ 		apt-get install build-essential	
+  	  
+  * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES]
+ 	> Fedora :
+ 	
+  	> Ubuntu :
+ 		apt-get install libboost-dev
+  	
+  * XML2 Library v2.0+
+  	> Fedora :
+  	
+  	> Ubuntu :
+ 		apt-get install libxml2-dev
+  
+  * GLPK Library
+  	> Fedora :
+  	
+  	> Ubuntu :
+ 		apt-get install libglpk-dev
+
+  * LPSOLVE Library v5.5+
+  	> Fedora :
+  		yum install suitesparse-devel
+  	> Ubuntu :
+ 		apt-get install liblpsolve55-dev
+
+   * CPLEX [HEADERS and LIBRARIES] with licence
+   
+   * GEXF Library v0.1.2 (provided in this project)
+   
 == 2. BUILDING ==
  
  This project uses the Cross-platform Make (CMake) build system. However, we
