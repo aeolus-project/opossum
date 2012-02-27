@@ -10,7 +10,7 @@ FOREACH (SRC_FILE ${project_SRCS})
 	set_source_files_properties(${SRC_FILE} PROPERTIES LANGUAGE CXX)
 ENDFOREACH (SRC_FILE ${project_SRCS})
 
-SET (project_LIBS ${Boost_LIBRARIES} ${XML2_LIBRARY_DIRS} gexf ilocplex cplex concert m pthread glpk lpsolve55) #boost_random gexf xml2
+SET (project_LIBS ${Boost_LIBRARIES} ${XML2_LIBRARY_DIRS} gexf ilocplex cplex concert m pthread glpk lpsolve55 colamd dl m) #boost_random gexf xml2
 SET (project_BIN ${PROJECT_NAME})
 
 #QT4_WRAP_CPP(project_MOC_SRCS_GENERATED ${project_MOC_HEADERS})
