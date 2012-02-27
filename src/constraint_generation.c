@@ -4,8 +4,6 @@
 #include <constraint_generation.h>
 
 
-bool generate_desagregate_constraints = true;
-bool generate_agregate_constraints = false;
 
 int new_var = 0;
 CUDFcoefficient min_bandwidth = 0; //TODO set min_bandwidth to 1Ko
@@ -13,7 +11,6 @@ CUDFcoefficient min_bandwidth = 0; //TODO set min_bandwidth to 1Ko
 struct SetPathCoeff {
 
 public:
-
 	SetPathCoeff(PSLProblem* problem, abstract_solver* solver) : problem(problem), solver(solver), stage(0) {
 	}
 

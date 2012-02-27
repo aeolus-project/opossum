@@ -37,7 +37,7 @@
 
 using namespace std;
 
-
+extern void inst2dotty(PSLProblem &problem);
 
 extern void flow2dotty(ostream& out, PSLProblem& problem, abstract_solver& solver, unsigned int stage);
 
@@ -47,14 +47,7 @@ extern void path2dotty(ostream& out, PSLProblem &problem, abstract_solver& solve
 
 extern void path2dotty(PSLProblem &problem, abstract_solver& solver);
 
-void solution2dotty(PSLProblem &problem, abstract_solver& solver) {
-	ofstream myfile;
-	myfile.open ("instance.dot");
-	problem.toDotty(myfile);
-	myfile.close();
-	flow2dotty(problem, solver);
-	path2dotty(problem, solver);
-}
+extern void solution2dotty(PSLProblem &problem, abstract_solver& solver);
 
 
 #endif /* GRAPHVIZ_HPP_ */

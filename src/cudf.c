@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "abstract_solver.h"
+#include "graphviz.hpp"
 
 //Remove main
 //#define main toto
@@ -553,14 +554,14 @@ int main(int argc, char *argv[]) {
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
 			} else if (strcmp(argv[i], "-only-agregate-constraints") == 0) {
-				generate_agregate_constraints = true;
-				generate_desagregate_constraints = false;
+				//generate_agregate_constraints = true;
+				//generate_desagregate_constraints = false;
 			} else if (strcmp(argv[i], "-only-desagregate-constraints") == 0) {
-				generate_agregate_constraints = false;
-				generate_desagregate_constraints = true;
+				//generate_agregate_constraints = false;
+				//generate_desagregate_constraints = true;
 			} else if (strcmp(argv[i], "-all-constraints") == 0) {
-				generate_agregate_constraints = true;
-				generate_desagregate_constraints = true;
+				//generate_agregate_constraints = true;
+				//generate_desagregate_constraints = true;
 			} else if (strcmp(argv[i], "-cov") == 0) {
 				criteria_opt_var = true;
 			} else if (strcmp(argv[i], "-noreduce") == 0) {
@@ -706,8 +707,6 @@ int main(int argc, char *argv[]) {
 		print_problem(cout, the_problem);
 
 		fprintf(stdout, "================================================================\n");
-
-		fprintf(stdout, "================================================================\n");
 	}
 
 	// choose the solver
@@ -757,10 +756,11 @@ int main(int argc, char *argv[]) {
 			//					printf("%s = "CUDFflags"\n", (*ipkg)->versioned_name, solver->get_solution(*ipkg));
 
 			fprintf(stdout, "================================================================\n");
-
 			fprintf(output_file, "\n");
+			//TODO set graphics of instance
 		}
 		//TODO set verbosity for solution graphics
+		solution2dotty(*problem, *solver);
 		//		ofstream myfile;
 		//		myfile.open ("solpbs.dot");
 		//		myfile << "digraph G {" <<endl;

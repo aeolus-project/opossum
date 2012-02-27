@@ -46,14 +46,14 @@ void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_so
 	out << "];" << endl;
 }
 
-extern void flow2dotty(ostream & out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
+void flow2dotty(ostream & out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
 {
 	for(NodeIterator i = problem.nbegin() ; i!=  problem.nend() ; i++) {
 		node2dotty(out, *i, problem, solver, stage);
 	}
 	for(LinkIterator l = problem.lbegin() ; l!=  problem.lend() ; l++) {
 		CUDFcoefficient connections = solver.get_solution(problem.rankY(*l, stage));
-		out << l->getOrigin()->getID() << " . " << l->getDestination()->getID();
+		out << l->getOrigin()->getID() << " -> " << l->getDestination()->getID();
 		if(connections > 0) {
 			out << "[label=\"" << connections << "\"];\n";
 		} else {
@@ -64,13 +64,14 @@ extern void flow2dotty(ostream & out, PSLProblem & problem, abstract_solver & so
 
 
 
-extern void flow2dotty(PSLProblem & problem, abstract_solver & solver)
+void flow2dotty(PSLProblem & problem, abstract_solver & solver)
 {
 	for (int i = 0; i < problem.stageCount(); ++i) {
 		ofstream myfile;
-		stringstream ss (stringstream::in);
+		stringstream ss (stringstream::in | stringstream::out);
 		ss << "flow-sol-" << i << ".dot";
-		myfile.open (ss.str().c_str());
+		//cout << "## " << ss.str() << endl;
+		myfile.open(ss.str().c_str());
 		myfile << "digraph F" << i << "{" <<endl;
 		flow2dotty(myfile, problem, solver, i);
 		myfile << endl << "}" << endl;
@@ -80,7 +81,7 @@ extern void flow2dotty(PSLProblem & problem, abstract_solver & solver)
 
 
 
-extern void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
+void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
 {
 
 	for(NodeIterator i = problem.nbegin() ; i!=  problem.nend() ; i++) {
@@ -90,13 +91,13 @@ extern void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & sol
 			j++;
 			while(j !=  i->nend()) {
 				CUDFcoefficient connections = solver.get_solution(problem.rankZ(*i,*j, stage));
-				CUDFcoefficient bandwidth = solver.get_solution(problem.rankB(*i,*j, stage));
-				out << i->getID() << " . " << j->getID();
 				if(connections > 0) {
+					CUDFcoefficient bandwidth = solver.get_solution(problem.rankB(*i,*j, stage));
+					out << i->getID() << " -> " << j->getID();
 					out << "[label=\"" << connections <<
-							out<< "/" << (bandwidth) << "\"];\n";
-					//TODO convert bandwidth to Ko
+							"|" << bandwidth << "\"];" << endl;
 				}
+				j++;
 			}
 		}
 	}
@@ -104,8 +105,8 @@ extern void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & sol
 	for(LinkIterator l = problem.lbegin() ; l!=  problem.lend() ; l++) {
 		CUDFcoefficient connections = solver.get_solution(problem.rankZ(l->getOrigin(), l->getDestination(), stage));
 		if(connections == 0) {
-			out << l->getOrigin()->getID() << " . " << l->getDestination()->getID();
-			out << "[style=\"invis\"];\n";
+			out << l->getOrigin()->getID() << " -> " << l->getDestination()->getID();
+			out << "[style=\"invis\"];" <<endl;
 		}
 	}
 
@@ -113,12 +114,12 @@ extern void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & sol
 
 
 
-extern void path2dotty(PSLProblem & problem, abstract_solver & solver)
+void path2dotty(PSLProblem & problem, abstract_solver & solver)
 {
 	for (int i = 1; i < problem.stageCount(); ++i) {
 		ofstream myfile;
-		stringstream ss (stringstream::in);
-		ss << "flow-sol-" << i << ".dot";
+		stringstream ss (stringstream::in | stringstream::out);
+		ss << "path-sol-" << i << ".dot";
 		myfile.open (ss.str().c_str());
 		myfile << "digraph P" << i << "{" <<endl;
 		path2dotty(myfile, problem, solver, i);
@@ -128,6 +129,17 @@ extern void path2dotty(PSLProblem & problem, abstract_solver & solver)
 }
 
 
+void inst2dotty(PSLProblem &problem) {
+	ofstream myfile;
+	myfile.open ("instance.dot");
+	problem.toDotty(myfile);
+	myfile.close();
+}
+
+void solution2dotty(PSLProblem &problem, abstract_solver& solver) {
+	flow2dotty(problem, solver);
+	path2dotty(problem, solver);
+}
 
 
 
