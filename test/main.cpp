@@ -19,11 +19,7 @@
 #include "../src/GexfGen.cpp"
 
 
-int add(int i, int j)
-{
-	return i + j;
-}
-
+//TODO Add test void forEachPath(FuncType functor) const;
 PSLProblem* initProblem() {
 	ifstream in;
 
@@ -38,9 +34,9 @@ PSLProblem* initProblem() {
 
 	problem->setSeed(SEED);
 	problem->generateNetwork(true);
-//#ifndef NDEBUG //Mode Debug
-//	cout << *problem << endl << endl;
-//#endif
+	//#ifndef NDEBUG //Mode Debug
+	//	cout << *problem << endl << endl;
+	//#endif
 	return problem;
 
 }
@@ -93,7 +89,7 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	for( LinkIterator i = problem->getRoot()->lbegin();i != problem->getRoot()->lend();i++) {
 		count_links++;	
 	}
-	BOOST_CHECK(count_links == problem->getLinkCount());
+	BOOST_CHECK(count_links == problem->linkCount());
 
 
 	/////////////////////////////////////////////////
@@ -138,7 +134,7 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	for( NodeIterator i = problem->getRoot()->nbegin();i != problem->getRoot()->nend();i++) {
 		count_nodes++;
 	}
-	BOOST_CHECK(count_nodes == problem->getNodeCount());
+	BOOST_CHECK(count_nodes == problem->nodeCount());
 
 }
 
@@ -153,11 +149,6 @@ BOOST_AUTO_TEST_CASE(networkGeneration)
 	cout << *problem;
 	IntList level2(problem->getLevelNodeCounts());
 	BOOST_CHECK_EQUAL_COLLECTIONS(level1.begin(), level1.end(), level2.begin(), level2.end());
-//	BOOST_CHECK(level1.size() == level2.size());
-//	for (int i = 0; i < level1.size(); ++i) {
-//		BOOST_CHECK(level1[i] == level2[i]);
-//	}
-
 }
 
 BOOST_AUTO_TEST_CASE(networkExample)
@@ -169,6 +160,23 @@ BOOST_AUTO_TEST_CASE(networkExample)
 	//myfile.open ("/tmp/pserver.dot");
 	problem->toDotty(myfile);
 	myfile.close();
+	//Test Ranks
+	problem->toRanks(cout);
+	FacilityNode* n0 = problem->getRoot();
+	FacilityNode* n3 = problem->getRoot()->getChild(0)->getChild(0);
+	FacilityNode* n6 = problem->getRoot()->getChild(1)->getChild(0);
+	//cout << *n3 << " " << *n6 << endl;
+	BOOST_CHECK(problem->rankX(n3) == 3);
+	BOOST_CHECK(problem->rankX(n6) == 6);
+	BOOST_CHECK(problem->rankX(n3, 0) == 18);
+	BOOST_CHECK(problem->rankX(n6, 0) == 21);
+	BOOST_CHECK(problem->rankY(n3, 0) == 36);
+	BOOST_CHECK(problem->rankY(n6, 1) == 43);
+	BOOST_CHECK(problem->rankY(n3->toFather(), 0) == 64);
+	BOOST_CHECK(problem->rankY(n6->toFather(), 1) == 71);
+	//TODO BOOST_CHECK(problem->rankZ(n0, n3, 0) == ??);
+	//TODO BOOST_CHECK(problem->rankZ(n0, n6, 1) == ??);
+
 
 
 }
