@@ -41,6 +41,7 @@ extern int verbosity;
 // requires the file descriptor of the targeted file and a pointer to the PSL problem
 extern void print_problem(ostream& out, PSLProblem *pbs);
 
-
+//extern void print_solution(ostream& out, PSLProblem *problem, abstract_solver* solver);
+//
 
 #endif

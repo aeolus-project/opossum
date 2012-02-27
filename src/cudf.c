@@ -5,13 +5,12 @@
 /*******************************************************/
 
 #include <cudf.h>
-#include <abstract_solver.h>
 #include <constraint_generation.h>
 #include <criteria.h>
 #include <combiner.h>
 #include <sys/stat.h>
 #include <errno.h>
-
+#include "abstract_solver.h"
 
 //Remove main
 //#define main toto
@@ -761,8 +760,12 @@ int main(int argc, char *argv[]) {
 
 			fprintf(output_file, "\n");
 		}
-
-
+		//TODO add solution graphics
+		//		ofstream myfile;
+		//		myfile.open ("solpbs.dot");
+		//		myfile << "digraph G {" <<endl;
+		//		flow2dotty(myfile, problem, solver, 1);
+		//		myfile << "}" <<endl;
 
 		// printing out CUDF solution
 		//			int nb_installed = 0;
@@ -791,13 +794,6 @@ int main(int argc, char *argv[]) {
 		//			}
 
 		// print out additional informations
-		//			fprintf(output_file, "# problem = %zu packages (%zu virtual packages), %zu installed packages.\n",
-		//					all_packages.size(), all_virtual_packages.size(), installed_packages.size());
-		//			fprintf(output_file, "# request = %zu install, %zu remove, %zu upgrade.\n",
-		//					(problem->install == (CUDFVpkgList *)NULL)?0:problem->install->size(),
-		//							(problem->remove == (CUDFVpkgList *)NULL)?0:problem->remove->size(),
-		//									(problem->upgrade == (CUDFVpkgList *)NULL)?0:problem->upgrade->size());
-		//			fprintf(output_file, "# solution = %d installed packages, %d new installed, %d has been removed.\n", nb_installed, nb_newinstalled, nb_removed);
 		fprintf(output_file, "# objective value = %f.\n", obj);
 		if (verbosity > 0) printf(">>>> Objective value = %f.\n", obj);
 	} else {
@@ -823,6 +819,7 @@ int parse_pslp(istream& in)
 	bool hierarchical=true;
 	the_problem->generateNetwork(hierarchical);
 
+	//TODO add option for instance graphics
 	ofstream myfile;
 	myfile.open ("graphpbs.dot");
 	//myfile.open ("/tmp/pserver.dot");
@@ -837,16 +834,5 @@ void print_problem(ostream& out, PSLProblem *pbs)
 }
 
 
-void print_solution(ostream& out, PSLProblem *problem, abstract_solver solver) {
-//	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-//
-//	}
-}
 
-void flow2dotty(PSLProblem *problem, abstract_solver solver, unsigned int stage) {
 
-}
-
-void path2dotty(PSLProblem *problem, abstract_solver solver, unsigned int stage) {
-
-}
