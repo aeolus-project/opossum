@@ -11,6 +11,8 @@
 #define _SCOEFF_SOLVER_H
 
 #include <vector>
+#include <stdlib.h>
+#include <stdio.h>
 //#include <cudf.h>
 
 // Template to allow coefficient saving
