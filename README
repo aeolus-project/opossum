@@ -62,19 +62,19 @@
   	  
   * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES]
  	> Fedora :
- 	
+ 		yum install boost-devel
   	> Ubuntu :
  		apt-get install libboost-dev
   	
   * XML2 Library v2.0+
   	> Fedora :
-  	
+  		yum install libxml2-devel
   	> Ubuntu :
  		apt-get install libxml2-dev
   
   * GLPK Library
   	> Fedora :
-  	
+  		yum install glpk-devel
   	> Ubuntu :
  		apt-get install libglpk-dev
 
@@ -85,8 +85,6 @@
  		apt-get install liblpsolve55-dev
 
    * CPLEX [HEADERS and LIBRARIES] with licence
-   
-   * GEXF Library v0.1.2 (provided in this project)
    
 == 2. BUILDING ==
  
