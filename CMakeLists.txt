@@ -132,7 +132,7 @@ SET(USE_SOLVERS "-D USECPLEX -D USEGLPK -D USELPSOLVE")
 #RESET DEFAULT FLAGS 
 SET(CMAKE_CXX_FLAGS "")
 #-Wall -Wstrict-aliasing
-SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fexceptions -D IL_STD ${USE_SOLVERS}")
+SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fPIC -fexceptions -D IL_STD ${USE_SOLVERS}")
 
 IF(DEBUG_BUILD)
     SET(COMMON_FLAGS "-g -ggdb ${COMMON_FLAGS}")
@@ -193,4 +193,13 @@ ENDIF (EXISTS "${MAINFOLDER}/include/${PROJECT_NAME}" AND IS_DIRECTORY "${MAINFO
 
 #################### Add Documentation Targets #################### 
 INCLUDE (DocumentationTargets)
+
+#ADD MODULE (Cotire to speedup the build)
+set (CMAKE_MODULE_PATH "${MAINFOLDER}/tools/share/cmake")
+include(cotire)
+
+#Add Executable with cotire to speed up building
+#!IMPORTANT : Add All Executables at the end otherwise it does not work with cotire 
+cotire(${PROJECT_NAME})
+cotire(${PROJECT_NAME}-tests)
 
