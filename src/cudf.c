@@ -782,7 +782,7 @@ int main(int argc, char *argv[]) {
 
 PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
-int verbosity = 5; //TODO initialize verbosity
+int verbosity = 5;
 
 int parse_pslp(istream& in)
 {
@@ -791,8 +791,8 @@ int parse_pslp(istream& in)
 	in >> *the_problem;
 	//TODO add option for the_problem->setSeed(seed);
 	//TODO add option for hierarchical network
-	bool hierarchical=true;
-	the_problem->generateNetwork(hierarchical);
+	bool hierarchic=true;
+	the_problem->generateNetwork(hierarchic);
 	return 0;
 }
 

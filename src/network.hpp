@@ -469,7 +469,6 @@ public:
 	inline unsigned int levelCount() const {
 		return levelNodeCounts.size();
 	}
-	//TODO inline bool isValid();
 
 	void setSeed(const unsigned int seed);
 	FacilityNode* generateNetwork();
@@ -477,7 +476,6 @@ public:
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
 
-	//TODO change visibility to network
 	bool checkNetwork();
 	bool checkNetworkHierarchy();
 	inline FacilityNode* getRoot() const {

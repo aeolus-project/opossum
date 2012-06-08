@@ -30,6 +30,19 @@
 
 #include "graphviz.hpp"
 
+void stylePServers(ostream & out, const int servers) {
+	switch (servers) {
+	case 0:	out << ",style=dashed"; break;
+	case 1:break;
+	case 2: out << ",style=filled,fillcolor=lightgoldenrod";break;
+	case 3: out << ",style=filled,fillcolor=palegreen";break;
+	case 4: out << ",style=filled,fillcolor=lightseagreen";break;
+	default:
+		out << ",style=filled,fillcolor=salmon";break;
+		break;
+	}
+}
+
 void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_solver & solver, unsigned int stage) {
 	CUDFcoefficient demand = stage == 0 ?
 			solver.get_solution(problem.rankX(i)) : i->getType()->getDemand(stage-1);
@@ -43,10 +56,26 @@ void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_so
 		out << "{" << demand << "|" << servers << "|" << connections << "}";
 	}
 	out << "}\"";
-	if(connections > 0) {
-		out << ",style=filled";
-	}
+	stylePServers(out, servers);
 	out << "];" << endl;
+}
+
+void colorConnection(ostream & out, const int connections) {
+	if(connections >= 50) {
+		if(connections >= 1000) {
+			out << ",color=firebrick";
+		} else if(connections >= 500) {
+			out << ",color=salmon";
+		} else if(connections >= 250) {
+
+			out << ",color=midnightblue";
+			//out << ",color=seagreen";
+		}else if(connections >= 100) {
+			out << ",color=seagreen";
+		} else {
+			out << ",color=darkgoldenrod";
+		}
+	}
 }
 
 void flow2dotty(ostream & out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
@@ -58,7 +87,12 @@ void flow2dotty(ostream & out, PSLProblem & problem, abstract_solver & solver, u
 		CUDFcoefficient connections = solver.get_solution(problem.rankY(*l, stage));
 		out << l->getOrigin()->getID() << " -> " << l->getDestination()->getID();
 		if(connections > 0) {
-			out << "[label=\"" << connections << "\"];\n";
+			out << "[label=\"" << connections << "\"";
+			colorConnection(out, connections);
+			if (l->isReliable()) {
+				out << ", style=bold ";
+			}
+			out <<"];" << endl;
 		} else {
 			out << "[style=\"invis\"];\n";
 		}
@@ -83,6 +117,35 @@ void flow2dotty(PSLProblem & problem, abstract_solver & solver)
 }
 
 
+void colorUnitBandwidth(ostream & out, const double unitBandwidth) {
+	if(unitBandwidth >= 10) {
+		if(unitBandwidth >= 1000) {
+			out << ",color=firebrick";
+		} else if(unitBandwidth >= 250) {
+			out << ",color=salmon";
+		} else if(unitBandwidth >= 100) {
+
+			out << ",color=midnightblue";
+			//out << ",color=seagreen";
+		}else if(unitBandwidth >= 50) {
+			out << ",color=seagreen";
+		} else {
+			out << ",color=darkgoldenrod";
+		}
+	}
+}
+
+bool isReliablePath(const FacilityNode* origin, FacilityNode* destination) {
+	while(destination != origin) {
+		if(destination->toFather()->isReliable()) {
+			destination = destination->getFather();
+			if(!destination) {
+				return false;
+			}
+		}else return false;
+	}
+	return true;
+}
 
 void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
 {
@@ -95,10 +158,17 @@ void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, un
 			while(j !=  i->nend()) {
 				CUDFcoefficient connections = solver.get_solution(problem.rankZ(*i,*j, stage));
 				if(connections > 0) {
-					CUDFcoefficient bandwidth = solver.get_solution(problem.rankB(*i,*j, stage));
+					double bandwidth = solver.get_solution(problem.rankB(*i,*j, stage));
+					bandwidth/=connections;
+					out.precision(1);
 					out << i->getID() << " -> " << j->getID();
 					out << "[label=\"" << connections <<
-							"|" << bandwidth << "\"];" << endl;
+							"\\n" << scientific << bandwidth << "\"";
+					colorUnitBandwidth(out, bandwidth);
+					if (isReliablePath(*i, *j)) {
+						out << ", style=bold ";
+					}
+					out << "];" << endl;
 				}
 				j++;
 			}
@@ -143,6 +213,7 @@ void solution2dotty(PSLProblem &problem, abstract_solver& solver) {
 	flow2dotty(problem, solver);
 	path2dotty(problem, solver);
 }
+
 
 
 
