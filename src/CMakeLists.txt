@@ -5,13 +5,17 @@ SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
 INCLUDE_DIRECTORIES("${MAINFOLDER}/src")
 
 #FORCE CXX COMPILATION FOR ALL SOURCES FILES
-FILE (GLOB_RECURSE project_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hh *.hpp)
+FILE (GLOB_RECURSE project_SRCS *.cpp *.cxx *.cc *.C *.c)
 FOREACH (SRC_FILE ${project_SRCS})
 	set_source_files_properties(${SRC_FILE} PROPERTIES LANGUAGE CXX)
 ENDFOREACH (SRC_FILE ${project_SRCS})
 
 SET (project_LIBS ${Boost_LIBRARIES} ${XML2_LIBRARY_DIRS} gexf ilocplex cplex concert m pthread glpk lpsolve55 colamd dl m) #boost_random gexf xml2
 SET (project_BIN ${PROJECT_NAME})
+
+#ADD MODULE (Cotire to speedup the build)
+set (CMAKE_MODULE_PATH "${MAINFOLDER}/tools/share/cmake")
+include(cotire)
 
 #QT4_WRAP_CPP(project_MOC_SRCS_GENERATED ${project_MOC_HEADERS})
 ADD_EXECUTABLE(${project_BIN} ${project_SRCS})
@@ -24,5 +28,7 @@ ADD_EXECUTABLE(${project_BIN} ${project_SRCS})
 
 TARGET_LINK_LIBRARIES(${project_BIN} ${project_LIBS})
 SET_TARGET_PROPERTIES(${project_BIN} PROPERTIES VERSION "${APPLICATION_VERSION_MAJOR}.${APPLICATION_VERSION_MINOR}" OUTPUT_NAME ${project_BIN} CLEAN_DIRECT_OUTPUT 1)
+#Add Executable with cotire to speed up building
+#cotire(${project_BIN})
 
 #INSTALL(TARGETS ${project_BIN} DESTINATION bin)

@@ -3,7 +3,7 @@ SET (EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
 SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/bin/${CMAKE_BUILD_TYPE}")
 
 #FORCE CXX COMPILATION FOR ALL SOURCES FILES
-FILE (GLOB_RECURSE test_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hh *.hpp)
+FILE (GLOB_RECURSE test_SRCS *.cpp *.cxx *.cc *.C *.c)
 FOREACH (SRC_FILE ${test_SRCS})
 	set_source_files_properties(${SRC_FILE} PROPERTIES LANGUAGE CXX)
 ENDFOREACH (SRC_FILE ${test_SRCS})
@@ -15,6 +15,8 @@ SET (test_BIN ${PROJECT_NAME}-tests)
 
 ADD_EXECUTABLE(${test_BIN} ${test_SRCS})
 TARGET_LINK_LIBRARIES(${test_BIN} ${test_LIBS})
+#Add Executable with cotire to speed up building
+#cotire(${project_BIN})
 
 if(START_TESTS)
     ADD_CUSTOM_TARGET(check ALL "${MAINFOLDER}/bin/Test/${test_BIN}" DEPENDS ${test_BIN} COMMENT "Executing unit tests..." VERBATIM SOURCES ${test_SRCS})

@@ -3,7 +3,7 @@
 #export ILOG_LICENSE_FILE=access.ilm
 
 ################ Project Properties ####################
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6.2)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.5)
 PROJECT (opossum)
 SET (APPLICATION_NAME "OPOSSUM")
 SET (APPLICATION_CODENAME "${PROJECT_NAME}")
@@ -132,7 +132,7 @@ SET(USE_SOLVERS "-D USECPLEX -D USEGLPK -D USELPSOLVE")
 #RESET DEFAULT FLAGS 
 SET(CMAKE_CXX_FLAGS "")
 #-Wall -Wstrict-aliasing
-SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fPIC -fexceptions -D IL_STD ${USE_SOLVERS}")
+SET(COMMON_FLAGS "-fmessage-length=0 -O0 -fexceptions -D IL_STD ${USE_SOLVERS}")
 
 IF(DEBUG_BUILD)
     SET(COMMON_FLAGS "-g -ggdb ${COMMON_FLAGS}")
@@ -185,7 +185,6 @@ if(BUILD_TESTS)
 
     message(STATUS "Building Test")
 endif (BUILD_TESTS)
-
 
 #################### Add Install Targets #################### 
 IF (EXISTS "${MAINFOLDER}/include/${PROJECT_NAME}" AND IS_DIRECTORY "${MAINFOLDER}/include/${PROJECT_NAME}")
