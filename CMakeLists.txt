@@ -3,7 +3,7 @@
 #export ILOG_LICENSE_FILE=access.ilm
 
 ################ Project Properties ####################
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6.2)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.5)
 PROJECT (opossum)
 SET (APPLICATION_NAME "OPOSSUM")
 SET (APPLICATION_CODENAME "${PROJECT_NAME}")
@@ -186,7 +186,6 @@ if(BUILD_TESTS)
     message(STATUS "Building Test")
 endif (BUILD_TESTS)
 
-
 #################### Add Install Targets #################### 
 IF (EXISTS "${MAINFOLDER}/include/${PROJECT_NAME}" AND IS_DIRECTORY "${MAINFOLDER}/include/${PROJECT_NAME}")
     INSTALL(DIRECTORY "${MAINFOLDER}/include/${PROJECT_NAME}" DESTINATION "include")
@@ -194,4 +193,13 @@ ENDIF (EXISTS "${MAINFOLDER}/include/${PROJECT_NAME}" AND IS_DIRECTORY "${MAINFO
 
 #################### Add Documentation Targets #################### 
 INCLUDE (DocumentationTargets)
+
+#ADD MODULE (Cotire to speedup the build)
+set (CMAKE_MODULE_PATH "${MAINFOLDER}/tools/share/cmake")
+include(cotire)
+
+#Add Executable with cotire to speed up building
+#!IMPORTANT : Add All Executables at the end otherwise it does not work with cotire 
+cotire(${PROJECT_NAME})
+cotire(${PROJECT_NAME}-tests)
 
