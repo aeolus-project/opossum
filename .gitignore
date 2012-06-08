@@ -22,6 +22,6 @@ Thumbs.db
 # lib
 #*.so*
 *.lib
-*.a
+#*.a
 *.la
 
