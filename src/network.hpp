@@ -499,7 +499,7 @@ public:
 	}
 
 	inline unsigned int rankCount() const {
-		return offsetB() + pathCount() * stageCount();
+		return endBij();
 	}
 
 	inline IntList getLevelNodeCounts() {
@@ -513,58 +513,70 @@ public:
 	LinkIterator lbegin() { return root->lbegin();}
 	LinkIterator lend() { return root->lend();}
 
-	//Rank Mapper
-	int rankX(FacilityNode *node) const {
-		return node->getID();
-	}
-	int rankX(FacilityNode *node, unsigned int stype) const {
-		return offsetXk() + node->getID() * serverTypeCount() + stype;
-	}
-	int rankY(FacilityNode *node, unsigned int stage) const {
-		return offsetYi() + node->getID() * stageCount() + stage;
-	}
-	int rankY(NetworkLink *link, unsigned int stage) const {
-		return offsetYij() + link->getID() * stageCount() + stage;
-	}
-	int rankZ(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
-		return offsetZ() + rank(source, destination, stage);
-	}
-	int rankB(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
-		return offsetB() + rank(source, destination, stage);
-	}
-
-
 	ostream& toRanks(ostream& out);
 	ostream& toDotty(ostream& out);
 
 	friend ostream& operator<<(ostream& out, const PSLProblem& f);
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 
-private:
-	//Delete tree from root node
-	//
-	void deleteTree(FacilityNode* node) {
-		levelNodeCounts.clear();
-		levelCumulNodeCounts.clear();
-		lengthCumulPathCounts.clear();
-		_nodeCount = 0;
-		if(node != NULL) {		
-			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
-				deleteTree(node->toChild(i)->getDestination());
-			}		
-			delete node;
-			node = NULL;
-		}
+	//----------------------------------------
+	//	Rank Mapper (associates each variable to an uniue index)
+	//----------------------------------------
+	int rankX(FacilityNode *node) const {
+		return node->getID();
+	}
+	int rankX(FacilityNode *node, unsigned int stype) const {
+		return endX() + node->getID() * serverTypeCount() + stype;
 	}
 
-	inline int offsetXk() const {
+	int rankY(FacilityNode *node, unsigned int stage) const {
+		return endXk() + node->getID() * stageCount() + stage;
+	}
+
+	int rankZ(FacilityNode *node, unsigned int stage) const {
+		return endYi() + node->getID() * stageCount() + stage;
+	}
+
+	int rankY(NetworkLink *link, unsigned int stage) const {
+		return endZi() + link->getID() * stageCount() + stage;
+	}
+
+	int rankZ(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
+		return endYij() + rank(source, destination, stage);
+	}
+
+	int rankB(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
+		return endZij() + rank(source, destination, stage);
+	}
+
+
+private:
+
+	inline int endX() const {
 		return _nodeCount;
 	}
-	inline int offsetYi() const {
-		return offsetXk() + _nodeCount * serverTypeCount();
+
+	inline int endXk() const {
+		return endX() + _nodeCount * serverTypeCount();
 	}
-	inline int offsetYij() const {
-		return offsetYi() + _nodeCount * stageCount();
+
+	inline int endYi() const {
+		return endXk() + _nodeCount * stageCount();
+	}
+
+	inline int endZi() const {
+		return endYi() + _nodeCount * stageCount();
+	}
+
+	inline int endYij() const {
+		return endZi() +  linkCount() * stageCount();
+	}
+
+	inline int endZij() const {
+		return endYij() + pathCount() * stageCount();
+	}
+	inline int endBij() const {
+		return endZij() + pathCount() * stageCount();
 	}
 
 	inline int rank(FacilityNode* source, FacilityNode* destination) const {
@@ -572,17 +584,25 @@ private:
 		//path are ranked by length and their index using the bread-first numbered tree.
 		return lengthCumulPathCounts[length-1] + (destination->getID() - levelCumulNodeCounts[length]);
 	}
+
 	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage) const {
 		return rank(source, destination) * stageCount() + stage;
 	}
-	inline int offsetZ() const {
-		return offsetYij() + linkCount() * stageCount();
-	}
-	inline int offsetB() const {
-		return offsetZ() + pathCount() * stageCount();
-	}
 
-
+	//Delete tree from root node
+	void deleteTree(FacilityNode* node) {
+		levelNodeCounts.clear();
+		levelCumulNodeCounts.clear();
+		lengthCumulPathCounts.clear();
+		_nodeCount = 0;
+		if(node != NULL) {
+			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
+				deleteTree(node->toChild(i)->getDestination());
+			}
+			delete node;
+			node = NULL;
+		}
+	}
 
 
 	IntList bandwidths;

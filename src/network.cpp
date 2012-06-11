@@ -310,12 +310,13 @@ ostream& PSLProblem::toDotty(ostream & out) {
 
 
 ostream& PSLProblem::toRanks(ostream & out) {
-	out << "X=[0," << offsetXk() << "[" << endl;
-	out << "Xk=[" << offsetXk() << "," << offsetYi() << "[" << endl;
-	out << "Yi=[" << offsetYi() << "," << offsetYij() << "[" << endl;
-	out << "Yij=[" << offsetYij() << "," << offsetZ() << "[" << endl;
-	out << "Z=[" << offsetZ() << "," << offsetB() << "[" << endl;
-	out << "B=[" << offsetB() << "," << rankCount() << "[" << endl;
+	out << "X=[0," << endX() << "[" << endl;
+	out << "Xk=[" << endX() << "," << endXk() << "[" << endl;
+	out << "Yi=[" << endXk() << "," << endYi() << "[" << endl;
+	out << "Zi=[" << endYi() << "," << endZi() << "[" << endl;
+	out << "Yij=[" << endZi() << "," << endYij() << "[" << endl;
+	out << "Z=[" << endYij() << "," << endZij() << "[" << endl;
+	out << "B=[" << endZij() << "," << endBij() << "[" << endl;
 	return out;
 }
 

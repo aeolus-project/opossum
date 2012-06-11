@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(networkExample)
 	PSLProblem* problem = initProblem();
 	ofstream myfile;
 	char* name = tmpnam(NULL);
-	myfile.open (name);
+	myfile.open(name);
 	//myfile.open ("/tmp/pserver.dot");
 	problem->toDotty(myfile);
 	myfile.close();
@@ -172,10 +172,14 @@ BOOST_AUTO_TEST_CASE(networkExample)
 	BOOST_CHECK(problem->rankX(n6, 0) == 21);
 	BOOST_CHECK(problem->rankY(n3, 0) == 36);
 	BOOST_CHECK(problem->rankY(n6, 1) == 43);
-	BOOST_CHECK(problem->rankY(n3->toFather(), 0) == 64);
-	BOOST_CHECK(problem->rankY(n6->toFather(), 1) == 71);
-	//TODO BOOST_CHECK(problem->rankZ(n0, n3, 0) == ??);
-	//TODO BOOST_CHECK(problem->rankZ(n0, n6, 1) == ??);
+	BOOST_CHECK(problem->rankZ(n3, 0) == 66);
+	BOOST_CHECK(problem->rankZ(n6, 1) == 73);
+	BOOST_CHECK(problem->rankY(n3->toFather(), 0) == 94);
+	BOOST_CHECK(problem->rankY(n6->toFather(), 1) == 101);
+	BOOST_CHECK(problem->rankZ(n0, n3, 0) == 146);
+	BOOST_CHECK(problem->rankZ(n0, n6, 1) == 153);
+	BOOST_CHECK(problem->rankB(n0, n3, 0) == 214);
+	BOOST_CHECK(problem->rankB(n0, n6, 1) == 221);
 
 
 
