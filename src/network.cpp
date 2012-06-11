@@ -347,8 +347,9 @@ NetworkLink::NetworkLink(unsigned int id, FacilityNode* father,
 }
 
 ostream& NetworkLink::toDotty(ostream & out) {
+	out.precision(1);
 	out << origin->getID() << " -> " << destination->getID();
-	out << "[label=\"" << getBandwidth() << "\"";
+	out << "[label=\"" << scientific << double(getBandwidth()) << "\"";
 	if (isReliable()) {
 		out << ", style=bold ";
 	}
