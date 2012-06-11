@@ -233,7 +233,7 @@ int cplex_solver::solve() {
 					// Output model to file (when requested)
 					if (OUTPUT_MODEL) {
 						char buffer[1024];
-						sprintf(buffer, "cplexpbs%d.lp", i);
+						sprintf(buffer, "cplexpb-%d.lp", i);
 						CPXwriteprob (env, lp, buffer, NULL);
 					}
 				} else
@@ -278,6 +278,12 @@ int cplex_solver::init_solutions() {
 	if ( status ) {
 		fprintf (stderr, "cplex_solver: init_solutions: failed to get solutions.\n");
 		exit(-1);
+	} else if (OUTPUT_MODEL) {
+		// Output model to file (when requested)
+		char buffer[1024];
+		sprintf(buffer, "cplexsol.xml");
+		CPXsolwrite(env, lp, buffer);
+
 	}
 	return 0;
 }
@@ -289,7 +295,6 @@ CUDFcoefficient cplex_solver::get_solution(int k) {  return (CUDFcoefficient)nea
 int cplex_solver::begin_objectives(void) { 
 	// Set Problem as a minimization problem
 	CPXchgobjsen (env, lp, CPX_MIN);
-
 	return 0;
 }
 
@@ -412,6 +417,6 @@ int cplex_solver::add_constraint_eq(CUDFcoefficient bound) {
 
 // ends up constraint declaration
 int cplex_solver::end_add_constraints(void) { 
-	if (OUTPUT_MODEL) CPXwriteprob (env, lp, "cplexpbs.lp", NULL);
+	if (OUTPUT_MODEL) CPXwriteprob (env, lp, "cplexpb.lp", NULL);
 	return 0;
 }

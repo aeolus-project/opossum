@@ -30,6 +30,11 @@
 
 #include "graphviz.hpp"
 
+#define INST "cplexpb"
+#define FLOW "sol-flow-"
+#define PATH "sol-path-"
+#define DOT ".dot"
+
 void stylePServers(ostream & out, const int servers) {
 	switch (servers) {
 	case 0:	out << ",style=dashed"; break;
@@ -106,7 +111,7 @@ void flow2dotty(PSLProblem & problem, abstract_solver & solver)
 	for (int i = 0; i < problem.stageCount(); ++i) {
 		ofstream myfile;
 		stringstream ss (stringstream::in | stringstream::out);
-		ss << "flow-sol-" << i << ".dot";
+		ss << FLOW << i << DOT;
 		//cout << "## " << ss.str() << endl;
 		myfile.open(ss.str().c_str());
 		myfile << "digraph F" << i << "{" <<endl;
@@ -192,7 +197,7 @@ void path2dotty(PSLProblem & problem, abstract_solver & solver)
 	for (int i = 1; i < problem.stageCount(); ++i) {
 		ofstream myfile;
 		stringstream ss (stringstream::in | stringstream::out);
-		ss << "path-sol-" << i << ".dot";
+		ss << PATH << i << DOT;
 		myfile.open (ss.str().c_str());
 		myfile << "digraph P" << i << "{" <<endl;
 		path2dotty(myfile, problem, solver, i);
@@ -204,7 +209,7 @@ void path2dotty(PSLProblem & problem, abstract_solver & solver)
 
 void inst2dotty(PSLProblem &problem) {
 	ofstream myfile;
-	myfile.open ("instance.dot");
+	myfile.open (INST DOT);
 	problem.toDotty(myfile);
 	myfile.close();
 }

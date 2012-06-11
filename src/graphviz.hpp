@@ -31,8 +31,7 @@
 #ifndef GRAPHVIZ_HPP_
 #define GRAPHVIZ_HPP_
 
-#include <iostream>
-#include <sstream>
+
 #include <abstract_solver.h>
 
 using namespace std;

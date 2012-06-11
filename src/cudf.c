@@ -798,7 +798,7 @@ int parse_pslp(istream& in)
 
 void print_problem(ostream& out, PSLProblem *pbs)
 {
-	cout << *pbs;
+	out << *pbs;
 }
 
 
