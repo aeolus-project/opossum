@@ -16,9 +16,6 @@
 
 
 
-extern bool generate_desagregate_constraints;
-extern bool generate_agregate_constraints;
-
 
 extern int new_var;
 extern CUDFcoefficient min_bandwidth;
