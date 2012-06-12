@@ -136,6 +136,56 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	}
 	BOOST_CHECK(count_nodes == problem->nodeCount());
 
+	/////////////////////////////////////////////////
+	//		UnitTest AncestorIterator
+	////////////////////////////////////////////////
+
+	AncestorIterator itA = problem->getRoot()->getChild(0)->getChild(0)->abegin();
+	//Copy ctor
+	//
+	AncestorIterator itA_copy(itA);
+	BOOST_CHECK(itA == itA_copy);
+
+	//Operator =
+	AncestorIterator itA_copy2 = problem->getRoot()->getChild(0)->getChild(0)->abegin();
+	itA_copy2 = itA;
+	BOOST_CHECK(itA == itA_copy2);
+
+	//Operator ++
+	//
+	itA++;
+	itA_copy++;
+	BOOST_CHECK(itA == itA_copy);
+
+	//Operator !=
+	//
+	BOOST_CHECK(itA != itA_copy2);
+	BOOST_CHECK(itA_copy != itA_copy2);
+
+	//Operator *
+	//
+	BOOST_CHECK(*itA == *itA_copy);
+	BOOST_CHECK(*itA != *(itA_copy2));
+
+	//Operator ->
+	//
+	BOOST_CHECK(itA->getID() == itA_copy->getID());
+
+	//Count ancestors
+	int count_ancestors = 0;
+	for( AncestorIterator i = problem->getRoot()->getChild(0)->getChild(0)->abegin();i != problem->getRoot()->getChild(0)->getChild(0)->aend();i++) {
+		cout << **i << endl;
+		count_ancestors++;
+	}
+	BOOST_CHECK(count_ancestors == 2);
+
+	//Count root ancestors
+	count_ancestors = 0;
+	for( AncestorIterator i = problem->getRoot()->abegin();i != problem->getRoot()->aend();i++) {
+		count_ancestors++;
+	}
+	BOOST_CHECK(count_ancestors == 0);
+
 }
 
 BOOST_AUTO_TEST_CASE(networkGeneration)

@@ -58,6 +58,7 @@ class FacilityNode;
 class NetworkLink;
 class LinkIterator;
 class NodeIterator;
+class AncestorIterator;
 class PSLProblem;
 
 typedef vector<unsigned int> IntList;
@@ -261,6 +262,10 @@ public:
 	LinkIterator lbegin();
 	LinkIterator lend();
 
+	//For AncestorIterator
+	AncestorIterator abegin();
+	AncestorIterator aend();
+
 private:
 	unsigned int id;
 	FacilityType* type;
@@ -424,9 +429,59 @@ private:
 
 };
 
+//----------------------------------------
+//	AncestorIterator Declaration
+//----------------------------------------
 
+class AncestorIterator : public std::iterator<std::forward_iterator_tag, FacilityNode> {
+public:
+	AncestorIterator(FacilityNode* p) : node( p) {
+		++(*this);
+	}
 
-//---------------------------------------- 
+	//Destructor of AncestorIterator
+	//Do not delete pointers of iterator
+	//
+	~AncestorIterator() {}
+
+	AncestorIterator(const AncestorIterator& other) : node(other.node) {}
+
+	// The assignment and relational operators are straightforward
+	AncestorIterator& operator=(const AncestorIterator& other) {
+		if(*this != other) {
+			node = other.node;
+		}
+		return *this;
+	}
+
+	bool operator==(const AncestorIterator& other) {
+		return (node == other.node);
+	}
+
+	bool operator!=(const AncestorIterator& other) {
+		return (node != other.node);
+	}
+
+	AncestorIterator& operator++();
+
+	AncestorIterator& operator++(int) {
+		++(*this);
+		return *this;
+	}
+
+	FacilityNode* operator*() {
+		return node;
+	}
+
+	FacilityNode* operator->() {
+		return node;
+	}
+
+private:
+	FacilityNode* node;
+
+};
+//----------------------------------------
 //	PSLProblem Declaration
 //----------------------------------------
 
@@ -575,6 +630,7 @@ private:
 	inline int endZij() const {
 		return endYij() + pathCount() * stageCount();
 	}
+
 	inline int endBij() const {
 		return endZij() + pathCount() * stageCount();
 	}

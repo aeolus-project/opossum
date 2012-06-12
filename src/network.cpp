@@ -55,6 +55,15 @@ LinkIterator FacilityNode::lend() {
 	return LinkIterator(NULL);
 }
 
+//For AncestorIterator
+AncestorIterator FacilityNode::abegin() {
+	return AncestorIterator(this);
+}
+
+AncestorIterator FacilityNode::aend() {
+	return AncestorIterator(NULL);
+}
+
 
 ostream & FacilityNode::toDotty(ostream & out) {
 	out << getID();
@@ -402,6 +411,15 @@ NodeIterator& NodeIterator::operator++() {
 	return (*this);
 }
 
+
+//----------------------------------------
+//	AncestorIterator Implementation
+//----------------------------------------
+
+AncestorIterator& AncestorIterator::operator++() {
+	node = node == NULL || node->isRoot() ? NULL : node->getFather();
+	return (*this);
+}
 
 //----------------------------------------
 //	istream methods Implementation
