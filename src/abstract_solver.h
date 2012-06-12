@@ -124,6 +124,7 @@ protected:
 			}
 			for (int s = 0; s < problem->stageCount(); ++s) {
 				set_intvar(problem->rankY(*i, s), sprint_var("y%d'%d", i->getID(), s));
+				set_intvar(problem->rankZ(*i, s), sprint_var("z%d'%d", i->getID(), s));
 			}
 		}
 

@@ -93,6 +93,40 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 		}
 
 		///////////
+		//Number of local connections
+		for (int s = 0; s < problem->stageCount(); ++s) {
+			solver.new_constraint();
+			solver.set_constraint_coeff(problem->rankZ(*i, s),1);
+			for(AncestorIterator p = i->abegin() ; p!=  i->aend() ; p++) {
+				solver.set_constraint_coeff( problem->rankZ(*p, *i, s), 1);
+			}
+			if(s == 0) {
+				//special case: initial broadcast (s=0)
+				solver.set_constraint_coeff( problem->rankX(*i), -1);
+				solver.add_constraint_eq(0);
+			} else {
+				//standard case: groups of clients
+				solver.add_constraint_eq(i->getType()->getDemand(s-1));
+			}
+
+
+		}
+
+		///////////
+		//the number of provided connections is the sum of the numbers of local and outgoing connections.
+//		for (int s = 0; s < problem->stageCount(); ++s) {
+//			solver.new_constraint();
+//			solver.set_constraint_coeff(problem->rankY(*i, s),1);
+//			solver.set_constraint_coeff(problem->rankZ(*i, s), -1);
+//			for(NodeIterator p = i->nbegin() ; p!=  i->nend() ; p++) {
+//				solver.set_constraint_coeff( problem->rankZ(*i, *p, s), 1);
+//			}
+//			solver.add_constraint_eq(i->getType()->getDemand(s));
+//		}
+
+
+
+		///////////
 		//Additional constraints for the initial broadcast(s=0)
 		if(i->isRoot()) {
 			//the central facility contains the root pserver
