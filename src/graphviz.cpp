@@ -140,18 +140,6 @@ void colorUnitBandwidth(ostream & out, const double unitBandwidth) {
 	}
 }
 
-bool isReliablePath(const FacilityNode* origin, FacilityNode* destination) {
-	while(destination != origin) {
-		if(destination->toFather()->isReliable()) {
-			destination = destination->getFather();
-			if(!destination) {
-				return false;
-			}
-		}else return false;
-	}
-	return true;
-}
-
 void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, unsigned int stage)
 {
 

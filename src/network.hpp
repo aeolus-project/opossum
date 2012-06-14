@@ -717,4 +717,14 @@ inline void NetworkLink::forEachPath(FuncType func) const {
 	} while (!ancestor->isRoot());
 }
 
+inline bool isReliablePath(const FacilityNode* origin, FacilityNode* destination) {
+	while(destination) {
+		if(destination == origin) return true;
+		else if(destination->toFather()->isReliable()) {
+			destination = destination->getFather();
+		} else destination = NULL;
+	}
+	return false;
+}
+
 #endif /* NETWORK_HPP_ */
