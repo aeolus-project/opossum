@@ -35,6 +35,22 @@
 #define PATH "sol-path-"
 #define DOT ".dot"
 
+
+void inst2dotty(PSLProblem &problem) {
+	ofstream myfile;
+	myfile.open (INST DOT);
+	problem.toDotty(myfile);
+	myfile.close();
+}
+
+void gtitle(ostream & out, const char* title, unsigned int stage) {
+	if(title) {
+		//cout << ">>>>>>>>>> " << title << endl;
+		out << "label=\"" << title << " - stage " << stage << "\";" << endl;
+		out << "labelloc=\"t\";" << endl;
+	}
+}
+
 void stylePServers(ostream & out, const int servers) {
 	switch (servers) {
 	case 0:	out << ",style=dashed"; break;
@@ -64,6 +80,9 @@ void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_so
 	stylePServers(out, servers);
 	out << "];" << endl;
 }
+
+
+
 
 void colorConnection(ostream & out, const int connections) {
 	if(connections >= 50) {
@@ -106,7 +125,7 @@ void flow2dotty(ostream & out, PSLProblem & problem, abstract_solver & solver, u
 
 
 
-void flow2dotty(PSLProblem & problem, abstract_solver & solver)
+void flow2dotty(PSLProblem & problem, abstract_solver & solver, char* title)
 {
 	for (int i = 0; i < problem.stageCount(); ++i) {
 		ofstream myfile;
@@ -179,8 +198,7 @@ void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, un
 }
 
 
-
-void path2dotty(PSLProblem & problem, abstract_solver & solver)
+void path2dotty(PSLProblem & problem, abstract_solver & solver, char* title)
 {
 	for (int i = 1; i < problem.stageCount(); ++i) {
 		ofstream myfile;
@@ -188,6 +206,7 @@ void path2dotty(PSLProblem & problem, abstract_solver & solver)
 		ss << PATH << i << DOT;
 		myfile.open (ss.str().c_str());
 		myfile << "digraph P" << i << "{" <<endl;
+		gtitle(myfile, title, i);
 		path2dotty(myfile, problem, solver, i);
 		myfile << endl << "}" << endl;
 		myfile.close();
@@ -195,16 +214,11 @@ void path2dotty(PSLProblem & problem, abstract_solver & solver)
 }
 
 
-void inst2dotty(PSLProblem &problem) {
-	ofstream myfile;
-	myfile.open (INST DOT);
-	problem.toDotty(myfile);
-	myfile.close();
-}
 
-void solution2dotty(PSLProblem &problem, abstract_solver& solver) {
-	flow2dotty(problem, solver);
-	path2dotty(problem, solver);
+
+void solution2dotty(PSLProblem &problem, abstract_solver& solver, char* title) {
+	flow2dotty(problem, solver, title);
+	path2dotty(problem, solver, title);
 }
 
 

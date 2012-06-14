@@ -15,6 +15,7 @@
 #include <abstract_criteria.h>
 
 #include <pserv_criteria.h>
+#include <conn_criteria.h>
 
 #include <lexagregate_combiner.h>
 #include <agregate_combiner.h>

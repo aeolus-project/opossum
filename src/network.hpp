@@ -645,18 +645,22 @@ public:
 		return node->getID();
 	}
 	int rankX(FacilityNode *node, unsigned int stype) const {
+		assert(stype >= 0 && stype < serverTypeCount());
 		return endX() + node->getID() * serverTypeCount() + stype;
 	}
 
 	int rankY(FacilityNode *node, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
 		return endXk() + node->getID() * stageCount() + stage;
 	}
 
 	int rankZ(FacilityNode *node, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
 		return endYi() + node->getID() * stageCount() + stage;
 	}
 
 	int rankY(NetworkLink *link, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
 		return endZi() + link->getID() * stageCount() + stage;
 	}
 
@@ -668,7 +672,13 @@ public:
 		return endZij() + rank(source, destination, stage);
 	}
 
+	int rankZ(pair<FacilityNode*, FacilityNode* > const &path, unsigned int stage) const {
+		return rankZ(path.first, path.second, stage);
+	}
 
+	int rankB(pair<FacilityNode*, FacilityNode* > const &path, unsigned int stage) const {
+		return rankB(path.first, path.second, stage);
+	}
 private:
 
 	inline int endX() const {
@@ -706,6 +716,7 @@ private:
 	}
 
 	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
 		return rank(source, destination) * stageCount() + stage;
 	}
 

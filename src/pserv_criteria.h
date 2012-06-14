@@ -15,16 +15,17 @@
 // i.e. the number of pservers that were
 // not installed in the initial configuration and
 // that are installed in the final one.
-// The criteria can be restricted to a type of pservers.
+// the scope of pservers and facilities can be retricted by using properties.
 class pserv_criteria: public pslp_criteria{
 public:
 
 	pair<unsigned int, unsigned int> pserv_range;
 	pair<unsigned int, unsigned int> layer_range;
 
+	unsigned int pserv_max;
+
 	// Criteria initialization
 	void initialize(PSLProblem *problem, abstract_solver *solver);
-
 	// Allocate some columns for the criteria
 	int set_variable_range(int first_free_var);
 	// Add the criteria to the objective
@@ -35,8 +36,10 @@ public:
 	int add_constraints();
 
 
-	pserv_criteria(CUDFcoefficient lambda_crit, int reliable, pair<unsigned int, unsigned int> pserv_range, pair<unsigned int, unsigned int> layer_range) : pslp_criteria(lambda_crit, reliable), pserv_range(pserv_range), layer_range(layer_range) {};
-
+	pserv_criteria(CUDFcoefficient lambda_crit, int reliable, pair<unsigned int, unsigned int> pserv_range, pair<unsigned int, unsigned int> layer_range) : pslp_criteria(lambda_crit, reliable), pserv_range(pserv_range), layer_range(layer_range) {
+		pserv_range.second = min(pserv_range.second, problem->serverTypeCount() -1);
+	};
+	virtual ~pserv_criteria() {}
 private :
 	inline bool all_pserv() {
 		return pserv_range.first <= 0 && problem->serverTypeCount() -1 <= pserv_range.second;

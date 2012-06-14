@@ -17,8 +17,18 @@
 
 //Remove main
 //#define main toto
-#define C_TEXT( text ) ((char*)std::string( text ).c_str())
+#define C_STR( text ) ((char*)std::string( text ).c_str())
 
+
+template <typename T>
+T* makeCombiner(CriteriaList* criteria, char* name) {
+	if (criteria->empty()) {
+		fprintf(stderr, "ERROR: -%s option requires a list of criteria.\n", name);
+		exit(-1);
+	}
+	return new T(criteria);
+
+}
 // underlying solver declaration
 // allows using solvers withour having to include the whole solver classes
 
@@ -253,9 +263,9 @@ CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int &pos, char si
 }
 
 void get_criteria_properties(char *crit_descr, unsigned int &pos,
-		string prop1, pair<unsigned int, unsigned int> &range1,
-		string prop2, pair<unsigned int, unsigned int> &range2,
-		int& reliable, CUDFcoefficient& lambda) {
+		string const & prop1, pair<unsigned int, unsigned int> &range1,
+		string const & prop2, pair<unsigned int, unsigned int> &range2,
+		int& reliable, CUDFcoefficient& lambda, char sign) {
 	int n = 0;
 	do {
 		vector< pair<unsigned int, unsigned int> *> opts;
@@ -272,6 +282,7 @@ void get_criteria_properties(char *crit_descr, unsigned int &pos,
 		}
 
 	} while(n > 0);
+	if(sign == '+') {lambda *=-1;}
 	cout << ">>>>>>>>>>> "<< prop1 <<": " << range1.first << " " << range1.second << endl;
 	cout << ">>>>>>>>>>> "<< prop2 <<": " << range2.first << " " <<  range2.second << endl;
 	cout << ">>>>>>>>>>> Reliable: " << reliable << endl;
@@ -504,14 +515,21 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 				int rel = -1;
 				CUDFcoefficient lambda = 1;
 				get_criteria_properties(crit_descr, pos,
-						C_TEXT("type"), r1,
-						C_TEXT("layer"), r2,
-						rel, lambda
+						"type", r1,
+						"layer", r2,
+						rel, lambda, crit_descr[sign]
 				);
-				if(crit_descr[sign] == '+') {lambda *=-1;}
 				criteria->push_back(new pserv_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "conn", crit_name_length) == 0) {
-				//TODO conn_criteria
+				pair<unsigned int, unsigned int> r1(0, numeric_limits<int>::max()), r2(0,numeric_limits<int>::max() );
+				int rel = -1;
+				CUDFcoefficient lambda = 1;
+				get_criteria_properties(crit_descr, pos,
+						"stage", r1,
+						"length", r2,
+						rel, lambda, crit_descr[sign]
+				);
+				criteria->push_back(new conn_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "bandw", crit_name_length) == 0) {
 				//TODO bandw_criteria
 			} else if (strncmp(crit_descr+crit_name, "agregate", crit_name_length) == 0) {
@@ -563,6 +581,7 @@ int main(int argc, char *argv[]) {
 	bool got_input = false;
 	bool got_output = false;
 	bool fulloutput = false;
+	char* obj_descr;
 	PSLProblem *problem;
 	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
 	//TODO remove useless options;
@@ -617,76 +636,43 @@ int main(int argc, char *argv[]) {
 				;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+4, true, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexicographic_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lex option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
+				obj_descr == argv[i];
 			} else if (strncmp(argv[i], "-lexicographic[", 15) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+14, true, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexicographic_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexicographic option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
+				obj_descr = argv[i];
+				cout << ">>>>>>>>>> " << argv[i] << endl;
+				cout << ">>>>>>>>>> " << obj_descr << endl;
 			} else if (strncmp(argv[i], "-agregate[", 10) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+9, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new agregate_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -agregate option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<agregate_combiner>(criteria, C_STR("agregate"));
+				obj_descr == argv[i];
 			} else if (strncmp(argv[i], "-lexagregate[", 13) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+12, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexagregate_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexagregate option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexagregate_combiner>(criteria, C_STR("lexagregate"));
+				obj_descr == argv[i];
 			} else if (strncmp(argv[i], "-lexsemiagregate[", 17) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+16, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexsemiagregate_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexsemiagregate option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexsemiagregate_combiner>(criteria, C_STR("lexsemiagregate"));
+				obj_descr == argv[i];
+
 			} else if (strncmp(argv[i], "-leximax[", 9) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+8, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new leximax_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -leximax option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<leximax_combiner>(criteria, C_STR("leximax"));
+				obj_descr == argv[i];
 			} else if (strncmp(argv[i], "-leximin[", 9) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+8, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new leximin_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -leximin option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<leximin_combiner>(criteria, C_STR("leximin"));
+				obj_descr == argv[i];
 			} else if (strncmp(argv[i], "-lexleximax[", 12) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexleximax_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexleximax option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexleximax_combiner>(criteria, C_STR("lexleximax"));
+				obj_descr == argv[i];
 			} else if (strncmp(argv[i], "-lexleximin[", 12) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexleximin_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexleximin option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexleximin_combiner>(criteria, C_STR("lexleximin"));
+				obj_descr == argv[i];
 			} else if (strcmp(argv[i], "-h") == 0) {
 				print_help();
 				exit(-1);
@@ -812,7 +798,7 @@ int main(int argc, char *argv[]) {
 			out << endl << "================================================================" << endl;
 		}
 		if(verbosity > 3) {
-			solution2dotty(*problem, *solver);
+			solution2dotty(*problem, *solver, obj_descr);
 		}
 
 		// print out additional informations

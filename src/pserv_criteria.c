@@ -12,7 +12,7 @@
 // Criteria initialization
 void pserv_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
 	pslp_criteria::initialize(problem, solver);
-
+	pserv_max = min(pserv_range.second, problem->serverTypeCount()-1);
 	if(all_pserv()) {
 		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 			if(isInRL(*i)) {
@@ -22,7 +22,7 @@ void pserv_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
 	} else {
 		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 			if(isInRL(*i)) {
-				for (int k = pserv_range.first; k <= pserv_range.second; ++k) {
+				for (int k = pserv_range.first; k <= pserv_max; ++k) {
 					_upper_bound += i->getType()->getServerCapacity(k);
 				}
 			}
@@ -46,7 +46,7 @@ int pserv_criteria::add_criteria_to_objective(CUDFcoefficient lambda) {
 	} else {
 		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 			if(isInRL(*i)) {
-				for (int k = pserv_range.first; k <= pserv_range.second; ++k) {
+				for (int k = pserv_range.first; k <= pserv_max; ++k) {
 					set_obj_coeff(problem->rankX(*i, k), lambda);
 				}
 			}
@@ -66,7 +66,7 @@ int pserv_criteria::add_criteria_to_constraint(CUDFcoefficient lambda) {
 	} else {
 		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 			if(isInRL(*i)) {
-				for (int k = pserv_range.first; k <= pserv_range.second; ++k) {
+				for (int k = pserv_range.first; k <= pserv_max; ++k) {
 					set_constraint_coeff(problem->rankX(*i, k), lambda);
 				}
 			}
