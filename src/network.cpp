@@ -64,6 +64,15 @@ AncestorIterator FacilityNode::aend() {
 	return AncestorIterator(NULL);
 }
 
+//For AncestorIterator
+PathIterator FacilityNode::pbegin() {
+	return PathIterator(this);
+}
+
+PathIterator FacilityNode::pend() {
+	return PathIterator(NULL);
+}
+
 
 ostream & FacilityNode::toDotty(ostream & out) {
 	out << getID();
@@ -381,7 +390,7 @@ LinkIterator::LinkIterator(FacilityNode* p) : current(NULL), end(NULL) {
 }
 
 LinkIterator& LinkIterator::operator ++() {
-	queue.push_back((*current)->getDestination());
+	queue.push_back((*current)->getDestination()); //TODO Do not add leaves ?
 	current++;
 	while (current == end && !queue.empty()) {
 		current = queue.front()->cbegin();
@@ -411,7 +420,6 @@ NodeIterator& NodeIterator::operator++() {
 	return (*this);
 }
 
-
 //----------------------------------------
 //	AncestorIterator Implementation
 //----------------------------------------
@@ -420,6 +428,23 @@ AncestorIterator& AncestorIterator::operator++() {
 	node = node == NULL || node->isRoot() ? NULL : node->getFather();
 	return (*this);
 }
+
+//----------------------------------------
+//	PathIterator Implementation
+//----------------------------------------
+
+PathIterator& PathIterator::operator++() {
+	if (cdest != edest) cdest++;
+	while (cdest == edest && cnode != enode) {
+		cnode++;
+		cdest = cnode->nbegin();
+		cdest++;
+		edest = cnode->nend();
+	}
+	return (*this);
+}
+
+
 
 //----------------------------------------
 //	istream methods Implementation

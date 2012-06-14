@@ -172,20 +172,30 @@ BOOST_AUTO_TEST_CASE(NetworkIterators)
 	BOOST_CHECK(itA->getID() == itA_copy->getID());
 
 	//Count ancestors
-	int count_ancestors = 0;
+	int count = 0;
 	for( AncestorIterator i = problem->getRoot()->getChild(0)->getChild(0)->abegin();i != problem->getRoot()->getChild(0)->getChild(0)->aend();i++) {
-		cout << **i << endl;
-		count_ancestors++;
+		count++;
 	}
-	BOOST_CHECK(count_ancestors == 2);
+	BOOST_CHECK(count == 2);
 
 	//Count root ancestors
-	count_ancestors = 0;
+	count = 0;
 	for( AncestorIterator i = problem->getRoot()->abegin();i != problem->getRoot()->aend();i++) {
-		count_ancestors++;
+		count++;
 	}
-	BOOST_CHECK(count_ancestors == 0);
+	BOOST_CHECK(count == 0);
 
+
+	/////////////////////////////////////////////////
+	//		UnitTest PathIterator
+	////////////////////////////////////////////////
+	//Count paths
+	count = 0;
+	for( PathIterator i = problem->getRoot()->pbegin();i != problem->getRoot()->pend();i++) {
+		//	cout << *(*i).first << " -> "<< *(*i).second << endl;
+		count++;
+	}
+	BOOST_CHECK(count == problem->pathCount());
 }
 
 BOOST_AUTO_TEST_CASE(networkGeneration)

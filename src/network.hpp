@@ -59,6 +59,7 @@ class NetworkLink;
 class LinkIterator;
 class NodeIterator;
 class AncestorIterator;
+class PathIterator;
 class PSLProblem;
 
 typedef vector<unsigned int> IntList;
@@ -265,6 +266,10 @@ public:
 	//For AncestorIterator
 	AncestorIterator abegin();
 	AncestorIterator aend();
+
+	//For PathIterator
+	PathIterator pbegin();
+	PathIterator pend();
 
 private:
 	unsigned int id;
@@ -479,6 +484,65 @@ public:
 
 private:
 	FacilityNode* node;
+
+};
+
+//----------------------------------------
+//	PathIterator Declaration
+//----------------------------------------
+
+class PathIterator : public std::iterator<std::forward_iterator_tag, pair<FacilityNode*, FacilityNode*> > {
+public:
+	PathIterator(FacilityNode* p) : cnode(p->nbegin()), enode(p->nend()), cdest(p->nbegin()), edest(p->nend()) {
+		cdest++;
+	}
+
+	//Destructor of PathIterator
+	//Do not delete pointers of iterator
+	//
+	~PathIterator() {}
+
+	PathIterator(const PathIterator& other) : cnode(other.cnode), enode(other.enode), cdest(other.cdest), edest(other.edest) {}
+
+	// The assignment and relational operators are straightforward
+	PathIterator& operator=(const PathIterator& other) {
+		if(*this != other) {
+			cnode= other.cnode;
+			enode= other.enode;
+			cdest = other.cdest;
+			edest = other.edest;
+		}
+		return *this;
+	}
+
+	bool operator==(const PathIterator& other) {
+		return (cnode == other.cnode) && (cdest== other.cdest);
+	}
+
+	bool operator!=(const PathIterator& other) {
+		return (cnode != other.cnode) || (cdest!= other.cdest);
+	}
+
+	PathIterator& operator++();
+
+	PathIterator& operator++(int) {
+		++(*this);
+		return *this;
+	}
+
+	pair<FacilityNode*, FacilityNode*> operator*() {
+		return pair<FacilityNode*, FacilityNode*>(*cnode, *cdest);
+	}
+
+	pair<FacilityNode*, FacilityNode*> operator->() {
+		return *(*this);
+	}
+
+private:
+	NodeIterator cnode;
+	NodeIterator enode;
+	NodeIterator cdest;
+	NodeIterator edest;
 
 };
 //----------------------------------------
