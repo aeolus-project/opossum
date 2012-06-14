@@ -1,6 +1,6 @@
 
 /*******************************************************/
-/* CUDF solver: new_criteria.h                         */
+/* CUDF solver: pserv_criteria.h                         */
 /* Implementation the pserv criteria                   */
 /* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
 /*******************************************************/
@@ -11,9 +11,7 @@
 
 // Criteria initialization
 void pserv_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
-	this->problem = problem;
-	this->solver = solver;
-	_upper_bound = 0;
+	pslp_criteria::initialize(problem, solver);
 
 	if(all_pserv()) {
 		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
@@ -77,24 +75,12 @@ int pserv_criteria::add_criteria_to_constraint(CUDFcoefficient lambda) {
 	return 0;
 }
 
-// Add the constraints required by the criteria
-int pserv_criteria::add_constraints() {
+int pserv_criteria::add_constraints()
+{
 	return 0;
 }
 
-// Compute the criteria range
-CUDFcoefficient pserv_criteria::bound_range() {
-	return CUDFabs(lambda_crit) * _upper_bound;
-}
 
-// Compute the criteria upper bound
-CUDFcoefficient pserv_criteria::upper_bound() {
-	return _upper_bound;
-}
 
-// Compute the criteria lower bound
-CUDFcoefficient pserv_criteria::lower_bound() {
-	return 0;
-}
 
 

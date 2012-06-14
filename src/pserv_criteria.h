@@ -18,11 +18,12 @@
 // The criteria can be restricted to a type of pservers.
 class pserv_criteria: public pslp_criteria{
 public:
-	PSLProblem *problem;      // a pointer to the problem
-	abstract_solver *solver;   // a pointer to the solver
 
-	// upper bound of the criteria
-	int _upper_bound;
+	pair<unsigned int, unsigned int> pserv_range;
+	pair<unsigned int, unsigned int> layer_range;
+
+	// Criteria initialization
+	void initialize(PSLProblem *problem, abstract_solver *solver);
 
 	// Allocate some columns for the criteria
 	int set_variable_range(int first_free_var);
@@ -33,23 +34,6 @@ public:
 	// Add constraints required by the criteria
 	int add_constraints();
 
-	// Compute the criteria range, upper and lower bounds
-	CUDFcoefficient bound_range();
-	CUDFcoefficient upper_bound();
-	CUDFcoefficient lower_bound();
-
-	// Does the criteria allows problem reductions
-	bool can_reduce(CUDFcoefficient lambda) { return ((lambda >= 0) && (lambda_crit >= 0)); }
-
-	// Criteria initialization
-	void initialize(PSLProblem *problem, abstract_solver *solver);
-
-
-	pair<unsigned int, unsigned int> pserv_range;
-	pair<unsigned int, unsigned int> layer_range;
-	int reliable;
-	// lambda multiplier for the criteria
-	CUDFcoefficient lambda_crit ;
 
 	pserv_criteria(CUDFcoefficient lambda_crit, int reliable, pair<unsigned int, unsigned int> pserv_range, pair<unsigned int, unsigned int> layer_range) : pslp_criteria(lambda_crit, reliable), pserv_range(pserv_range), layer_range(layer_range) {};
 
@@ -74,13 +58,6 @@ private :
 		return isInRel(node) && isInLayer(node);
 	}
 
-	inline void set_constraint_coeff(int rank, CUDFcoefficient value) {
-		solver->set_constraint_coeff(rank, lambda_crit * value);
-	}
-
-	inline void set_obj_coeff(int rank, CUDFcoefficient value) {
-		solver->set_obj_coeff(rank, lambda_crit * value + solver->get_obj_coeff(rank));
-	}
 };
 
 #endif

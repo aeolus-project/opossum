@@ -72,6 +72,12 @@ public:
 	// upper bound of the criteria
 	int _upper_bound;
 
+	virtual void initialize(PSLProblem *problem, abstract_solver *solver) {
+		this->problem = problem;
+		this->solver = solver;
+		_upper_bound = 0;
+	}
+
 	// Compute the criteria range, upper and lower bounds
 	virtual CUDFcoefficient bound_range() {
 		return CUDFabs(lambda_crit) * _upper_bound;
@@ -90,11 +96,11 @@ public:
 
 protected :
 
-	virtual void set_constraint_coeff(int rank, CUDFcoefficient value) {
+	inline void set_constraint_coeff(int rank, CUDFcoefficient value) {
 		solver->set_constraint_coeff(rank, lambda_crit * value);
 	}
 
-	virtual void set_obj_coeff(int rank, CUDFcoefficient value) {
+	inline void set_obj_coeff(int rank, CUDFcoefficient value) {
 		solver->set_obj_coeff(rank, lambda_crit * value + solver->get_obj_coeff(rank));
 	}
 };
