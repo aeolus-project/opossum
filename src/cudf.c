@@ -501,15 +501,15 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 			// handle criteria
 			if (strncmp(crit_descr+crit_name, "pserv", crit_name_length) == 0) {
 				pair<unsigned int, unsigned int> r1(0, numeric_limits<int>::max()), r2(0,numeric_limits<int>::max() );
-				int reliable = -1;
+				int rel = -1;
 				CUDFcoefficient lambda = 1;
 				get_criteria_properties(crit_descr, pos,
 						C_TEXT("type"), r1,
 						C_TEXT("layer"), r2,
-						reliable, lambda
+						rel, lambda
 				);
 				if(crit_descr[sign] == '+') {lambda *=-1;}
-				criteria->push_back(new pserv_criteria(r1, r2, reliable, lambda));
+				criteria->push_back(new pserv_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "conn", crit_name_length) == 0) {
 				//TODO conn_criteria
 			} else if (strncmp(crit_descr+crit_name, "bandw", crit_name_length) == 0) {

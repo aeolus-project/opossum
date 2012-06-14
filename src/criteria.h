@@ -14,14 +14,7 @@
 #include <abstract_solver.h>
 #include <abstract_criteria.h>
 
-//#include <removed_criteria.h>
-//#include <changed_criteria.h>
-//#include <notuptodate_criteria.h>
 #include <pserv_criteria.h>
-//#include <nunsat_criteria.h>
-
-//#include <count_criteria.h>
-//#include <unaligned_criteria.h>
 
 #include <lexagregate_combiner.h>
 #include <agregate_combiner.h>

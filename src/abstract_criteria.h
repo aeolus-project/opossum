@@ -14,37 +14,38 @@
 
 // Abstract criteria class
 class abstract_criteria {
- public:
-  // Method called to allocate some variables (columns) to the criteria
-  virtual int set_variable_range(int first_free_var) { return 0; }
-  // Method called to add the criteria to the current objective
-  virtual int add_criteria_to_objective(CUDFcoefficient lambda) { return 0; };
-  // Method called to add the criteria to the constraints
-  virtual int add_criteria_to_constraint(CUDFcoefficient lambda) { return 0; };
-  // Method called to add criteria related constraints
-  virtual int add_constraints() { return 0; };
+public:
+	// Method called to allocate some variables (columns) to the criteria
+	virtual int set_variable_range(int first_free_var) { return 0; }
+	// Method called to add the criteria to the current objective
+	virtual int add_criteria_to_objective(CUDFcoefficient lambda) { return 0; };
+	// Method called to add the criteria to the constraints
+	virtual int add_criteria_to_constraint(CUDFcoefficient lambda) { return 0; };
+	// Method called to add criteria related constraints
+	virtual int add_constraints() { return 0; };
 
-  // Gives the range of the criteria objective 
-  virtual CUDFcoefficient bound_range() { return 0; };
-  // Gives the upper bound of the criteria objective
-  virtual CUDFcoefficient upper_bound() { return 0; };
-  // Gives the lower bound of the criteria objective
-  virtual CUDFcoefficient lower_bound() { return 0; };
+	// Gives the range of the criteria objective
+	virtual CUDFcoefficient bound_range() { return 0; };
+	// Gives the upper bound of the criteria objective
+	virtual CUDFcoefficient upper_bound() { return 0; };
+	// Gives the lower bound of the criteria objective
+	virtual CUDFcoefficient lower_bound() { return 0; };
 
-  // Does this criteria allows problem reduction ?
-  virtual bool can_reduce(CUDFcoefficient lambda) { return true; }
+	// Does this criteria allows problem reduction ?
+	virtual bool can_reduce(CUDFcoefficient lambda) { return true; }
 
-  // Method called to let the criteria initializes itself
-  virtual void initialize(PSLProblem *problem, abstract_solver *solver) { };
-  // Method called to initialize criteria variables
-  virtual void initialize_intvars() { };
+	// Method called to let the criteria initializes itself
+	virtual void initialize(PSLProblem *problem, abstract_solver *solver) { };
+	// Method called to initialize criteria variables
+	virtual void initialize_intvars() { };
 
-  //Method called to let the criteria checks some properties availability
-  virtual void check_property(PSLProblem *problem) {};
+	//Method called to let the criteria checks some properties availability
+	virtual void check_property(PSLProblem *problem) {};
 
-  // Criteria destructor
-  virtual ~abstract_criteria() { };
+	// Criteria destructor
+	virtual ~abstract_criteria() { };
 };
+
 
 // Type for a list of criteria
 typedef vector<abstract_criteria *> CriteriaList;
@@ -52,6 +53,51 @@ typedef CriteriaList::iterator CriteriaListIterator;
 
 // Shall we optimize variable usage or not
 extern bool criteria_opt_var;
+
+inline bool isInRange(unsigned int val, pair<unsigned int, unsigned int> &range) {
+	return val >= range.first && val <= range.second;
+}
+
+// A generic class for defining PSLP criteria.
+class pslp_criteria : public abstract_criteria {
+public:
+	PSLProblem *problem;      // a pointer to the problem
+	abstract_solver *solver;   // a pointer to the solver
+
+	// select elements according to their reliability (nodes, links, paths ...)
+	int reliable;
+	// lambda multiplier for the criteria
+	CUDFcoefficient lambda_crit ;
+
+	// upper bound of the criteria
+	int _upper_bound;
+
+	// Compute the criteria range, upper and lower bounds
+	virtual CUDFcoefficient bound_range() {
+		return CUDFabs(lambda_crit) * _upper_bound;
+	}
+	virtual CUDFcoefficient upper_bound() {
+		return _upper_bound;
+	}
+	virtual CUDFcoefficient lower_bound() {
+		return 0;
+	}
+
+	pslp_criteria(CUDFcoefficient lambda_crit, int reliable) : lambda_crit(lambda_crit), reliable(reliable)  {};
+
+	// Criteria destructor
+	virtual ~pslp_criteria() {};
+
+protected :
+
+	virtual void set_constraint_coeff(int rank, CUDFcoefficient value) {
+		solver->set_constraint_coeff(rank, lambda_crit * value);
+	}
+
+	virtual void set_obj_coeff(int rank, CUDFcoefficient value) {
+		solver->set_obj_coeff(rank, lambda_crit * value + solver->get_obj_coeff(rank));
+	}
+};
 
 #endif
 
