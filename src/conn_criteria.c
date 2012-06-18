@@ -25,6 +25,7 @@ int conn_criteria::rank(pair<FacilityNode*,FacilityNode*> const &path, const uns
 {
 	return problem->rankZ(path, stage);
 }
+
 // Add the criteria to the current objective function
 int conn_criteria::add_criteria_to_objective(CUDFcoefficient lambda) {
 	if(isInRange(0, length_range)) {

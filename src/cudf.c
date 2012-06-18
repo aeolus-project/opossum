@@ -246,6 +246,27 @@ int get_criteria_options(char *crit_descr, unsigned int &pos, vector< pair<unsig
 	return 0;
 }
 
+
+CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int & start,unsigned int & length, char sign) {
+	CUDFcoefficient lambda = 1;
+	for (unsigned int i = 0; i < length; i++)
+		if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
+			crit_descr[start+i+1] = '\0';
+			fprintf(stderr, "ERROR: criteria options: a lambda value must be an integer int: %s\n", crit_descr);
+			exit(-1);extern abstract_solver *new_pblib_solver(char *pbsolver);
+
+		}
+
+	if (sscanf(crit_descr+start, CUDFflags, &lambda) != 1) {
+		crit_descr[start+length+1] = '\0';
+		fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
+		exit(-1);
+	}
+	if (sign == '+') lambda *= -1;
+	return lambda;
+}
+
+
 // Get user defined weight for a criteria
 CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int &pos, char sign) {
 	vector< pair<unsigned int, unsigned int> *> opts;
@@ -253,7 +274,7 @@ CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int &pos, char si
 	int n = get_criteria_options(crit_descr, pos, &opts);
 
 	if (n == 1) {
-		//TODO return get_criteria_lambda(crit_descr, opts[0]->first, opts[0]->second, sign);
+		 return get_criteria_lambda(crit_descr, opts[0]->first, opts[0]->second, sign);
 	} else if (n > 1) {
 		crit_descr[pos] = '\0';
 		fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
@@ -290,195 +311,7 @@ void get_criteria_properties(char *crit_descr, unsigned int &pos,
 }
 
 
-// Get a property name from user defined criteria
-void check_criteria_property_name(char *crit_descr, unsigned int start,unsigned int length) {
-	if (crit_descr[start+length-1] != ':') {
-		crit_descr[start+length] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a property name must end with a ':': %s\n", crit_descr);
-		exit(-1);
-	}
-}
 
-// Get a property name from user defined criteria
-char *get_criteria_property_name(char *crit_descr, unsigned int start,unsigned int length) {
-	char *property = (char *)NULL;
-	check_criteria_property_name(crit_descr, start, length);
-	if ((property = (char *)malloc((length+1)*sizeof(char))) == (char *)NULL) {
-		fprintf(stderr, "ERROR: criteria options: not enough memory to store property name.\n");
-		exit(-1);
-	}
-	strncpy(property, crit_descr+start, length);
-	property[length] = '\0';
-	return property;
-}
-
-int switch_criteria_property_name(char *crit_descr, unsigned int start,unsigned int length, char** names, int n) {
-	check_criteria_property_name(crit_descr, start, length);
-	length--;
-	for (int i = 0; i < n; ++i) {
-		if(! strncmp(crit_descr + start, names[i], length)) {
-			return i;
-		}
-	}
-	crit_descr[start+length] = '\0';
-	fprintf(stderr, "ERROR: criteria options: a valid property name is required here: %s\n", crit_descr);
-	exit(-1);
-}
-
-// Get a property bool from user defined criteria
-void get_criteria_property_bool(char *crit_descr, unsigned int start,unsigned int length, bool &value) {
-	if ((length == 4) &&
-			(crit_descr[start+0] == 't') &&
-			(crit_descr[start+1] == 'r') &&
-			(crit_descr[start+2] == 'u') &&
-			(crit_descr[start+3] == 'e'))
-		value = true;
-	else if ((length == 5) &&
-			(crit_descr[start+0] == 'f') &&
-			(crit_descr[start+1] == 'a') &&
-			(crit_descr[start+2] == 'l') &&
-			(crit_descr[start+3] == 's') &&
-			(crit_descr[start+4] == 'e'))
-		value = false;
-	else {
-		crit_descr[start+length] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a boolean is required here (either 'true' or 'false'): %s\n", crit_descr);
-		exit(-1);
-	}
-}
-
-// Get a property integer from user defined criteria
-void get_criteria_property_int(char *crit_descr, unsigned int start,unsigned int length, int &value) {
-	for (unsigned int i = 0; i < length; i++)
-		if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
-			crit_descr[start+i+1] = '\0';
-			fprintf(stderr, "ERROR: criteria options: the option value must be an integer int: %s\n", crit_descr);
-			exit(-1);
-
-		}
-
-	if (sscanf(crit_descr+start, "%d", &value) != 1) {
-		crit_descr[start+length+1] = '\0';
-		fprintf(stderr, "ERROR: criteria options: an integer value is espected here: %s\n", crit_descr);
-		exit(-1);
-	}
-}
-
-// Get a property integer from user defined criteria
-void get_criteria_property_interval(char *crit_descr, unsigned int start,unsigned int length, int &min, int&max) {
-	unsigned int i;
-	while(crit_descr[start+i] != ':' && i < length) {
-		i++;
-	}
-	if( i > 0 && sscanf(crit_descr+start, CUDFflags, &min) != 1) {
-		crit_descr[start+length+1] = '\0';
-		fprintf(stderr, "ERROR: criteria options: an integer value is espected here: %s\n", crit_descr);
-		exit(-1);
-	}
-	if(crit_descr[start+i] != ':') {
-
-	}
-	start = i++;
-	i=0;
-	while(crit_descr[start+i] != ':' && i < length) {
-		i++;
-	}
-	if( i > 0 && sscanf(crit_descr+start, CUDFflags, &min) != 1) {
-		crit_descr[start+length+1] = '\0';
-		fprintf(stderr, "ERROR: criteria options: an integer value is espected here: %s\n", crit_descr);
-		exit(-1);
-	}
-
-	//	for (unsigned int i = 0; i < length; i++)
-	//		if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
-	//			crit_descr[start+i+1] = '\0';
-	//			fprintf(stderr, "ERROR: criteria options: the option value must be an integer int: %s\n", crit_descr);
-	//			exit(-1);
-	//
-	//		}
-
-	//	if (sscanf(crit_descr+start, CUDFflags, &value) != 1) {
-	//		crit_descr[start+length+1] = '\0';
-	//		fprintf(stderr, "ERROR: criteria options: an integer value is espected here: %s\n", crit_descr);
-	//		exit(-1);
-	//	}
-}
-
-CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int & start,unsigned int & length, char sign) {
-	CUDFcoefficient lambda = 1;
-	for (unsigned int i = 0; i < length; i++)
-		if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
-			crit_descr[start+i+1] = '\0';
-			fprintf(stderr, "ERROR: criteria options: a lambda value must be an integer int: %s\n", crit_descr);
-			exit(-1);extern abstract_solver *new_pblib_solver(char *pbsolver);
-
-		}
-
-	if (sscanf(crit_descr+start, CUDFflags, &lambda) != 1) {
-		crit_descr[start+length+1] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
-		exit(-1);
-	}
-	if (sign == '+') lambda *= -1;
-	return lambda;
-}
-
-
-
-// Get property name from a user defined criteria
-char *get_criteria_property_name(char *crit_descr, unsigned int &pos) {
-	vector< pair<unsigned int, unsigned int> *> opts;
-	char *property = (char *)NULL;
-
-	int n = get_criteria_options(crit_descr, pos, &opts);
-
-	if (n == 1) {
-		property = get_criteria_property_name(crit_descr, opts[0]->first, opts[0]->second);
-	} else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a property name is required here: %s\n", crit_descr);
-		exit(-1);
-	}
-
-	return property;
-}
-
-
-// Get name and boolean options from user defined criteria
-char *get_criteria_property_name_and_bool(char *crit_descr, unsigned int &pos, bool &value) {
-	vector< pair<unsigned int, unsigned int> *> opts;
-	char *property = (char *)NULL;
-
-	int n = get_criteria_options(crit_descr, pos, &opts);
-
-	if (n == 2) {
-		property = get_criteria_property_name(crit_descr, opts[0]->first, opts[0]->second);
-		get_criteria_property_bool(crit_descr, opts[1]->first, opts[1]->second, value);
-	} else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a property name and a boolean are required here: %s\n", crit_descr);
-		exit(-1);
-	}
-	return property;
-}
-
-// Get name and an integer option from user defined criteria
-char *get_criteria_property_name_and_int(char *crit_descr, unsigned int &pos, int &value) {
-	vector< pair<unsigned int, unsigned int> *> opts;
-	char *property = (char *)NULL;
-
-	int n = get_criteria_options(crit_descr, pos, &opts);
-
-	if (n == 2) {
-		property = get_criteria_property_name(crit_descr, opts[0]->first, opts[0]->second);
-		get_criteria_property_int(crit_descr, opts[1]->first, opts[1]->second, value);
-	} else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a property name and an integer are required here: %s\n", crit_descr);
-		exit(-1);
-	}
-	return property;
-}
 
 // Process a user defined criteria
 CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_level, vector<abstract_criteria *> *criteria_with_property) {
@@ -496,8 +329,7 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 				crit_name = pos;
 				break;
 			default:
-				fprintf(stderr, "ERROR: criteria options: a criteria description must begin with a sign which gives its sense (- = min, + = max): %s\n",
-						crit_descr+pos);
+				fprintf(stderr, "ERROR: criteria options: a criteria description must begin with a sign which gives its sense (- = min, + = max): %s\n", crit_descr+pos);
 				exit(-1);
 				break;
 			}
@@ -642,8 +474,8 @@ int main(int argc, char *argv[]) {
 				CriteriaList *criteria = get_criteria(argv[i]+14, true, &criteria_with_property);
 				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
 				obj_descr = argv[i];
-				cout << ">>>>>>>>>> " << argv[i] << endl;
-				cout << ">>>>>>>>>> " << obj_descr << endl;
+				//cout << ">>>>>>>>>> " << argv[i] << endl;
+				//cout << ">>>>>>>>>> " << obj_descr << endl;
 			} else if (strncmp(argv[i], "-agregate[", 10) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+9, false, &criteria_with_property);
 				combiner = makeCombiner<agregate_combiner>(criteria, C_STR("agregate"));
@@ -731,7 +563,7 @@ int main(int argc, char *argv[]) {
 		switch (parse_pslp(cin)) {
 		case 0: break;
 		case 1: fprintf(stderr, "ERROR: invalid input in problem.\n"); exit(-1);
-		case 2: fprintf(stderr, "ERROR: parser memory issue.\n"); exit(-1);
+		case 2: fprintf(stderr, "ERROR:range(int min, int max) : min(min), max(max), max_limit(max) {} parser memory issue.\n"); exit(-1);
 		}
 	}
 

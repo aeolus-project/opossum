@@ -105,5 +105,38 @@ protected :
 	}
 };
 
+
+class param_range {
+
+private:
+	string param_name;
+	int _min, _max;
+public:
+	param_range(string param, int min, int max) : param_name(param), _min(min), _max(max) {}
+	param_range(string param, int min) : param_name(param), _min(min), _max(numeric_limits<int>::max()) {}
+	virtual ~param_range() {}
+
+	bool contains(int val) {
+		return _min <= val && val <= _max;
+	}
+
+	bool scanf(const char * s) {
+		return sscanf(s, (param_name + ":,%d-%d").c_str(), &_min, &_max) != 2;
+	}
+
+	void update_max(int max_limit) {
+		if(max_limit < _max) {
+			_max = max_limit;
+		}
+	}
+
+	int min() {
+		return _min;
+	}
+
+	int max() {
+		return _max;
+	}
+};
 #endif
 
