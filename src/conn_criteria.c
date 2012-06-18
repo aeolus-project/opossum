@@ -1,7 +1,7 @@
 
 /*******************************************************/
-/* CUDF solver: conn_criteria.h                         */
-/* Implementation of the conn criteria                   */
+/* CUDF solver: conn_criteria.c                       */
+/* Implementation of the conn criteria                 */
 /* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
 /*******************************************************/
 
@@ -12,8 +12,24 @@
 // Criteria initialization
 void conn_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
 	pslp_criteria::initialize(problem, solver);
-	stage_max = min(stage_range.second, problem->stageCount() - 1);
-	//TODO Initialize upper bound
+	stage_range.set_min_limit(0);
+	stage_range.set_max_limit(problem->stageCount() - 1);
+	length_range.set_min_limit(1); //Ignore local connections
+	initialize_upper_bound(problem);
+}
+
+// Criteria initialization
+void conn_criteria::initialize_upper_bound(PSLProblem *problem) {
+	_upper_bound = 0;
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		_upper_bound += i->getType()->getTotalDemand();
+	}
+}
+
+
+int conn_criteria::rank(pair<FacilityNode*,FacilityNode*> const &path, const unsigned int stage)
+{
+	return problem->rankZ(path, stage);
 }
 
 // Computing the number of columns required to handle the criteria
@@ -21,25 +37,13 @@ int conn_criteria::set_variable_range(int first_free_var) {
 	return first_free_var;
 }
 
-int conn_criteria::rank(pair<FacilityNode*,FacilityNode*> const &path, const unsigned int stage)
-{
-	return problem->rankZ(path, stage);
-}
+
 
 // Add the criteria to the current objective function
 int conn_criteria::add_criteria_to_objective(CUDFcoefficient lambda) {
-	if(isInRange(0, length_range)) {
-		for (NodeIterator n = problem->getRoot()->nbegin(); n != problem->getRoot()->nend(); ++n) {
-			if(reliable != 0) { //local connections are reliable.
-				for (int s = stage_range.first; s <= stage_max; ++s) {
-					set_obj_coeff(problem->rankZ(*n, s), lambda);
-				}
-			}
-		}
-	}
 	for (PathIterator p = problem->getRoot()->pbegin(); p != problem->getRoot()->pend(); ++p) {
-		if(isInRL(*p)) {
-			for (int s = stage_range.first; s <= stage_max; ++s) {
+		if(isRLSelected(*p)) {
+			for (int s = stage_range.min(); s <= stage_range.max(); ++s) {
 				set_obj_coeff(rank(*p, s), lambda);
 			}
 		}
@@ -49,18 +53,9 @@ int conn_criteria::add_criteria_to_objective(CUDFcoefficient lambda) {
 
 // Add the criteria to the constraint set
 int conn_criteria::add_criteria_to_constraint(CUDFcoefficient lambda) {
-	if(isInRange(0, length_range)) {
-		for (NodeIterator n = problem->getRoot()->nbegin(); n != problem->getRoot()->nend(); ++n) {
-			if(reliable != 0) { //local connections are reliable.
-				for (int s = stage_range.first; s <= stage_max; ++s) {
-					set_constraint_coeff(problem->rankZ(*n, s), lambda);
-				}
-			}
-		}
-	}
 	for (PathIterator p = problem->getRoot()->pbegin(); p != problem->getRoot()->pend(); ++p) {
-		if(isInRL(*p)) {
-			for (int s = stage_range.first; s <= stage_max; ++s) {
+		if(isRLSelected(*p)) {
+			for (int s = stage_range.min(); s <= stage_range.max(); ++s) {
 				set_constraint_coeff(rank(*p, s), lambda);
 			}
 		}

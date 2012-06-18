@@ -7,6 +7,7 @@
 
 int new_var = 0;
 CUDFcoefficient min_bandwidth = 1; //set min_bandwidth to 1Ko
+CUDFcoefficient max_bandwidth = 5000; //set min_bandwidth to 1Ko
 
 struct SetPathCoeff {
 
@@ -114,15 +115,15 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 
 		///////////
 		//the number of provided connections is the sum of the numbers of local and outgoing connections.
-//		for (int s = 0; s < problem->stageCount(); ++s) {
-//			solver.new_constraint();
-//			solver.set_constraint_coeff(problem->rankY(*i, s),1);
-//			solver.set_constraint_coeff(problem->rankZ(*i, s), -1);
-//			for(NodeIterator p = i->nbegin() ; p!=  i->nend() ; p++) {
-//				solver.set_constraint_coeff( problem->rankZ(*i, *p, s), 1);
-//			}
-//			solver.add_constraint_eq(i->getType()->getDemand(s));
-//		}
+		//		for (int s = 0; s < problem->stageCount(); ++s) {
+		//			solver.new_constraint();
+		//			solver.set_constraint_coeff(problem->rankY(*i, s),1);
+		//			solver.set_constraint_coeff(problem->rankZ(*i, s), -1);
+		//			for(NodeIterator p = i->nbegin() ; p!=  i->nend() ; p++) {
+		//				solver.set_constraint_coeff( problem->rankZ(*i, *p, s), 1);
+		//			}
+		//			solver.add_constraint_eq(i->getType()->getDemand(s));
+		//		}
 
 
 
@@ -213,6 +214,8 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 					solver.set_constraint_coeff(problem->rankB(*i, *j, s), 1);
 					solver.set_constraint_coeff(problem->rankZ(*i, *j, s), - min_bandwidth);
 					solver.add_constraint_geq(0);
+					///////////
+					//TODO maximal bandwidth for a single connection
 				}
 				j++;
 			}

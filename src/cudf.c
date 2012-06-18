@@ -283,33 +283,6 @@ CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int &pos, char si
 	return sign == '+' ? -1 : +1;
 }
 
-void get_criteria_properties(char *crit_descr, unsigned int &pos,
-		string const & prop1, pair<unsigned int, unsigned int> &range1,
-		string const & prop2, pair<unsigned int, unsigned int> &range2,
-		int& reliable, CUDFcoefficient& lambda, char sign) {
-	int n = 0;
-	do {
-		vector< pair<unsigned int, unsigned int> *> opts;
-		n = get_criteria_options(crit_descr, pos, &opts); //TODO Simplify method ?
-		if( n > 0 &&
-				sscanf(crit_descr+opts[0]->first, (prop1 + ":,%d-%d").c_str(), &range1.first, &range1.second) != 2 &&
-				sscanf(crit_descr+opts[0]->first, (prop2 + ":,%d-%d").c_str(), &range2.first, &range2.second) != 2 &&
-				sscanf(crit_descr+opts[0]->first, "reliable:,%d", &reliable) != 1 &&
-				sscanf(crit_descr+opts[0]->first, CUDFflags, &lambda) != 1
-		) {
-			crit_descr[pos] = '\0';
-			fprintf(stderr, "ERROR: criteria options: invalid format [<property>,<value>]: %s\n", crit_descr+opts[0]->first);
-			exit(-1);
-		}
-
-	} while(n > 0);
-	if(sign == '+') {lambda *=-1;}
-	cout << ">>>>>>>>>>> "<< prop1 <<": " << range1.first << " " << range1.second << endl;
-	cout << ">>>>>>>>>>> "<< prop2 <<": " << range2.first << " " <<  range2.second << endl;
-	cout << ">>>>>>>>>>> Reliable: " << reliable << endl;
-	cout << ">>>>>>>>>>> Lambda: " << lambda << endl;
-}
-
 
 void get_criteria_properties(char *crit_descr, unsigned int &pos,
 		param_range &param1, param_range &param2,
@@ -363,24 +336,17 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 
 			// handle criteria
 			if (strncmp(crit_descr+crit_name, "pserv", crit_name_length) == 0) {
-				pair<unsigned int, unsigned int> r1(0, numeric_limits<int>::max()), r2(0,numeric_limits<int>::max() );
+				param_range r1("type",0), r2("layer",0);
 				int rel = -1;
 				CUDFcoefficient lambda = 1;
-				get_criteria_properties(crit_descr, pos,
-						"type", r1,
-						"layer", r2,
-						rel, lambda, crit_descr[sign]
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]
 				);
 				criteria->push_back(new pserv_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "conn", crit_name_length) == 0) {
-				pair<unsigned int, unsigned int> r1(0, numeric_limits<int>::max()), r2(0,numeric_limits<int>::max() );
+				param_range r1("stage",0), r2("length",1);
 				int rel = -1;
 				CUDFcoefficient lambda = 1;
-				get_criteria_properties(crit_descr, pos,
-						"stage", r1,
-						"length", r2,
-						rel, lambda, crit_descr[sign]
-				);
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
 				criteria->push_back(new conn_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "bandw", crit_name_length) == 0) {
 				param_range r1("stage",0), r2("length",1);

@@ -1,6 +1,6 @@
 
 /*******************************************************/
-/* CUDF solver: pserv_criteria.h                         */
+/* CUDF solver: pserv_criteria.h                       */
 /* Concrete class for the pserv criteria               */
 /* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
 /*******************************************************/
@@ -19,10 +19,8 @@
 class pserv_criteria: public pslp_criteria{
 public:
 
-	pair<unsigned int, unsigned int> pserv_range;
-	pair<unsigned int, unsigned int> layer_range;
-
-	unsigned int pserv_max;
+	param_range pserv_range;
+	param_range level_range;
 
 	// Criteria initialization
 	void initialize(PSLProblem *problem, abstract_solver *solver);
@@ -36,29 +34,17 @@ public:
 	int add_constraints();
 
 
-	pserv_criteria(CUDFcoefficient lambda_crit, int reliable, pair<unsigned int, unsigned int> pserv_range, pair<unsigned int, unsigned int> layer_range) : pslp_criteria(lambda_crit, reliable), pserv_range(pserv_range), layer_range(layer_range) {
-		pserv_range.second = min(pserv_range.second, problem->serverTypeCount() -1);
-	};
+	pserv_criteria(CUDFcoefficient lambda_crit, int reliable, param_range pserv_range, param_range level_range) : pslp_criteria(lambda_crit, reliable), pserv_range(pserv_range), level_range(level_range) {}
 	virtual ~pserv_criteria() {}
+
 private :
-	inline bool all_pserv() {
-		return pserv_range.first <= 0 && problem->serverTypeCount() -1 <= pserv_range.second;
-	}
 
-	inline bool isInRel(FacilityNode* node) {
-		if(reliable < 0) return true;
-		else {
-			const bool relp = isReliablePath(problem->getRoot(), node);
-			return reliable == 0 ? !relp : relp;
+	inline bool isRLSelected(FacilityNode* node) {
+		if(level_range.contains(node->getType()->getLevel())) {
+			return reliable == 0 ? !isReliablePath(problem->getRoot(), node) :
+					reliable > 0 ? isReliablePath(problem->getRoot(), node) : true;
 		}
-	}
-
-	inline bool isInLayer(FacilityNode* node) {
-		return isInRange(node->getType()->getLevel(), layer_range);
-	}
-
-	inline bool isInRL(FacilityNode* node) {
-		return isInRel(node) && isInLayer(node);
+		return false;
 	}
 
 };

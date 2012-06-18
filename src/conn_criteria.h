@@ -1,7 +1,7 @@
 
 /*******************************************************/
-/* CUDF solver: conn_criteria.h                         */
-/* Concrete class for the conn criteria               */
+/* CUDF solver: bandw_criteria.h                       */
+/* Concrete class for the bandw criteria               */
 /* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
 /*******************************************************/
 
@@ -12,18 +12,16 @@
 #include <abstract_criteria.h>
 
 // A concrete class for the conn criteria
-// i.e. the number of connections between a pserver and a client.
-// the scope of connections can be retricted by using properties.
+// i.e. the number of connections.
 class conn_criteria: public pslp_criteria{
 public:
 
-	pair<unsigned int, unsigned int> stage_range;
-	pair<unsigned int, unsigned int> length_range;
+	param_range stage_range;
+	param_range length_range;
+	CUDFcoefficient local_lambda;
 
-	unsigned int stage_max;
-
-	conn_criteria(CUDFcoefficient lambda_crit, int reliable, pair<unsigned int, unsigned int> stage_range, pair<unsigned int, unsigned int> length_range) : pslp_criteria(lambda_crit, reliable), stage_range(stage_range), length_range(length_range) {};
-		virtual ~conn_criteria() {}
+	conn_criteria(CUDFcoefficient lambda_crit, int reliable, param_range stage_range, param_range length_range) : pslp_criteria(lambda_crit, reliable), stage_range(stage_range), length_range(length_range) {};
+	virtual ~conn_criteria() {}
 
 
 	// Criteria initialization
@@ -38,24 +36,18 @@ public:
 	// Add constraints required by the criteria
 	int add_constraints();
 
-	int rank(pair<FacilityNode*, FacilityNode*> const &path, const unsigned int stage);
+	virtual void initialize_upper_bound(PSLProblem *problem);
+	virtual int rank(pair<FacilityNode*, FacilityNode*> const &path, const unsigned int stage);
 
 private :
 
-	inline bool isReliable(pair<FacilityNode*, FacilityNode*> const & path) {
-		if(reliable < 0) return true;
-		else {
-			const bool relp = isReliablePath(path.first, path.second);
-			return reliable == 0 ? !relp : relp;
+	inline bool isRLSelected(pair<FacilityNode*, FacilityNode*> const &path) {
+		if(length_range.contains(path.second->getType()->getLevel() - path.first->getType()->getLevel())) {
+			return reliable == 0 ? ! isReliablePath(path.first, path.second) :
+					reliable > 0 ? isReliablePath(path.first, path.second) : true;
 		}
-	}
+		return false;
 
-	inline bool isInLength(pair<FacilityNode*, FacilityNode*> const & path) {
-		return isInRange(path.second->getType()->getLevel() - path.first->getType()->getLevel(), length_range);
-	}
-
-	inline bool isInRL(pair<FacilityNode*, FacilityNode*> const &path) {
-		return isReliable(path) && isInLength(path);
 	}
 
 };
