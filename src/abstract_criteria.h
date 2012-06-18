@@ -112,7 +112,9 @@ private:
 	string param_name;
 	int _min, _max;
 public:
-	param_range(string param, int min, int max) : param_name(param), _min(min), _max(max) {}
+	param_range(string param, int min, int max) : param_name(param), _min(min), _max(max) {
+		assert(_min <= _max);
+	}
 	param_range(string param, int min) : param_name(param), _min(min), _max(numeric_limits<int>::max()) {}
 	virtual ~param_range() {}
 
@@ -121,13 +123,21 @@ public:
 	}
 
 	bool scanf(const char * s) {
-		return sscanf(s, (param_name + ":,%d-%d").c_str(), &_min, &_max) != 2;
+		return sscanf(s, (param_name + ":,%d-%d").c_str(), &_min, &_max) == 2;
 	}
 
-	void update_max(int max_limit) {
+	void set_min_limit(int min_limit) {
+		if(min_limit > _min) {
+			_min = min_limit;
+		}
+		assert(_min <= _max);
+	}
+
+	void set_max_limit(int max_limit) {
 		if(max_limit < _max) {
 			_max = max_limit;
 		}
+		assert(_min <= _max);
 	}
 
 	int min() {

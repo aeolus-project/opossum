@@ -42,7 +42,7 @@ public:
 
 private :
 
-	inline bool isInRel(pair<FacilityNode*, FacilityNode*> const & path) {
+	inline bool isReliable(pair<FacilityNode*, FacilityNode*> const & path) {
 		if(reliable < 0) return true;
 		else {
 			const bool relp = isReliablePath(path.first, path.second);
@@ -55,7 +55,7 @@ private :
 	}
 
 	inline bool isInRL(pair<FacilityNode*, FacilityNode*> const &path) {
-		return isInRel(path) && isInLength(path);
+		return isReliable(path) && isInLength(path);
 	}
 
 };

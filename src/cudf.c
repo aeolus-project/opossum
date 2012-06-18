@@ -274,7 +274,7 @@ CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int &pos, char si
 	int n = get_criteria_options(crit_descr, pos, &opts);
 
 	if (n == 1) {
-		 return get_criteria_lambda(crit_descr, opts[0]->first, opts[0]->second, sign);
+		return get_criteria_lambda(crit_descr, opts[0]->first, opts[0]->second, sign);
 	} else if (n > 1) {
 		crit_descr[pos] = '\0';
 		fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
@@ -311,7 +311,27 @@ void get_criteria_properties(char *crit_descr, unsigned int &pos,
 }
 
 
+void get_criteria_properties(char *crit_descr, unsigned int &pos,
+		param_range &param1, param_range &param2,
+		int& reliable, CUDFcoefficient& lambda, char sign) {
+	int n = 0;
+	do {
+		vector< pair<unsigned int, unsigned int> *> opts;
+		n = get_criteria_options(crit_descr, pos, &opts); //TODO Simplify method ?
+		if( n > 0 &&
+				! param1.scanf(crit_descr+opts[0]->first) &&
+				! param2.scanf(crit_descr+opts[0]->first) &&
+				sscanf(crit_descr+opts[0]->first, "reliable:,%d", &reliable) != 1 &&
+				sscanf(crit_descr+opts[0]->first, CUDFflags, &lambda) != 1
+		) {
+			crit_descr[pos] = '\0';
+			fprintf(stderr, "ERROR: criteria options: invalid format [<property>,<value>]: %s\n", crit_descr+opts[0]->first);
+			exit(-1);
+		}
 
+	} while(n > 0);
+	if(sign == '+') {lambda *=-1;}
+}
 
 // Process a user defined criteria
 CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_level, vector<abstract_criteria *> *criteria_with_property) {
@@ -363,7 +383,11 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 				);
 				criteria->push_back(new conn_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "bandw", crit_name_length) == 0) {
-				//TODO bandw_criteria
+				param_range r1("stage",0), r2("length",1);
+				int rel = -1;
+				CUDFcoefficient lambda = 1;
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
+				criteria->push_back(new bandw_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "agregate", crit_name_length) == 0) {
 				criteria->push_back(new agregate_combiner(process_criteria(crit_descr, pos, false, criteria_with_property),
 						get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
