@@ -18,7 +18,6 @@ public:
 
 	param_range stage_range;
 	param_range length_range;
-	CUDFcoefficient local_lambda;
 
 	conn_criteria(CUDFcoefficient lambda_crit, int reliable, param_range stage_range, param_range length_range) : pslp_criteria(lambda_crit, reliable), stage_range(stage_range), length_range(length_range) {};
 	virtual ~conn_criteria() {}

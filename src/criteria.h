@@ -15,6 +15,7 @@
 #include <abstract_criteria.h>
 
 #include <pserv_criteria.h>
+#include <local_criteria.h>
 #include <conn_criteria.h>
 #include <bandw_criteria.h>
 
