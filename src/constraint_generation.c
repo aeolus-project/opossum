@@ -215,7 +215,11 @@ int generate_constraints(PSLProblem *problem, abstract_solver &solver, abstract_
 					solver.set_constraint_coeff(problem->rankZ(*i, *j, s), - min_bandwidth);
 					solver.add_constraint_geq(0);
 					///////////
-					//TODO maximal bandwidth for a single connection
+					//maximal bandwidth for a single connection
+					solver.new_constraint();
+					solver.set_constraint_coeff(problem->rankB(*i, *j, s), 1);
+					solver.set_constraint_coeff(problem->rankZ(*i, *j, s), - max_bandwidth);
+					solver.add_constraint_leq(0);
 				}
 				j++;
 			}
