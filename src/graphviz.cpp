@@ -70,11 +70,14 @@ void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_so
 	CUDFcoefficient servers = solver.get_solution(problem.rankX(i));
 	CUDFcoefficient connections = solver.get_solution(problem.rankY(i, stage));
 	out << i->getID();
-	out << "[shape=record, label=\"{{" << i->getID() << "}|";
-	if(stage == 0 || servers == 0 ) {
-		out << "{" << demand << "}";
+	out << "[shape=record, label=\"{";
+	if(showID) {
+			out << "{" << i->getID() << "|" << demand <<"}";
 	} else {
-		out << "{" << demand << "|" << servers << "|" << connections << "}";
+		out << demand ;
+	}
+			if(stage> 0 && servers > 0 ) {
+		out << "|{"<< servers << "|" << connections << "}";
 	}
 	out << "}\"";
 	stylePServers(out, servers);
@@ -134,6 +137,7 @@ void flow2dotty(PSLProblem & problem, abstract_solver & solver, char* title)
 		//cout << "## " << ss.str() << endl;
 		myfile.open(ss.str().c_str());
 		myfile << "digraph F" << i << "{" <<endl;
+		gtitle(myfile, title, i);
 		flow2dotty(myfile, problem, solver, i);
 		myfile << endl << "}" << endl;
 		myfile.close();

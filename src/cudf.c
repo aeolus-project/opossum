@@ -253,7 +253,7 @@ CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int & start,unsig
 		if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
 			crit_descr[start+i+1] = '\0';
 			fprintf(stderr, "ERROR: criteria options: a lambda value must be an integer int: %s\n", crit_descr);
-			exit(-1);extern abstract_solver *new_pblib_solver(char *pbsolver);
+			exit(-1);
 
 		}
 
@@ -460,6 +460,9 @@ int main(int argc, char *argv[]) {
 				//generate_desagregate_constraints = true;
 			} else if (strcmp(argv[i], "-cov") == 0) {
 				criteria_opt_var = true;
+			} else if (strcmp(argv[i], "-id") == 0) {
+					showID=true;
+					//TODO man CL parameter
 			} else if (strcmp(argv[i], "-noreduce") == 0) {
 				;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
@@ -643,7 +646,9 @@ int main(int argc, char *argv[]) {
 
 PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
+
 int verbosity = 5;
+bool showID=false;
 
 int parse_pslp(istream& in)
 {
