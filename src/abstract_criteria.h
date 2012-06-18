@@ -116,6 +116,8 @@ public:
 		assert(_min <= _max);
 	}
 	param_range(string param, int min) : param_name(param), _min(min), _max(numeric_limits<int>::max()) {}
+	param_range(string param) : param_name(param), _min(0), _max(numeric_limits<int>::max()) {}
+
 	virtual ~param_range() {}
 
 	bool contains(int val) {
