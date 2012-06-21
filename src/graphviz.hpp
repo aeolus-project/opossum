@@ -36,8 +36,6 @@
 
 using namespace std;
 
-extern bool showID;
-
 extern void inst2dotty(PSLProblem &problem);
 
 extern void flow2dotty(ostream& out, PSLProblem& problem, abstract_solver& solver, unsigned int stage);

@@ -648,7 +648,7 @@ PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
 int verbosity = 5;
-bool showID=false;
+//bool showID=false;
 
 int parse_pslp(istream& in)
 {

@@ -26,6 +26,8 @@
  */
 #include "network.hpp"
 
+
+bool showID = false;
 //---------------------------------------- 
 //	FacilityNode Implementation
 //----------------------------------------
@@ -76,10 +78,20 @@ PathIterator FacilityNode::pend() {
 
 ostream & FacilityNode::toDotty(ostream & out) {
 	out << getID();
-	out << "[shape=record, label=\"{{" << getID() << "}|{"
-			<< getType()->getTotalDemand() << "|"
-			<< getType()->getTotalCapacity() << "}}\"];" << endl;
-	if (!isRoot()) {
+	out << "[shape=record, label=\"{";
+	if(showID) {
+		out << getID() << "|";
+	}
+	int capa = getType()->getTotalCapacity();
+	if(capa > 0) {
+	out << "{" << getType()->getTotalDemand() << "|"
+			<< getType()->getTotalCapacity() << "}}\"";
+	} else {
+		out << getType()->getTotalDemand() << "}\",style=dashed";
+
+	}
+	out << "];" << endl;
+	if (!isRoot()) { //Draw link
 		toFather()->toDotty(out);
 	}
 	for (size_t i = 0; i < children.size(); ++i) {

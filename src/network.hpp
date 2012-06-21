@@ -48,6 +48,8 @@
 //Define the seed of random
 #define SEED 1000
 
+extern bool showID;
+
 using namespace boost::random;
 using namespace std;
 
@@ -96,7 +98,7 @@ T& dereference(T* ptr) {
 	return *ptr;
 }
 
-//---------------------------------------- 
+//----------------------------------------
 //	ServerType Declaration
 //----------------------------------------
 
@@ -242,8 +244,9 @@ public:
 	}
 
 	bool isReliableFromRoot();
+
 	ostream& toDotty(ostream& out);
-	ostream& toGEXF(ostream& out);
+
 	void print(ostream& out);
 
 	//For LinkListIterator
