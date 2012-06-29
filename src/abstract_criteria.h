@@ -125,7 +125,17 @@ public:
 	}
 
 	bool scanf(const char * s) {
-		return sscanf(s, (param_name + ":,%d-%d").c_str(), &_min, &_max) == 2;
+		//return sscanf(s, (param_name + ":,%d-%d").c_str(), &_min, &_max) == 2;
+		if(sscanf(s, (param_name + ",%d-%d").c_str(), &_min, &_max) != 2) {
+			char c;
+			if(sscanf(s, (param_name + ",%d%c").c_str(), &_min, &c) == 2 && c == '-') {
+				_max = numeric_limits<int>::max();
+			}
+			else if(sscanf(s, (param_name + ",%d-").c_str(), &_min) == 1) {
+				_max=_min;
+			} else return false;
+		}
+		return true;
 	}
 
 	void set_min_limit(int min_limit) {

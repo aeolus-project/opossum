@@ -281,6 +281,10 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 	return root;
 }
 
+int PSLProblem::getExpectedNodes() {
+	//TODO
+	return 0;
+}
 
 bool PSLProblem::checkNetwork()
 {

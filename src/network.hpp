@@ -597,6 +597,7 @@ public:
 
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
+	int getExpectedNodes();
 
 	bool checkNetwork();
 	bool checkNetworkHierarchy();

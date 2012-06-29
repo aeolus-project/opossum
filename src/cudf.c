@@ -468,7 +468,7 @@ int main(int argc, char *argv[]) {
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+4, true, &criteria_with_property);
 				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexicographic[", 15) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+14, true, &criteria_with_property);
 				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
@@ -476,32 +476,31 @@ int main(int argc, char *argv[]) {
 			} else if (strncmp(argv[i], "-agregate[", 10) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+9, false, &criteria_with_property);
 				combiner = makeCombiner<agregate_combiner>(criteria, C_STR("agregate"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexagregate[", 13) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+12, false, &criteria_with_property);
 				combiner = makeCombiner<lexagregate_combiner>(criteria, C_STR("lexagregate"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexsemiagregate[", 17) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+16, false, &criteria_with_property);
 				combiner = makeCombiner<lexsemiagregate_combiner>(criteria, C_STR("lexsemiagregate"));
-				obj_descr == argv[i];
-
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-leximax[", 9) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+8, false, &criteria_with_property);
 				combiner = makeCombiner<leximax_combiner>(criteria, C_STR("leximax"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-leximin[", 9) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+8, false, &criteria_with_property);
 				combiner = makeCombiner<leximin_combiner>(criteria, C_STR("leximin"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexleximax[", 12) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
 				combiner = makeCombiner<lexleximax_combiner>(criteria, C_STR("lexleximax"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexleximin[", 12) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
 				combiner = makeCombiner<lexleximin_combiner>(criteria, C_STR("lexleximin"));
-				obj_descr == argv[i];
+				obj_descr = argv[i];
 			} else if (strcmp(argv[i], "-h") == 0) {
 				print_help();
 				exit(-1);
