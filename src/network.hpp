@@ -102,18 +102,13 @@ T& dereference(T* ptr) {
 //	ServerType Declaration
 //----------------------------------------
 
-//TODO add costs as parameters to criteria and replace server types by a coefficients list;
-
 class ServerType {
 public:
-	ServerType() : capacity(0), cost(0) {}
-	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {}
+	ServerType() : capacity(0) {}
+	ServerType(unsigned int capacity) : capacity(capacity) {}
 
 	virtual ~ServerType() {}
 
-	inline CUDFcoefficient getCost() const {
-		return cost;
-	}
 	inline CUDFcoefficient getMaxConnections() const {
 		return capacity;
 	}
@@ -122,7 +117,6 @@ public:
 
 private:
 	CUDFcoefficient capacity;
-	CUDFcoefficient cost;
 
 };
 

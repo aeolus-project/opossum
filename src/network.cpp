@@ -480,8 +480,8 @@ istream& operator >>(istream & in, PSLProblem & problem) {
 		in >> *stype;
 		problem.servers.push_back(stype);
 	}
-	in >> problem._groupCount;
 	in >> n;
+	in >> problem._groupCount;
 	for (int i = 0; i < n; ++i) {
 		FacilityType* ftype = new FacilityType();
 		ftype->read(in, problem);
@@ -491,7 +491,7 @@ istream& operator >>(istream & in, PSLProblem & problem) {
 }
 
 istream& operator >>(istream & in, ServerType & s) {
-	in >> s.capacity >> s.cost;
+	in >> s.capacity;
 	return in;
 }
 
@@ -543,7 +543,7 @@ ostream& operator<<(ostream& out, const FacilityType& f) {
 }
 
 ostream& operator<<(ostream& out, const ServerType& f) {
-	return out << "Capacity:" << f.getMaxConnections() << "\tCost:" << f.getCost();
+	return out << "C:" << f.getMaxConnections();
 }
 
 
