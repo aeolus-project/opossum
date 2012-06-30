@@ -144,6 +144,15 @@ public:
 	inline unsigned int getLevel() const {
 		return level;
 	}
+
+	inline unsigned int binoN() const {
+		return binornd->distribution().t();
+	}
+
+	inline double binoP() const {
+		return binornd->distribution().p();
+	}
+
 	inline CUDFcoefficient getDemand(unsigned int stage) const {
 		return demands[stage];
 	}
@@ -587,11 +596,12 @@ public:
 	}
 
 	void setSeed(const unsigned int seed);
-	FacilityNode* generateNetwork();
 
+	ostream& printNetworkGeneratorInfo(ostream& out);
+
+	FacilityNode* generateNetwork();
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
-	int getExpectedNodes();
 
 	bool checkNetwork();
 	bool checkNetworkHierarchy();

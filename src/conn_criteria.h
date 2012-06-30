@@ -1,4 +1,3 @@
-
 /*******************************************************/
 /* CUDF solver: bandw_criteria.h                       */
 /* Concrete class for the bandw criteria               */

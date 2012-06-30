@@ -84,8 +84,8 @@ ostream & FacilityNode::toDotty(ostream & out) {
 	}
 	int capa = getType()->getTotalCapacity();
 	if(capa > 0) {
-	out << "{" << getType()->getTotalDemand() << "|"
-			<< getType()->getTotalCapacity() << "}}\"";
+		out << "{" << getType()->getTotalDemand() << "|"
+				<< getType()->getTotalCapacity() << "}}\"";
 	} else {
 		out << getType()->getTotalDemand() << "}\",style=dashed";
 
@@ -221,6 +221,39 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 //	PSLProblem Implementation
 //----------------------------------------
 
+ostream& PSLProblem::printNetworkGeneratorInfo(ostream& out) {
+	double expNodes[levelCount()];
+	double expTreeSize[levelCount()];
+	double expClients[levelCount()];
+	double expCTreeSize[levelCount()];
+	for (int l = 0; l < levelCount(); ++l) {
+		expNodes[l]=0;
+		expTreeSize[l]=0;
+		expClients[l]=0;
+		expCTreeSize[l]=0;
+	}
+	for (FacilityTypeListIterator f = facilities.begin(); f != facilities.end(); ++f) {
+		int exp = (*f)->binoN() * (*f)->binoP();
+		expNodes[(*f)->getLevel()] += exp;
+		expClients[(*f)->getLevel()] += exp * (*f)->getTotalDemand();
+	}
+	expTreeSize[levelCount()-1] = 0;
+	expCTreeSize[levelCount()-1] = 0;
+	for (int l = levelCount() -2; l >= 0; --l) {
+		expTreeSize[l] =   (expTreeSize[l+1] + 1) * expNodes[l+1];
+		expCTreeSize[l] =  (expCTreeSize[l+1]) * expNodes[l+1] +  expClients[l + 1];
+	}
+
+	out << "Expected:" << endl << "Level: #children - #child-clients - |subtree| - #subtree-clients" << endl;
+	for (int l = 0; l < levelCount()-1; ++l) {
+		out << l << ": " << expNodes[l+1] << "\t" << expClients[l+1] << "\t" << expTreeSize[l] << "\t" << expCTreeSize[l] << endl;
+	}
+	out << "Total Facilities: " << (expTreeSize[0]+ expNodes[0]) <<endl;
+	out << "Total Clients: " << (expCTreeSize[0]+ expClients[0]) << endl;
+
+	return out;
+}
+
 FacilityNode* PSLProblem::generateNetwork() {
 	return generateNetwork(true);
 }
@@ -281,10 +314,6 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 	return root;
 }
 
-int PSLProblem::getExpectedNodes() {
-	//TODO
-	return 0;
-}
 
 bool PSLProblem::checkNetwork()
 {
@@ -503,9 +532,9 @@ ostream& operator <<(ostream & out, const PSLProblem & f) {
 	cout << "Bandwidths: {";
 	copy(f.bandwidths.begin(), f.bandwidths.end(),
 			ostream_iterator<int>(out, " "));
-	cout << "}" << endl;
+	cout << "}" << endl << "Servers: ";
 	transform(f.servers.begin(), f.servers.end(),
-			ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
+			ostream_iterator<ServerType>(out, " "), dereference<ServerType>);
 	transform(f.facilities.begin(), f.facilities.end(),
 			ostream_iterator<FacilityType>(out, "\n"),
 			dereference<FacilityType>);

@@ -567,6 +567,8 @@ int main(int argc, char *argv[]) {
 	// if whished, print out the read problem
 	if (verbosity > 2) {
 		out << "================================================================" << endl;
+		the_problem->printNetworkGeneratorInfo(out);
+		out << "================================================================" << endl;
 		print_problem(out, the_problem);
 		out << "================================================================" << endl;
 	}
@@ -654,7 +656,6 @@ int parse_pslp(istream& in)
 	if(the_problem) delete the_problem;
 	the_problem = new PSLProblem();
 	in >> *the_problem;
-	//TODO add option for the_problem->setSeed(seed);
 	//TODO add option for hierarchical network
 	bool hierarchic=true;
 	the_problem->generateNetwork(hierarchic);
