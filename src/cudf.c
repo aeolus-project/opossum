@@ -17,7 +17,6 @@
 
 
 //Remove main
-#define C_STR( text ) ((char*)std::string( text ).c_str())
 
 
 template <typename T>

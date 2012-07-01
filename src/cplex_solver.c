@@ -10,7 +10,6 @@
 #include <math.h>
 
 //TODO Replace by verbosity
-#define OUTPUT_MODEL 1
 #define USEXNAME 0
 
 // solver creation 
@@ -239,10 +238,10 @@ int cplex_solver::solve() {
 					}
 
 					// Output model to file (when requested)
-					if (OUTPUT_MODEL) {
+					if (verbosity >= VERBOSE) {
 						char buffer[1024];
 						sprintf(buffer, "cplexpb-%d.lp", i);
-						CPXwriteprob (env, lp, buffer, NULL);
+						writelp(buffer);
 					}
 				} else
 					return 1;
@@ -286,12 +285,9 @@ int cplex_solver::init_solutions() {
 	if ( status ) {
 		fprintf (stderr, "cplex_solver: init_solutions: failed to get solutions.\n");
 		exit(-1);
-	} else if (OUTPUT_MODEL) {
+	} else if (verbosity >= VERBOSE) {
 		// Output model to file (when requested)
-		char buffer[1024];
-		sprintf(buffer, "sol-cplex.xml");
-		CPXsolwrite(env, lp, buffer);
-
+		writesol(C_STR("sol-cplex.xml"));
 	}
 	return 0;
 }
@@ -425,6 +421,6 @@ int cplex_solver::add_constraint_eq(CUDFcoefficient bound) {
 
 // ends up constraint declaration
 int cplex_solver::end_add_constraints(void) { 
-	if (OUTPUT_MODEL) CPXwriteprob (env, lp, "cplexpb.lp", NULL);
+	if (verbosity >= VERBOSE) writelp(C_STR("cplexpb.lp"));
 	return 0;
 }

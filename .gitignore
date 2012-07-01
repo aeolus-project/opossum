@@ -1,7 +1,7 @@
 #Opossum files
 cplexpb*.lp
 cplexpb*.dot
-cplexsol.xml
+sol-cplex.xml
 sol-*.dot
 
 # c++ / cmake

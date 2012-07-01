@@ -21,9 +21,10 @@
 #include <iostream>
 
 #include "network.hpp"
-//#include "abstract_solver.h"
 
 using namespace std;
+
+#define C_STR( text ) ((char*)std::string( text ).c_str())
 
 // current CUDF problem
 extern PSLProblem *the_problem;
