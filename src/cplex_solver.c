@@ -9,6 +9,7 @@
 #include <cplex_solver.h>
 #include <math.h>
 
+//TODO Replace by verbosity
 #define OUTPUT_MODEL 1
 #define USEXNAME 0
 
@@ -49,7 +50,7 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		exit(-1);
 	}
 
-	if (verbosity > 1) {
+	if (verbosity >= DEFAULT) {
 		/* Turn on output to the screen */
 		status = CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);
 		if ( status ) {
@@ -57,7 +58,7 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 			exit(-1);
 		}
 
-		if (verbosity > 2) {
+		if (verbosity >= SEARCH) {
 			/* MIP node log display information */
 			status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 5);
 			if ( status ) {
@@ -163,6 +164,13 @@ int cplex_solver::writelp(char *filename) {
 	return CPXwriteprob (env, lp, filename, NULL);
 }
 
+// Just write the solution in a file
+int cplex_solver::writesol(char *filename) {
+	return CPXsolwrite(env, lp, filename);
+}
+
+
+
 // solve the current problem
 int cplex_solver::solve() {
 	int nb_objectives = objectives.size();
@@ -197,7 +205,7 @@ int cplex_solver::solve() {
 					index[0] = previ;
 					values[0] = objective_value();
 
-					if (verbosity > 0)
+					if (verbosity >= DEFAULT)
 						printf(">>>> Objective value %d = %f\n", previ, values[0]);
 
 					{
@@ -241,7 +249,7 @@ int cplex_solver::solve() {
 			} else
 				return 1;
 		} else {
-			if (verbosity > 2)
+			if (verbosity >= DEFAULT)
 				fprintf(stderr, "CPLEX solution status = %d\n", mipstat);
 			return 0;
 		}
@@ -281,7 +289,7 @@ int cplex_solver::init_solutions() {
 	} else if (OUTPUT_MODEL) {
 		// Output model to file (when requested)
 		char buffer[1024];
-		sprintf(buffer, "cplexsol.xml");
+		sprintf(buffer, "sol-cplex.xml");
 		CPXsolwrite(env, lp, buffer);
 
 	}

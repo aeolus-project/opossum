@@ -72,6 +72,7 @@ public:
 
 	// Write the lp on a file
 	int writelp(char *filename);
+	int writesol(char *filename);
 
 	// Solve the problem
 	int solve();

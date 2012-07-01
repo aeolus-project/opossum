@@ -14,8 +14,9 @@
 #include "graphviz.hpp"
 
 
+
+
 //Remove main
-//#define main toto
 #define C_STR( text ) ((char*)std::string( text ).c_str())
 
 
@@ -47,8 +48,6 @@ extern abstract_solver *new_lpsolve_solver();
 #ifdef USEGLPK
 extern abstract_solver *new_glpk_solver(bool use_exact);
 #endif
-
-bool criteria_opt_var = false;
 
 // print cudf help
 void print_help() {
@@ -189,7 +188,6 @@ void print_help() {
 			stderr,
 			"  eg.: -agregate[-removed[100],-notuptodate[50],-nunsat[recommends:,true][10],-new]\n");
 	fprintf(stderr, "other options:\n");
-	fprintf(stderr, " -fo: full solution output\n");
 	fprintf(stderr, " -v<n>: set verbosity level to n\n");
 	fprintf(stderr, " -h: print this help\n");
 
@@ -407,7 +405,6 @@ int main(int argc, char *argv[]) {
 	bool nosolve = false;
 	bool got_input = false;
 	bool got_output = false;
-	bool fulloutput = false;
 	char* obj_descr;
 	PSLProblem *problem;
 	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
@@ -444,8 +441,6 @@ int main(int argc, char *argv[]) {
 					}
 					got_output=true;
 				}
-			} else if (strcmp(argv[i], "-fo") == 0) {
-				fulloutput = true;
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
 			} else if (strcmp(argv[i], "-only-agregate-constraints") == 0) {
@@ -457,8 +452,6 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "-all-constraints") == 0) {
 				//generate_agregate_constraints = true;
 				//generate_desagregate_constraints = true;
-			} else if (strcmp(argv[i], "-cov") == 0) {
-				criteria_opt_var = true;
 			} else if (strcmp(argv[i], "-id") == 0) {
 				showID=true;
 				//TODO man CL parameter
@@ -500,7 +493,7 @@ int main(int argc, char *argv[]) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
 				combiner = makeCombiner<lexleximin_combiner>(criteria, C_STR("lexleximin"));
 				obj_descr = argv[i];
-			} else if (strcmp(argv[i], "-h") == 0) {
+			} else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0 ) {
 				print_help();
 				exit(-1);
 			} else if (strcmp(argv[i], "-nosolve") == 0) {
@@ -565,18 +558,13 @@ int main(int argc, char *argv[]) {
 	ostream& out = got_output ? output_file : cout;
 
 	// if whished, print out the read problem
-	if (verbosity > 1) {
+	if (verbosity >= VERBOSE) {
 		print_generator_summary(out, the_problem);
-		if (verbosity > 2) {
-			print_generator_data(out, the_problem);
-			if (verbosity > 3) {
-				export_problem(the_problem);
-				if (verbosity > 4) {
-					print_problem(out, the_problem);
-				}
-			}
+		export_problem(the_problem);
+		if (verbosity >= ALL) {
+			print_problem(out, the_problem);
 		}
-
+		out << "================================================================" << endl;
 	}
 
 	// choose the solver
@@ -610,9 +598,7 @@ int main(int argc, char *argv[]) {
 	// combiner initialization
 	combiner->initialize(problem, solver);
 
-	if(verbosity > -1) {
-		out << "================================================================" << endl;
-	}
+
 	// generate the constraints, solve the problem and print out the solutions
 	//if ((problem->all_packages->size() > 0) && (generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
 	if ((generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
@@ -621,23 +607,28 @@ int main(int argc, char *argv[]) {
 		solver->init_solutions();
 
 		double obj = solver->objective_value();
-		if(verbosity > -1) {
-			out << "================================================================" << endl;
+		if(verbosity >= QUIET) {
+			if(verbosity >= DEFAULT) {
+				out << "================================================================" << endl;
+			}
 			out << "s OPTIMAL" << endl;
 			out << "o " << obj << endl;
-			if(verbosity > 0) {
+			if(verbosity >= DEFAULT) {
 				print_solution(out, the_problem, solver);
-				if(verbosity > 3) {
+				if(verbosity >= VERBOSE) {
 					export_solution(the_problem, solver, obj_descr);
 				}
 			}
 		}
 	} else {
-		if (verbosity > -1)
-			out << "================================================================" << endl;
-		out << "s UNKNOWN" <<endl ;
+		if (verbosity >= QUIET) {
+			if(verbosity >= DEFAULT) {
+				out << "================================================================" << endl;
+			}
+			out << "s UNKNOWN" <<endl ;
+		}
 	}
-	if (verbosity > 0) {
+	if (verbosity >= DEFAULT) {
 		print_messages(out, the_problem, solver);
 	}
 
@@ -650,7 +641,7 @@ int main(int argc, char *argv[]) {
 PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
-int verbosity = 5;
+int verbosity = DEFAULT;
 //bool showID=false;
 
 int parse_pslp(istream& in)
@@ -683,12 +674,6 @@ extern void print_generator_summary(ostream & out, PSLProblem *problem)
 {
 	out << "================================================================" << endl;
 	problem->printGeneratorSummary(out);
-}
-
-
-
-extern void print_generator_data(ostream & out, PSLProblem *problem)
-{
 	out << "================================================================" << endl;
 	out << *problem;
 }
@@ -711,6 +696,8 @@ void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 
 void export_solution(PSLProblem *problem, abstract_solver *solver,char* objective)
 {
+
+	//TODO export also as cplex solution
 	solution2dotty(*problem, *solver, objective);
 }
 
