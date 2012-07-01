@@ -221,7 +221,7 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 //	PSLProblem Implementation
 //----------------------------------------
 
-ostream& PSLProblem::printNetworkGeneratorInfo(ostream& out) {
+ostream& PSLProblem::printGeneratorSummary(ostream& out) {
 	double expNodes[levelCount()];
 	double expTreeSize[levelCount()];
 	double expClients[levelCount()];
@@ -538,8 +538,8 @@ ostream& operator <<(ostream & out, const PSLProblem & f) {
 	transform(f.facilities.begin(), f.facilities.end(),
 			ostream_iterator<FacilityType>(out, "\n"),
 			dereference<FacilityType>);
-	if (f.root)
-		f.root->print(out);
+//	if (f.root)
+//		f.root->print(out);
 	return out;
 }
 

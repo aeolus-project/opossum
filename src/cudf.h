@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include "network.hpp"
-
+//#include "abstract_solver.h"
 
 using namespace std;
 
@@ -37,11 +37,23 @@ extern int parse_pslp(istream& in);
 // Handling verbosity level
 extern int verbosity;
 
-// Print out a CUDF problem
+// Print out a PSL problem
 // requires the file descriptor of the targeted file and a pointer to the PSL problem
 extern void print_problem(ostream& out, PSLProblem *pbs);
 
-//extern void print_solution(ostream& out, PSLProblem *problem, abstract_solver* solver);
+// Export the PSL problem as a graphivz file (.dot)
+// requires the file descriptor of the targeted file and a pointer to the PSL problem
+extern void export_problem(PSLProblem *problem);
+
+// Print out a generator (expected children, nodes, clientts ...);
+// requires the file descriptor of the targeted file and a pointer to the PSL problem
+extern void print_generator_summary(ostream& out, PSLProblem *pbs);
+
+// Print out the generator data (matrices);
+// requires the file descriptor of the targeted file and a pointer to the PSL problem
+extern void print_generator_data(ostream& out, PSLProblem *pbs);
+
+
 //
 
 #endif

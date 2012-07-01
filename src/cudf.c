@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
-#include "abstract_solver.h"
 #include "graphviz.hpp"
 
 
@@ -461,8 +460,8 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "-cov") == 0) {
 				criteria_opt_var = true;
 			} else if (strcmp(argv[i], "-id") == 0) {
-					showID=true;
-					//TODO man CL parameter
+				showID=true;
+				//TODO man CL parameter
 			} else if (strcmp(argv[i], "-noreduce") == 0) {
 				;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
@@ -564,18 +563,21 @@ int main(int argc, char *argv[]) {
 	}
 
 	ostream& out = got_output ? output_file : cout;
-	// if whished, print out the read problem
-	if (verbosity > 2) {
-		out << "================================================================" << endl;
-		the_problem->printNetworkGeneratorInfo(out);
-		out << "================================================================" << endl;
-		print_problem(out, the_problem);
-		out << "================================================================" << endl;
-	}
-	if(verbosity > 3) {
-		inst2dotty(*the_problem);
-	}
 
+	// if whished, print out the read problem
+	if (verbosity > 1) {
+		print_generator_summary(out, the_problem);
+		if (verbosity > 2) {
+			print_generator_data(out, the_problem);
+			if (verbosity > 3) {
+				export_problem(the_problem);
+				if (verbosity > 4) {
+					print_problem(out, the_problem);
+				}
+			}
+		}
+
+	}
 
 	// choose the solver
 	if (solver == (abstract_solver *)NULL)
@@ -608,6 +610,9 @@ int main(int argc, char *argv[]) {
 	// combiner initialization
 	combiner->initialize(problem, solver);
 
+	if(verbosity > -1) {
+		out << "================================================================" << endl;
+	}
 	// generate the constraints, solve the problem and print out the solutions
 	//if ((problem->all_packages->size() > 0) && (generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
 	if ((generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
@@ -616,27 +621,24 @@ int main(int argc, char *argv[]) {
 		solver->init_solutions();
 
 		double obj = solver->objective_value();
-		if (verbosity > 2) {
+		if(verbosity > -1) {
 			out << "================================================================" << endl;
-			out << "Objective value: " << obj << endl <<  "Solution: ";
-			for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-				int servers = solver->get_solution(problem->rankX(*i));
-				if(servers > 0) {
-					out << i->getID() << ":" << servers << " ";
+			out << "s OPTIMAL" << endl;
+			out << "o " << obj << endl;
+			if(verbosity > 0) {
+				print_solution(out, the_problem, solver);
+				if(verbosity > 3) {
+					export_solution(the_problem, solver, obj_descr);
 				}
 			}
-			out << endl << "================================================================" << endl;
 		}
-		if(verbosity > 3) {
-			solution2dotty(*problem, *solver, obj_descr);
-		}
-
-		// print out additional informations
-		if (verbosity > 0) printf(">>>> Objective value = %f.\n", obj);
 	} else {
-		if (verbosity > 0)
-			cout << "No solution found." <<endl ;
-		out << "FAIL" << endl << "No solution found" << endl;
+		if (verbosity > -1)
+			out << "================================================================" << endl;
+		out << "s UNKNOWN" <<endl ;
+	}
+	if (verbosity > 0) {
+		print_messages(out, the_problem, solver);
 	}
 
 	if (got_output) {
@@ -662,10 +664,66 @@ int parse_pslp(istream& in)
 	return 0;
 }
 
-void print_problem(ostream& out, PSLProblem *pbs)
+
+void print_problem(ostream& out, PSLProblem *problem)
 {
-	out << *pbs;
+	out << "================================================================" << endl;
+	if (problem->getRoot())
+		problem->getRoot()->print(out);
 }
+
+extern void export_problem(PSLProblem *problem)
+{
+	inst2dotty(*problem);
+}
+
+
+
+extern void print_generator_summary(ostream & out, PSLProblem *problem)
+{
+	out << "================================================================" << endl;
+	problem->printGeneratorSummary(out);
+}
+
+
+
+extern void print_generator_data(ostream & out, PSLProblem *problem)
+{
+	out << "================================================================" << endl;
+	out << *problem;
+}
+
+
+
+void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
+{
+	out << "s ";
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		int servers = solver->get_solution(problem->rankX(*i));
+		if(servers > 0) {
+			out << i->getID() << ":" << servers << " ";
+		}
+	}
+	out << endl;
+}
+
+
+
+void export_solution(PSLProblem *problem, abstract_solver *solver,char* objective)
+{
+	solution2dotty(*problem, *solver, objective);
+}
+
+
+
+void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
+{
+
+	out << "d TODO" << endl;
+	out << "c TODO" << endl;
+}
+
+
 
 
 

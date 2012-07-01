@@ -174,5 +174,21 @@ protected:
 	}
 };
 
+//// Print out a solution
+//// requires the file descriptor of the targeted file, a pointer to the PSL problem, and another pointer to the solver.
+extern void print_solution(ostream& out, PSLProblem *problem, abstract_solver* solver);
+//
+//// Export the PSL solution as several graphivz files(sol-*.dot)
+//// requires the file descriptor of the targeted file, a pointer to the PSL problem, another pointer to the solver, and the objective.
+extern void export_solution(PSLProblem *problem, abstract_solver* solver,char* objective);
+//
+//// Print out diagnostic and configuration messages (XCSP format)
+//// requires the file descriptor of the targeted file, a pointer to the PSL problem, and another pointer to the solver.
+extern void print_messages(ostream& out, PSLProblem *problem, abstract_solver* solver);
+
+
+
+
+
 
 #endif

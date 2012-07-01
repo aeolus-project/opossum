@@ -597,7 +597,7 @@ public:
 
 	void setSeed(const unsigned int seed);
 
-	ostream& printNetworkGeneratorInfo(ostream& out);
+	ostream& printGeneratorSummary(ostream& out);
 
 	FacilityNode* generateNetwork();
 	//generate Breadth-First Numbered Tree
