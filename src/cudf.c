@@ -587,7 +587,7 @@ int main(int argc, char *argv[]) {
 		if(verbosity >= QUIET) {
 			if(verbosity >= DEFAULT) {
 				out << "================================================================" << endl;
-				//out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
+				out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
 			}
 			out << "s OPTIMAL" << endl;
 			out << "o " << obj << endl;
@@ -635,15 +635,16 @@ void print_problem(ostream& out, PSLProblem *problem)
 			<< problem->facilityTypeCount() << " FTYPES    "
 			<< problem->levelTypeCount() << " LEVELS    "
 			<< endl
-			<< "d FACILITIES " << problem->nodeCount() << endl
-			<< "d CLIENTS " << problem->clientCount() << endl
+			<< "c " << problem->nodeCount() <<" FACILITIES    "
+			<< problem->clientCount() << " CLIENTS "  << endl
 			<<endl ;
 			;
 			//TODO Set by groups
 			//TODO Always display the total number of pserv and sum vector of pservs
-	if (verbosity >= ALL && problem->getRoot())
+	if (verbosity >= ALL && problem->getRoot()) {
 		out << endl;
 		problem->getRoot()->print(out);
+	}
 }
 
 extern void export_problem(PSLProblem *problem)
@@ -708,7 +709,6 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 	out << "d TIME " << solver->timeCount() << endl;
 	out << "d NODES " << solver->nodeCount() << endl;
 	out << "d SOLUTIONS " << solver->solutionCount() << endl;
-	out << "c #OBJECTIVES " << solver->objectiveCount() << endl;
 	//Compute total pserver capacity
 	double capa = 0;
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
