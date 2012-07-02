@@ -84,13 +84,13 @@ public:
 	CUDFcoefficient get_solution(int k);
 
 	// get the number of solutions found at the end of solving
-	int solutionCount(){return solution_count;}
+	int solutionCount(){return _solutionCount;}
 	// get the number of objectives (or sub-problems).
 	int objectiveCount();
 	// get the number of nodes at the end of solving
-	int nodeCount() {return node_count;}
+	int nodeCount() {return _nodeCount;}
 	// get the solving time.
-	int timeCount() {return time_count;}
+	int timeCount() {return _timeCount;}
 
 	// variables only for internal use (should be private)
 	CPXENVptr env;   // cplex environment
@@ -114,9 +114,9 @@ public:
 	}
 
 private:
-	int solution_count;
-	int node_count;
-	double time_count;
+	int _solutionCount;
+	int _nodeCount;
+	double _timeCount;
 
 };
 

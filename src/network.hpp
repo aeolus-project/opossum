@@ -557,7 +557,7 @@ private:
 
 class PSLProblem {
 public:
-	PSLProblem() : _groupCount(0), root(NULL), _nodeCount(0) {}
+	PSLProblem() : _groupCount(0), root(NULL), _nodeCount(0), _clientCount(0) {}
 
 	//Destructor of PSLProblem
 	//Delete all nodes of the tree
@@ -591,13 +591,17 @@ public:
 		return facilities.size();
 	}
 
+	inline unsigned int levelTypeCount() const {
+		return facilities[facilities.size()-1]->getLevel() + 1;
+	}
+
 	inline unsigned int levelCount() const {
 		return levelNodeCounts.size();
 	}
 
 	void setSeed(const unsigned int seed);
 
-	ostream& printGeneratorSummary(ostream& out);
+	ostream& print_generator(ostream& out);
 
 	FacilityNode* generateNetwork();
 	//generate Breadth-First Numbered Tree
@@ -615,6 +619,10 @@ public:
 
 	inline unsigned int linkCount() const {
 		return _nodeCount - 1;
+	}
+
+	inline unsigned int clientCount() const {
+		return _clientCount;
 	}
 
 	inline unsigned int pathCount() const {
@@ -734,6 +742,7 @@ private:
 		levelCumulNodeCounts.clear();
 		lengthCumulPathCounts.clear();
 		_nodeCount = 0;
+		_clientCount = 0;
 		if(node != NULL) {
 			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
 				deleteTree(node->toChild(i)->getDestination());
@@ -750,6 +759,7 @@ private:
 	unsigned int _groupCount;
 	FacilityNode* root;
 	unsigned int _nodeCount;
+	unsigned int _clientCount;
 	IntList levelNodeCounts;
 	//number of nodes of level lower or equal than l;
 	IntList levelCumulNodeCounts;

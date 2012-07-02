@@ -16,7 +16,10 @@
 
 
 
-//Remove main
+PSLProblem* current_problem = NULL;
+PSLProblem* the_problem = NULL;
+
+int verbosity = DEFAULT;
 
 
 template <typename T>
@@ -57,7 +60,7 @@ void print_help() {
 			"MANCOOSI project, grant agreement n. 214898.\n");
 	fprintf(
 			stderr,
-			"Usual call: mccs -i <input_file> -o <outputfile> <criteria combiner>[<criteria>{, <criteria>}*] <solver option> <other options>?\n");
+			"Usual call: opossum -i <input_file> -o <outputfile> <criteria combiner>[<criteria>{, <criteria>}*] <solver option> <other options>?\n");
 	fprintf(stderr, "file options:\n");
 	fprintf(
 			stderr,
@@ -536,11 +539,10 @@ int main(int argc, char *argv[]) {
 	if (verbosity >= VERBOSE) {
 		print_generator_summary(out, the_problem);
 		export_problem(the_problem);
-		if (verbosity >= ALL) {
-			print_problem(out, the_problem);
-		}
+		print_problem(out, the_problem);
 		out << "================================================================" << endl;
 	}
+
 
 	// choose the solver
 	if (solver == (abstract_solver *)NULL)
@@ -585,6 +587,7 @@ int main(int argc, char *argv[]) {
 		if(verbosity >= QUIET) {
 			if(verbosity >= DEFAULT) {
 				out << "================================================================" << endl;
+				//out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
 			}
 			out << "s OPTIMAL" << endl;
 			out << "o " << obj << endl;
@@ -613,12 +616,6 @@ int main(int argc, char *argv[]) {
 	exit(0);
 }
 
-PSLProblem* current_problem = NULL;
-PSLProblem* the_problem = NULL;
-
-int verbosity = DEFAULT;
-//bool showID=false;
-
 int parse_pslp(istream& in)
 {
 	if(the_problem) delete the_problem;
@@ -634,7 +631,18 @@ int parse_pslp(istream& in)
 void print_problem(ostream& out, PSLProblem *problem)
 {
 	out << "================================================================" << endl;
-	if (problem->getRoot())
+	out << "c " << problem->groupCount() << " GROUPS    "
+			<< problem->facilityTypeCount() << " FTYPES    "
+			<< problem->levelTypeCount() << " LEVELS    "
+			<< endl
+			<< "d FACILITIES " << problem->nodeCount() << endl
+			<< "d CLIENTS " << problem->clientCount() << endl
+			<<endl ;
+			;
+			//TODO Set by groups
+			//TODO Always display the total number of pserv and sum vector of pservs
+	if (verbosity >= ALL && problem->getRoot())
+		out << endl;
 		problem->getRoot()->print(out);
 }
 
@@ -648,7 +656,7 @@ extern void export_problem(PSLProblem *problem)
 extern void print_generator_summary(ostream & out, PSLProblem *problem)
 {
 	out << "================================================================" << endl;
-	problem->printGeneratorSummary(out);
+	problem->print_generator(out);
 	out << "================================================================" << endl;
 	out << *problem;
 }
@@ -700,7 +708,7 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 	out << "d TIME " << solver->timeCount() << endl;
 	out << "d NODES " << solver->nodeCount() << endl;
 	out << "d SOLUTIONS " << solver->solutionCount() << endl;
-	out << "d #OBJECTIVES " << solver->objectiveCount() << endl;
+	out << "c #OBJECTIVES " << solver->objectiveCount() << endl;
 	//Compute total pserver capacity
 	double capa = 0;
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {

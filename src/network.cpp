@@ -108,7 +108,7 @@ void FacilityNode::print(ostream& out) {
 	string shift = string(2 * type->getLevel(), ' ');
 	string sep = string(15, '-');
 	if (children.size() > 0) {
-		out << shift << children.size() << " " << sep << endl;
+		out << shift << sep << " " << children.size() << endl;
 		for (size_t i = 0; i < children.size(); ++i) {
 			out << shift << *children[i] << endl;
 		}
@@ -221,31 +221,32 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 //	PSLProblem Implementation
 //----------------------------------------
 
-ostream& PSLProblem::printGeneratorSummary(ostream& out) {
-	double expNodes[levelCount()];
-	double expTreeSize[levelCount()];
-	double expClients[levelCount()];
-	double expCTreeSize[levelCount()];
-	for (int l = 0; l < levelCount(); ++l) {
+ostream& PSLProblem::print_generator(ostream& out) {
+	const int n = levelTypeCount();
+	double expNodes[n];
+	double expTreeSize[n];
+	double expClients[n];
+	double expCTreeSize[n];
+	for (int l = 0; l < n; ++l) {
 		expNodes[l]=0;
 		expTreeSize[l]=0;
 		expClients[l]=0;
 		expCTreeSize[l]=0;
 	}
 	for (FacilityTypeListIterator f = facilities.begin(); f != facilities.end(); ++f) {
-		int exp = (*f)->binoN() * (*f)->binoP();
+		double exp = (*f)->binoP() * ( (double) (*f)->binoN());
 		expNodes[(*f)->getLevel()] += exp;
 		expClients[(*f)->getLevel()] += exp * (*f)->getTotalDemand();
 	}
-	expTreeSize[levelCount()-1] = 0;
-	expCTreeSize[levelCount()-1] = 0;
-	for (int l = levelCount() -2; l >= 0; --l) {
+	expTreeSize[n-1] = 0;
+	expCTreeSize[n-1] = 0;
+	for (int l = n -2; l >= 0; --l) {
 		expTreeSize[l] =   (expTreeSize[l+1] + 1) * expNodes[l+1];
 		expCTreeSize[l] =  (expCTreeSize[l+1]) * expNodes[l+1] +  expClients[l + 1];
 	}
 
 	out << "Expected:" << endl << "Level: #children - #child-clients - |subtree| - #subtree-clients" << endl;
-	for (int l = 0; l < levelCount()-1; ++l) {
+	for (int l = 0; l < n-1; ++l) {
 		out << l << ": " << expNodes[l+1] << "\t" << expClients[l+1] << "\t" << expTreeSize[l] << "\t" << expCTreeSize[l] << endl;
 	}
 	out << "Total Facilities: " << (expTreeSize[0]+ expNodes[0]) <<endl;
@@ -265,6 +266,7 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 	levelNodeCounts.push_back(1);
 	queue<FacilityNode*> queue;
 	root = new FacilityNode(_nodeCount++, facilities[0]);
+	_clientCount += facilities[0]->getTotalDemand();
 	queue.push(root);
 	unsigned int ftype = 1, clevel = 0, idx = 0;
 	FacilityNode* current = queue.front();
@@ -275,6 +277,7 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 				&& facilities[idx]->getLevel() == clevel + 1) {
 			//number of children
 			const unsigned int nbc = facilities[idx]->genRandomFacilities();
+			_clientCount += nbc * facilities[idx]->getTotalDemand();
 			//generate children
 			for (unsigned int i = 0; i < nbc; ++i) {
 				FacilityNode* child = new FacilityNode(_nodeCount,
@@ -535,6 +538,7 @@ ostream& operator <<(ostream & out, const PSLProblem & f) {
 	cout << "}" << endl << "Servers: ";
 	transform(f.servers.begin(), f.servers.end(),
 			ostream_iterator<ServerType>(out, " "), dereference<ServerType>);
+	out << endl << "Facilities:" << endl;
 	transform(f.facilities.begin(), f.facilities.end(),
 			ostream_iterator<FacilityType>(out, "\n"),
 			dereference<FacilityType>);
