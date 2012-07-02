@@ -657,11 +657,30 @@ extern void print_generator_summary(ostream & out, PSLProblem *problem)
 
 void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
+	int cpt = 0;
 	out << "s ";
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		int servers = solver->get_solution(problem->rankX(*i));
 		if(servers > 0) {
-			out << i->getID() << ":" << servers << " ";
+			//Print #pservers
+			out << i->getID() << "[" << servers;
+			//Print pservers capacity
+			if(servers < i->getType()->getTotalCapacity()) {
+				out << "/" << i->getType()->getTotalCapacity();
+			}
+			out << "]";
+			//Print pservers by type
+			if(problem->serverTypeCount() > 1) {
+				out << "{";
+				for (int k = 0; k < problem->serverTypeCount(); ++k) {
+					if(k > 0) out << ",";
+					out << solver->get_solution(problem->rankX(*i, k));
+
+				}
+				out << "}";
+			}
+
+			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
 		}
 	}
 	out << endl;
@@ -678,7 +697,7 @@ void export_solution(PSLProblem *problem, abstract_solver *solver,char* objectiv
 
 void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
-
+	//Display spare clients.
 	out << "d TODO" << endl;
 	out << "c TODO" << endl;
 }
