@@ -675,7 +675,6 @@ void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 				for (int k = 0; k < problem->serverTypeCount(); ++k) {
 					if(k > 0) out << ",";
 					out << solver->get_solution(problem->rankX(*i, k));
-
 				}
 				out << "}";
 			}
@@ -697,10 +696,33 @@ void export_solution(PSLProblem *problem, abstract_solver *solver,char* objectiv
 
 void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
-	//Display spare clients.
-	out << "d TODO" << endl;
-	out << "c TODO" << endl;
-}
+
+	out << "d TIME " << solver->timeCount() << endl;
+	out << "d NODES " << solver->nodeCount() << endl;
+	out << "d SOLUTIONS " << solver->solutionCount() << endl;
+	out << "d #OBJECTIVES " << solver->objectiveCount() << endl;
+	//Compute total pserver capacity
+	double capa = 0;
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			capa += solver->get_solution(problem->rankX(*i, k)) * problem->getServer(k)->getMaxConnections();
+		}
+	}
+	//Display spare capacity.
+	double avg_spare_capa;
+	for (int s = 1; s < problem->stageCount(); ++s) {
+		double clients = 0;
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			clients += solver->get_solution(problem->rankY(*i, s));
+		}
+		out.precision(2);
+		double spare_capa = (capa-clients)/capa;
+		avg_spare_capa += spare_capa;
+		out << "d SPARE_CAPA_S" << s << " " << fixed << spare_capa <<endl;
+	}
+	avg_spare_capa /= problem->groupCount();
+	out << "d SPARE_CAPA " << fixed << avg_spare_capa <<endl;
+	}
 
 
 

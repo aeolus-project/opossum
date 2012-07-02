@@ -107,6 +107,19 @@ public:
 	// get the status of a rank in the final configuration
 	virtual CUDFcoefficient get_solution(int k) { return 0; };
 
+	// get the number of solutions found at the end of solving
+	virtual int solutionCount() { return 0; };
+
+	// get the number of objectives (or sub-problems).
+	virtual int objectiveCount() { return 0; };
+
+	// get the number of nodes at the end of solving
+	virtual int nodeCount() { return 0; };
+
+	// get the solving time.
+	virtual int timeCount() { return 0; };
+
+
 	// ******************************************************************
 	// abstract solver destructor
 	virtual ~abstract_solver() {};

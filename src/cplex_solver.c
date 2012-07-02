@@ -9,7 +9,6 @@
 #include <cplex_solver.h>
 #include <math.h>
 
-//TODO Replace by verbosity
 #define USEXNAME 0
 
 // solver creation 
@@ -19,7 +18,9 @@ abstract_solver *new_cplex_solver() { return new cplex_solver(); }
 // requires the list of versioned packages and the total amount of variables (including additional ones)
 int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	int status;
-
+	solution_count = 0;
+	node_count = 0;
+	time_count = 0;
 
 	// Coefficient initialization
 	initialize_coeffs(problem->rankCount() + other_vars);
@@ -181,10 +182,15 @@ int cplex_solver::solve() {
 	// Solve the objectives in a lexical order
 	for (int i = first_objective; i < nb_objectives; i++) {
 		// Solve the mip problem
+		//CPXsetintparam(env, CPX_PARAM_SOLNPOOLCAPACITY,1);
+		time_t stime = - time(NULL);
 		if (CPXmipopt (env, lp)) return 0;
-
+		stime += time(NULL);
 		// Get solution status
 		if ((mipstat = CPXgetstat(env, lp)) == CPXMIP_OPTIMAL) {
+			solution_count += CPXgetsolnpoolnumsolns(env, lp) + CPXgetsolnpoolnumreplaced(env, lp);
+			time_count += stime;
+			node_count += CPXgetnodecnt(env, lp);
 			if (i < nb_objectives - 1) {
 				// Get next non empty objective
 				// (must be done here to avoid conflicting method calls
@@ -206,7 +212,6 @@ int cplex_solver::solve() {
 
 					if (verbosity >= DEFAULT)
 						printf(">>>> Objective value %d = %f\n", previ, values[0]);
-
 					{
 						int status, begin[2];
 						double rhs[1];
@@ -424,3 +429,10 @@ int cplex_solver::end_add_constraints(void) {
 	if (verbosity >= VERBOSE) writelp(C_STR("cplexpb.lp"));
 	return 0;
 }
+
+int cplex_solver::objectiveCount()
+{
+	return objectives.size();
+}
+
+
