@@ -61,41 +61,28 @@ void print_help() {
 	fprintf(stderr, "file options:\n");
 	fprintf(
 			stderr,
-			" -i <input_file>: set the input file to <input_file> (by default attempt to read on stdin)\n");
+			"\t-i <input_file>: set the input file to <input_file> (by default attempt to read on stdin)\n");
 	fprintf(
 			stderr,
-			" -o <output_file>: set the output file to <output_file> (by default write on stdout)\n");
+			"\t-o <output_file>: set the output file to <output_file> (by default write on stdout)\n");
 	fprintf(stderr, "solver options:\n");
 #ifdef USECPLEX
-	fprintf(stderr, " -cplex: use IBM ILOG Cplex solver\n");
+	fprintf(stderr, "\t-cplex: use IBM ILOG Cplex solver\n");
 #endif
 #ifdef USEGUROBI
-	fprintf(stderr, " -gurobi: use Gurobi solver\n");
+	fprintf(stderr, "\t-gurobi: use Gurobi solver\n");
 #endif
 #ifdef USELPSOLVE
-	fprintf(stderr, " -lpsolve: use lpsolve solver\n");
+	fprintf(stderr, "\t-lpsolve: use lpsolve solver\n");
 #endif
 #ifdef USEGLPK
-	fprintf(stderr, " -glpk: use glpk solver\n");
+	fprintf(stderr, "\t-glpk: use glpk solver\n");
 #endif
 	fprintf(
 			stderr,
-			" -lp <lpsolver>: use lp (cplex format) solver <lpsolver> (tested with scip and cbc)\n");
+			"\t-lp <lpsolver>: use lp (cplex format) solver <lpsolver> (tested with scip and cbc)\n");
 	fprintf(stderr,
-			" -pblib <pbsolver>: use pseudo boolean solver <pbsolver>\n");
-	fprintf(stderr,
-			" -nosolve: do not solve the problem (for debug purpose)\n");
-	fprintf(stderr, "constraint generation options:\n");
-	fprintf(stderr, " -noreduce: do not reduce the initial problem\n");
-	fprintf(
-			stderr,
-			" -only-agregate-constraints: generate only agregate constraints\n");
-	fprintf(
-			stderr,
-			" -only-desagregate-constraints: generate only deagregate constraints (default)\n");
-	fprintf(
-			stderr,
-			" -all-constraints: generate all kind of constraints (insure redundancy)\n");
+			"\t-nosolve: do not solve the problem (for debug purpose)\n");
 	fprintf(stderr, "combining criteria:\n");
 	fprintf(stderr, " -lexicographic[<lccriteria>{,<lccriteria>}*]\n");
 	fprintf(
@@ -185,10 +172,11 @@ void print_help() {
 			" -lexleximin[<ccriteria>{,<ccriteria>}*] equivalent to -lex[<ccriteria>,-leximin[<ccriteria>{,<ccriteria>}*]]\n");
 	fprintf(
 			stderr,
-			"  eg.: -agregate[-removed[100],-notuptodate[50],-nunsat[recommends:,true][10],-new]\n");
+			"  eg.: TODO\n");
 	fprintf(stderr, "other options:\n");
-	fprintf(stderr, " -v<n>: set verbosity level to n\n");
-	fprintf(stderr, " -h: print this help\n");
+	fprintf(stderr, "\t-v<n>: set verbosity level to n\n");
+	fprintf(stderr, "\t-id: print node IDs in graphviz\n");
+	fprintf(stderr, "\t-h|-help|--help: print this help\n");
 
 }
 
@@ -442,20 +430,8 @@ int main(int argc, char *argv[]) {
 				}
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
-			} else if (strcmp(argv[i], "-only-agregate-constraints") == 0) {
-				//generate_agregate_constraints = true;
-				//generate_desagregate_constraints = false;
-			} else if (strcmp(argv[i], "-only-desagregate-constraints") == 0) {
-				//generate_agregate_constraints = false;
-				//generate_desagregate_constraints = true;
-			} else if (strcmp(argv[i], "-all-constraints") == 0) {
-				//generate_agregate_constraints = true;
-				//generate_desagregate_constraints = true;
 			} else if (strcmp(argv[i], "-id") == 0) {
 				showID=true;
-				//TODO man CL parameter
-			} else if (strcmp(argv[i], "-noreduce") == 0) {
-				;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+4, true, &criteria_with_property);
 				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
@@ -695,8 +671,6 @@ void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 
 void export_solution(PSLProblem *problem, abstract_solver *solver,char* objective)
 {
-
-	//TODO export also as cplex solution
 	solution2dotty(*problem, *solver, objective);
 }
 
