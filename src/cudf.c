@@ -636,7 +636,7 @@ void print_problem(ostream& out, PSLProblem *problem)
 			<< problem->levelTypeCount() << " LEVELS    "
 			<< endl
 			<< "c " << problem->nodeCount() <<" FACILITIES    "
-			<< problem->clientCount() << " CLIENTS "  << endl
+			<< problem->clientCount() << " CLIENTS "
 			<<endl ;
 			;
 			//TODO Set by groups
