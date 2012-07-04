@@ -13,7 +13,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <stdio.h>
-//#include <cudf.h>
+
 
 // Template to allow coefficient saving
 // mainly used to save objective coefficients

@@ -48,6 +48,8 @@
 //Define the seed of random
 #define SEED 1000
 
+extern bool showID;
+
 using namespace boost::random;
 using namespace std;
 
@@ -58,6 +60,8 @@ class FacilityNode;
 class NetworkLink;
 class LinkIterator;
 class NodeIterator;
+class AncestorIterator;
+class PathIterator;
 class PSLProblem;
 
 typedef vector<unsigned int> IntList;
@@ -94,22 +98,17 @@ T& dereference(T* ptr) {
 	return *ptr;
 }
 
-//---------------------------------------- 
+//----------------------------------------
 //	ServerType Declaration
 //----------------------------------------
 
-//TODO add costs as parameters to criteria and replace server types by a coefficients list;
-
 class ServerType {
 public:
-	ServerType() : capacity(0), cost(0) {}
-	ServerType(unsigned int capacity, unsigned int cost) : capacity(capacity), cost(cost) {}
+	ServerType() : capacity(0) {}
+	ServerType(unsigned int capacity) : capacity(capacity) {}
 
 	virtual ~ServerType() {}
 
-	inline CUDFcoefficient getCost() const {
-		return cost;
-	}
 	inline CUDFcoefficient getMaxConnections() const {
 		return capacity;
 	}
@@ -118,7 +117,6 @@ public:
 
 private:
 	CUDFcoefficient capacity;
-	CUDFcoefficient cost;
 
 };
 
@@ -146,6 +144,15 @@ public:
 	inline unsigned int getLevel() const {
 		return level;
 	}
+
+	inline unsigned int binoN() const {
+		return binornd->distribution().t();
+	}
+
+	inline double binoP() const {
+		return binornd->distribution().p();
+	}
+
 	inline CUDFcoefficient getDemand(unsigned int stage) const {
 		return demands[stage];
 	}
@@ -240,8 +247,9 @@ public:
 	}
 
 	bool isReliableFromRoot();
+
 	ostream& toDotty(ostream& out);
-	ostream& toGEXF(ostream& out);
+
 	void print(ostream& out);
 
 	//For LinkListIterator
@@ -260,6 +268,14 @@ public:
 	//For LinkIterator
 	LinkIterator lbegin();
 	LinkIterator lend();
+
+	//For AncestorIterator
+	AncestorIterator abegin();
+	AncestorIterator aend();
+
+	//For PathIterator
+	PathIterator pbegin();
+	PathIterator pend();
 
 private:
 	unsigned int id;
@@ -424,9 +440,118 @@ private:
 
 };
 
+//----------------------------------------
+//	AncestorIterator Declaration
+//----------------------------------------
 
+class AncestorIterator : public std::iterator<std::forward_iterator_tag, FacilityNode> {
+public:
+	AncestorIterator(FacilityNode* p) : node( p) {
+		++(*this);
+	}
 
-//---------------------------------------- 
+	//Destructor of AncestorIterator
+	//Do not delete pointers of iterator
+	//
+	~AncestorIterator() {}
+
+	AncestorIterator(const AncestorIterator& other) : node(other.node) {}
+
+	// The assignment and relational operators are straightforward
+	AncestorIterator& operator=(const AncestorIterator& other) {
+		if(*this != other) {
+			node = other.node;
+		}
+		return *this;
+	}
+
+	bool operator==(const AncestorIterator& other) {
+		return (node == other.node);
+	}
+
+	bool operator!=(const AncestorIterator& other) {
+		return (node != other.node);
+	}
+
+	AncestorIterator& operator++();
+
+	AncestorIterator& operator++(int) {
+		++(*this);
+		return *this;
+	}
+
+	FacilityNode* operator*() {
+		return node;
+	}
+
+	FacilityNode* operator->() {
+		return node;
+	}
+
+private:
+	FacilityNode* node;
+
+};
+
+//----------------------------------------
+//	PathIterator Declaration
+//----------------------------------------
+
+class PathIterator : public std::iterator<std::forward_iterator_tag, pair<FacilityNode*, FacilityNode*> > {
+public:
+	PathIterator(FacilityNode* p) : cnode(p->nbegin()), enode(p->nend()), cdest(p->nbegin()), edest(p->nend()) {
+		cdest++;
+	}
+
+	//Destructor of PathIterator
+	//Do not delete pointers of iterator
+	//
+	~PathIterator() {}
+
+	PathIterator(const PathIterator& other) : cnode(other.cnode), enode(other.enode), cdest(other.cdest), edest(other.edest) {}
+
+	// The assignment and relational operators are straightforward
+	PathIterator& operator=(const PathIterator& other) {
+		if(*this != other) {
+			cnode= other.cnode;
+			enode= other.enode;
+			cdest = other.cdest;
+			edest = other.edest;
+		}
+		return *this;
+	}
+
+	bool operator==(const PathIterator& other) {
+		return (cnode == other.cnode) && (cdest== other.cdest);
+	}
+
+	bool operator!=(const PathIterator& other) {
+		return (cnode != other.cnode) || (cdest!= other.cdest);
+	}
+
+	PathIterator& operator++();
+
+	PathIterator& operator++(int) {
+		++(*this);
+		return *this;
+	}
+
+	pair<FacilityNode*, FacilityNode*> operator*() {
+		return pair<FacilityNode*, FacilityNode*>(*cnode, *cdest);
+	}
+
+	pair<FacilityNode*, FacilityNode*> operator->() {
+		return *(*this);
+	}
+
+private:
+	NodeIterator cnode;
+	NodeIterator enode;
+	NodeIterator cdest;
+	NodeIterator edest;
+
+};
+//----------------------------------------
 //	PSLProblem Declaration
 //----------------------------------------
 
@@ -466,13 +591,19 @@ public:
 		return facilities.size();
 	}
 
+	inline unsigned int levelTypeCount() const {
+		return facilities[facilities.size()-1]->getLevel() + 1;
+	}
+
 	inline unsigned int levelCount() const {
 		return levelNodeCounts.size();
 	}
 
 	void setSeed(const unsigned int seed);
-	FacilityNode* generateNetwork();
 
+	ostream& print_generator(ostream& out);
+
+	FacilityNode* generateNetwork();
 	//generate Breadth-First Numbered Tree
 	FacilityNode* generateNetwork(bool hierarchic);
 
@@ -499,7 +630,7 @@ public:
 	}
 
 	inline unsigned int rankCount() const {
-		return offsetB() + pathCount() * stageCount();
+		return endBij();
 	}
 
 	inline IntList getLevelNodeCounts() {
@@ -513,58 +644,81 @@ public:
 	LinkIterator lbegin() { return root->lbegin();}
 	LinkIterator lend() { return root->lend();}
 
-	//Rank Mapper
-	int rankX(FacilityNode *node) const {
-		return node->getID();
-	}
-	int rankX(FacilityNode *node, unsigned int stype) const {
-		return offsetXk() + node->getID() * serverTypeCount() + stype;
-	}
-	int rankY(FacilityNode *node, unsigned int stage) const {
-		return offsetYi() + node->getID() * stageCount() + stage;
-	}
-	int rankY(NetworkLink *link, unsigned int stage) const {
-		return offsetYij() + link->getID() * stageCount() + stage;
-	}
-	int rankZ(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
-		return offsetZ() + rank(source, destination, stage);
-	}
-	int rankB(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
-		return offsetB() + rank(source, destination, stage);
-	}
-
-
 	ostream& toRanks(ostream& out);
 	ostream& toDotty(ostream& out);
 
 	friend ostream& operator<<(ostream& out, const PSLProblem& f);
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 
-private:
-	//Delete tree from root node
-	//
-	void deleteTree(FacilityNode* node) {
-		levelNodeCounts.clear();
-		levelCumulNodeCounts.clear();
-		lengthCumulPathCounts.clear();
-		_nodeCount = 0;
-		if(node != NULL) {		
-			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
-				deleteTree(node->toChild(i)->getDestination());
-			}		
-			delete node;
-			node = NULL;
-		}
+	//----------------------------------------
+	//	Rank Mapper (associates each variable to an uniue index)
+	//----------------------------------------
+	int rankX(FacilityNode *node) const {
+		return node->getID();
+	}
+	int rankX(FacilityNode *node, unsigned int stype) const {
+		assert(stype >= 0 && stype < serverTypeCount());
+		return endX() + node->getID() * serverTypeCount() + stype;
 	}
 
-	inline int offsetXk() const {
+	int rankY(FacilityNode *node, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
+		return endXk() + node->getID() * stageCount() + stage;
+	}
+
+	int rankZ(FacilityNode *node, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
+		return endYi() + node->getID() * stageCount() + stage;
+	}
+
+	int rankY(NetworkLink *link, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
+		return endZi() + link->getID() * stageCount() + stage;
+	}
+
+	int rankZ(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
+		return endYij() + rank(source, destination, stage);
+	}
+
+	int rankB(FacilityNode *source, FacilityNode *destination, unsigned int stage) const {
+		return endZij() + rank(source, destination, stage);
+	}
+
+	int rankZ(pair<FacilityNode*, FacilityNode* > const &path, unsigned int stage) const {
+		return rankZ(path.first, path.second, stage);
+	}
+
+	int rankB(pair<FacilityNode*, FacilityNode* > const &path, unsigned int stage) const {
+		return rankB(path.first, path.second, stage);
+	}
+private:
+
+	inline int endX() const {
 		return _nodeCount;
 	}
-	inline int offsetYi() const {
-		return offsetXk() + _nodeCount * serverTypeCount();
+
+	inline int endXk() const {
+		return endX() + _nodeCount * serverTypeCount();
 	}
-	inline int offsetYij() const {
-		return offsetYi() + _nodeCount * stageCount();
+
+	inline int endYi() const {
+		return endXk() + _nodeCount * stageCount();
+	}
+
+	inline int endZi() const {
+		return endYi() + _nodeCount * stageCount();
+	}
+
+	inline int endYij() const {
+		return endZi() +  linkCount() * stageCount();
+	}
+
+	inline int endZij() const {
+		return endYij() + pathCount() * stageCount();
+	}
+
+	inline int endBij() const {
+		return endZij() + pathCount() * stageCount();
 	}
 
 	inline int rank(FacilityNode* source, FacilityNode* destination) const {
@@ -572,17 +726,26 @@ private:
 		//path are ranked by length and their index using the bread-first numbered tree.
 		return lengthCumulPathCounts[length-1] + (destination->getID() - levelCumulNodeCounts[length]);
 	}
+
 	inline int rank(FacilityNode* source, FacilityNode* destination, unsigned int stage) const {
+		assert(stage >= 0 && stage < stageCount());
 		return rank(source, destination) * stageCount() + stage;
 	}
-	inline int offsetZ() const {
-		return offsetYij() + linkCount() * stageCount();
-	}
-	inline int offsetB() const {
-		return offsetZ() + pathCount() * stageCount();
-	}
 
-
+	//Delete tree from root node
+	void deleteTree(FacilityNode* node) {
+		levelNodeCounts.clear();
+		levelCumulNodeCounts.clear();
+		lengthCumulPathCounts.clear();
+		_nodeCount = 0;
+		if(node != NULL) {
+			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
+				deleteTree(node->toChild(i)->getDestination());
+			}
+			delete node;
+			node = NULL;
+		}
+	}
 
 
 	IntList bandwidths;
@@ -639,6 +802,16 @@ inline void NetworkLink::forEachPath(FuncType func) const {
 			}
 		}
 	} while (!ancestor->isRoot());
+}
+
+inline bool isReliablePath(const FacilityNode* origin, FacilityNode* destination) {
+	while(destination) {
+		if(destination == origin) return true;
+		else if(destination->toFather()->isReliable()) {
+			destination = destination->getFather();
+		} else destination = NULL;
+	}
+	return false;
 }
 
 #endif /* NETWORK_HPP_ */

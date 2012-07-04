@@ -9,7 +9,6 @@
 #include <cplex_solver.h>
 #include <math.h>
 
-#define OUTPUT_MODEL 1
 #define USEXNAME 0
 
 // solver creation 
@@ -19,7 +18,9 @@ abstract_solver *new_cplex_solver() { return new cplex_solver(); }
 // requires the list of versioned packages and the total amount of variables (including additional ones)
 int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	int status;
-
+	_solutionCount = 0;
+	_nodeCount = 0;
+	_timeCount = 0;
 
 	// Coefficient initialization
 	initialize_coeffs(problem->rankCount() + other_vars);
@@ -49,22 +50,24 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		exit(-1);
 	}
 
-	if (verbosity > 1) {
+	if (verbosity >= DEFAULT) {
 		/* Turn on output to the screen */
 		status = CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);
 		if ( status ) {
 			fprintf (stderr, "Failure to turn on screen indicator, error %d.\n", status);
 			exit(-1);
 		}
-
-		if (verbosity > 2) {
-			/* MIP node log display information */
-			status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 5);
-			if ( status ) {
-				fprintf (stderr, "Failure to turn off presolve, error %d.\n", status);
-				exit(-1);
-			}
+		/* MIP node log display information */
+		int verb = verbosity >= SEARCH ? 5 : verbosity >= VERBOSE ? 2 : 1;
+		status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, verb);
+//		int val = -1;
+//		CPXgetintparam (env, CPX_PARAM_MIPDISPLAY, &val);
+//		cerr <<  val << endl;
+		if ( status ) {
+			fprintf (stderr, "Failure to turn off presolve, error %d.\n", status);
+			exit(-1);
 		}
+
 	}
 
 	/* Create the problem. */
@@ -163,6 +166,13 @@ int cplex_solver::writelp(char *filename) {
 	return CPXwriteprob (env, lp, filename, NULL);
 }
 
+// Just write the solution in a file
+int cplex_solver::writesol(char *filename) {
+	return CPXsolwrite(env, lp, filename);
+}
+
+
+
 // solve the current problem
 int cplex_solver::solve() {
 	int nb_objectives = objectives.size();
@@ -174,10 +184,15 @@ int cplex_solver::solve() {
 	// Solve the objectives in a lexical order
 	for (int i = first_objective; i < nb_objectives; i++) {
 		// Solve the mip problem
+		//CPXsetintparam(env, CPX_PARAM_SOLNPOOLCAPACITY,1);
+		time_t stime = - time(NULL);
 		if (CPXmipopt (env, lp)) return 0;
-
+		stime += time(NULL);
 		// Get solution status
 		if ((mipstat = CPXgetstat(env, lp)) == CPXMIP_OPTIMAL) {
+			_solutionCount += CPXgetsolnpoolnumsolns(env, lp) + CPXgetsolnpoolnumreplaced(env, lp);
+			_timeCount += stime;
+			_nodeCount += CPXgetnodecnt(env, lp);
 			if (i < nb_objectives - 1) {
 				// Get next non empty objective
 				// (must be done here to avoid conflicting method calls
@@ -197,9 +212,8 @@ int cplex_solver::solve() {
 					index[0] = previ;
 					values[0] = objective_value();
 
-					if (verbosity > 0)
+					if (verbosity >= DEFAULT)
 						printf(">>>> Objective value %d = %f\n", previ, values[0]);
-
 					{
 						int status, begin[2];
 						double rhs[1];
@@ -231,17 +245,17 @@ int cplex_solver::solve() {
 					}
 
 					// Output model to file (when requested)
-					if (OUTPUT_MODEL) {
+					if (verbosity >= VERBOSE) {
 						char buffer[1024];
 						sprintf(buffer, "cplexpb-%d.lp", i);
-						CPXwriteprob (env, lp, buffer, NULL);
+						writelp(buffer);
 					}
 				} else
 					return 1;
 			} else
 				return 1;
 		} else {
-			if (verbosity > 2)
+			if (verbosity >= DEFAULT)
 				fprintf(stderr, "CPLEX solution status = %d\n", mipstat);
 			return 0;
 		}
@@ -278,12 +292,9 @@ int cplex_solver::init_solutions() {
 	if ( status ) {
 		fprintf (stderr, "cplex_solver: init_solutions: failed to get solutions.\n");
 		exit(-1);
-	} else if (OUTPUT_MODEL) {
+	} else if (verbosity >= VERBOSE) {
 		// Output model to file (when requested)
-		char buffer[1024];
-		sprintf(buffer, "cplexsol.xml");
-		CPXsolwrite(env, lp, buffer);
-
+		writesol(C_STR("sol-cplex.xml"));
 	}
 	return 0;
 }
@@ -417,6 +428,13 @@ int cplex_solver::add_constraint_eq(CUDFcoefficient bound) {
 
 // ends up constraint declaration
 int cplex_solver::end_add_constraints(void) { 
-	if (OUTPUT_MODEL) CPXwriteprob (env, lp, "cplexpb.lp", NULL);
+	if (verbosity >= VERBOSE) writelp(C_STR("cplexpb.lp"));
 	return 0;
 }
+
+int cplex_solver::objectiveCount()
+{
+	return objectives.size();
+}
+
+

@@ -15,25 +15,9 @@
 #include <combiner.h>
 
 
-
-
 extern int new_var;
 extern CUDFcoefficient min_bandwidth;
-
-
-// available criteria
-#define CRIT_DEFAULT 1
-#define CRIT_CONSERVATIVE 2
-#define CRIT_FRESHER 3
-#define CRIT_SFRESHER 4
-#define CRIT_FFRESHER 5
-#define CRIT_TFRESHER 5
-#define CRIT_PARANOID 6
-#define CRIT_TRENDY   7
-#define CRIT_TRENDY2  8
-#define CRIT_LEXPARANOID  9
-#define CRIT_LEXTRENDY   10
-#define CRIT_LEXTRENDY2  11
+extern CUDFcoefficient max_bandwidth;
 
 
 // main function for constraint generation (translate a CUDF problem into MILP problem for a given solver and a given criteria)

@@ -107,6 +107,19 @@ public:
 	// get the status of a rank in the final configuration
 	virtual CUDFcoefficient get_solution(int k) { return 0; };
 
+	// get the number of solutions found at the end of solving
+	virtual int solutionCount() { return 0; };
+
+	// get the number of objectives (or sub-problems).
+	virtual int objectiveCount() { return 0; };
+
+	// get the number of nodes at the end of solving
+	virtual int nodeCount() { return 0; };
+
+	// get the solving time.
+	virtual int timeCount() { return 0; };
+
+
 	// ******************************************************************
 	// abstract solver destructor
 	virtual ~abstract_solver() {};
@@ -124,6 +137,7 @@ protected:
 			}
 			for (int s = 0; s < problem->stageCount(); ++s) {
 				set_intvar(problem->rankY(*i, s), sprint_var("y%d'%d", i->getID(), s));
+				set_intvar(problem->rankZ(*i, s), sprint_var("z%d'%d", i->getID(), s));
 			}
 		}
 
@@ -172,6 +186,22 @@ protected:
 		return name;
 	}
 };
+
+//// Print out a solution
+//// requires the file descriptor of the targeted file, a pointer to the PSL problem, and another pointer to the solver.
+extern void print_solution(ostream& out, PSLProblem *problem, abstract_solver* solver);
+//
+//// Export the PSL solution as several graphivz files(sol-*.dot)
+//// requires the file descriptor of the targeted file, a pointer to the PSL problem, another pointer to the solver, and the objective.
+extern void export_solution(PSLProblem *problem, abstract_solver* solver,char* objective);
+//
+//// Print out diagnostic and configuration messages (XCSP format)
+//// requires the file descriptor of the targeted file, a pointer to the PSL problem, and another pointer to the solver.
+extern void print_messages(ostream& out, PSLProblem *problem, abstract_solver* solver);
+
+
+
+
 
 
 #endif
