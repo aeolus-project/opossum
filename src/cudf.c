@@ -324,26 +324,26 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 			// handle criteria
 			if (strncmp(crit_descr+crit_name, "pserv", crit_name_length) == 0) {
 				param_range r1("type"), r2("level");
-				int rel = -1;
+				int rel = RELIABLE_OR_NOT;
 				CUDFcoefficient lambda = 1;
 				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]
 				);
 				criteria->push_back(new pserv_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "local", crit_name_length) == 0) {
 				param_range r1("stage"), r2("level");
-				int rel = -1;
+				int rel = RELIABLE_OR_NOT;
 				CUDFcoefficient lambda = 1;
 				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
 				criteria->push_back(new local_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "conn", crit_name_length) == 0) {
 				param_range r1("stage"), r2("length",1);
-				int rel = -1;
+				int rel = RELIABLE_OR_NOT;
 				CUDFcoefficient lambda = 1;
 				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
 				criteria->push_back(new conn_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "bandw", crit_name_length) == 0) {
 				param_range r1("stage"), r2("length",1);
-				int rel = -1;
+				int rel = RELIABLE_OR_NOT;
 				CUDFcoefficient lambda = 1;
 				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
 				criteria->push_back(new bandw_criteria(lambda, rel, r1, r2));
@@ -404,7 +404,6 @@ int main(int argc, char *argv[]) {
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
-			cerr << argv[i] << endl;
 			if (strcmp(argv[i], "-i") == 0) {
 				i++;
 				if (i < argc) {

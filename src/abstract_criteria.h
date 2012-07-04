@@ -10,6 +10,10 @@
 #ifndef _ABSTRACT_CRITERIA_H_
 #define _ABSTRACT_CRITERIA_H_
 
+#define  RELIABLE_OR_NOT -1
+#define NON_RELIABLE 0
+#define RELIABLE 1
+
 #include <abstract_solver.h>
 
 // Abstract criteria class

@@ -38,8 +38,8 @@ private :
 
 	inline bool isRLSelected(FacilityNode* node) {
 		if(level_range.contains(node->getType()->getLevel())) {
-			return reliable == 0 ? !isReliablePath(problem->getRoot(), node) :
-					reliable > 0 ? isReliablePath(problem->getRoot(), node) : true;
+			return reliable == RELIABLE ? isReliablePath(problem->getRoot(), node) :
+					reliable == NON_RELIABLE ? !isReliablePath(problem->getRoot(), node) : true;
 		}
 		return false;
 	}

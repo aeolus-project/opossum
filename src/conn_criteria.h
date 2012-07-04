@@ -41,8 +41,8 @@ private :
 
 	inline bool isRLSelected(pair<FacilityNode*, FacilityNode*> const &path) {
 		if(length_range.contains(path.second->getType()->getLevel() - path.first->getType()->getLevel())) {
-			return reliable == 0 ? ! isReliablePath(path.first, path.second) :
-					reliable > 0 ? isReliablePath(path.first, path.second) : true;
+			return reliable == RELIABLE ? isReliablePath(path.first, path.second) :
+					reliable == NON_RELIABLE ? isReliablePath(path.first, path.second) : true;
 		}
 		return false;
 
