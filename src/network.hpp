@@ -557,7 +557,7 @@ private:
 
 class PSLProblem {
 public:
-	PSLProblem() : _groupCount(0), root(NULL), _nodeCount(0), _clientCount(0) {}
+	PSLProblem() : _groupCount(0), root(NULL), _nodeCount(0) {}
 
 	//Destructor of PSLProblem
 	//Delete all nodes of the tree
@@ -619,10 +619,6 @@ public:
 
 	inline unsigned int linkCount() const {
 		return _nodeCount - 1;
-	}
-
-	inline unsigned int clientCount() const {
-		return _clientCount;
 	}
 
 	inline unsigned int pathCount() const {
@@ -742,7 +738,6 @@ private:
 		levelCumulNodeCounts.clear();
 		lengthCumulPathCounts.clear();
 		_nodeCount = 0;
-		_clientCount = 0;
 		if(node != NULL) {
 			for ( size_t i = 0; i < node->getChildrenCount(); ++i ) {
 				deleteTree(node->toChild(i)->getDestination());
@@ -759,7 +754,6 @@ private:
 	unsigned int _groupCount;
 	FacilityNode* root;
 	unsigned int _nodeCount;
-	unsigned int _clientCount;
 	IntList levelNodeCounts;
 	//number of nodes of level lower or equal than l;
 	IntList levelCumulNodeCounts;

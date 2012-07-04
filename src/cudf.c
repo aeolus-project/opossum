@@ -398,7 +398,7 @@ int main(int argc, char *argv[]) {
 	char* obj_descr;
 	PSLProblem *problem;
 	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
-	//TODO remove useless options;
+	//TODO Add seed parameter and logging message
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
@@ -539,6 +539,8 @@ int main(int argc, char *argv[]) {
 	if (verbosity >= VERBOSE) {
 		print_generator_summary(out, the_problem);
 		export_problem(the_problem);
+	}
+	if (verbosity >= DEFAULT) {
 		print_problem(out, the_problem);
 		out << "================================================================" << endl;
 	}
@@ -634,13 +636,52 @@ void print_problem(ostream& out, PSLProblem *problem)
 	out << "c " << problem->groupCount() << " GROUPS    "
 			<< problem->facilityTypeCount() << " FTYPES    "
 			<< problem->levelTypeCount() << " LEVELS    "
-			<< endl
-			<< "c " << problem->nodeCount() <<" FACILITIES    "
-			<< problem->clientCount() << " CLIENTS "
+			<< endl;
+
+	int clientCount = 0;
+	int pservCount = 0;
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		clientCount += i->getType()->getTotalDemand();
+		pservCount += i->getType()->getTotalCapacity();
+	}
+	out << "c " << problem->nodeCount() <<" FACILITIES    "
+			<< pservCount << " PSERVERS    "
+			<< clientCount << " CLIENTS "
 			<<endl ;
-			;
-			//TODO Set by groups
-			//TODO Always display the total number of pserv and sum vector of pservs
+	if(problem->groupCount() > 1) {
+		int demands[problem->groupCount()];
+		for (int g = 0; g < problem->groupCount(); ++g) {
+			demands[g] = 0;
+		}
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			for (int g = 0; g < problem->groupCount(); ++g) {
+				demands[g] += i->getType()->getDemand(g);
+			}
+		}
+		out << "c ";
+		for (int g = 0; g < problem->groupCount(); ++g) {
+			out << demands[g] << " ";
+		}
+
+		out << "DEMANDS" << endl;
+	}
+	if(problem->serverTypeCount() > 1) {
+		int pserv[problem->serverTypeCount()];
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			pserv[k] = 0;
+		}
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			for (int k = 0; k < problem->serverTypeCount(); ++k) {
+				pserv[k] += i->getType()->getServerCapacity(k);
+			}
+		}
+
+		out << "c ";
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			out << pserv[k] << " ";
+		}
+		out << "PSERVERS" << endl;
+	}
 	if (verbosity >= ALL && problem->getRoot()) {
 		out << endl;
 		problem->getRoot()->print(out);
@@ -716,21 +757,48 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 			capa += solver->get_solution(problem->rankX(*i, k)) * problem->getServer(k)->getMaxConnections();
 		}
 	}
+	//Display installed pservers.
+	int pserv[problem->serverTypeCount()];
+	int tot_pserv = 0;
+	for (int k = 0; k < problem->serverTypeCount(); ++k) {
+		pserv[k]=0;
+	}
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		tot_pserv += solver->get_solution(problem->rankX(*i));
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			pserv[k] += solver->get_solution(problem->rankX(*i, k));
+		}
+	}
+	out << "d PSERVERS " << tot_pserv << endl;
+	if(problem->serverTypeCount() > 1) {
+		out << "d VEC_PSERVERS ";
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			out << pserv[k] << " ";
+		}
+		out <<endl;
+	}
 	//Display spare capacity.
-	double avg_spare_capa;
+	double spare_capa[problem->stageCount()];
+	double avg_spare_capa = 0;
 	for (int s = 1; s < problem->stageCount(); ++s) {
 		double clients = 0;
 		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 			clients += solver->get_solution(problem->rankY(*i, s));
 		}
-		out.precision(2);
-		double spare_capa = (capa-clients)/capa;
-		avg_spare_capa += spare_capa;
-		out << "d SPARE_CAPA_S" << s << " " << fixed << spare_capa <<endl;
+		spare_capa[s] = (capa-clients)/capa;
+		avg_spare_capa +=spare_capa[s];
 	}
-	avg_spare_capa /= problem->groupCount();
+	out.precision(2);
+	avg_spare_capa/= problem->stageCount()-1;
 	out << "d SPARE_CAPA " << fixed << avg_spare_capa <<endl;
+	if(problem->stageCount() > 2) {
+		out << "d VEC_SPARE_CAPA ";
+		for (int s = 1; s < problem->stageCount(); ++s) {
+			out << spare_capa[s] << " ";
+		}
+		out << endl;
 	}
+}
 
 
 

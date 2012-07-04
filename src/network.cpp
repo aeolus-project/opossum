@@ -266,7 +266,6 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 	levelNodeCounts.push_back(1);
 	queue<FacilityNode*> queue;
 	root = new FacilityNode(_nodeCount++, facilities[0]);
-	_clientCount += facilities[0]->getTotalDemand();
 	queue.push(root);
 	unsigned int ftype = 1, clevel = 0, idx = 0;
 	FacilityNode* current = queue.front();
@@ -277,7 +276,6 @@ FacilityNode* PSLProblem::generateNetwork(bool hierarchic) {
 				&& facilities[idx]->getLevel() == clevel + 1) {
 			//number of children
 			const unsigned int nbc = facilities[idx]->genRandomFacilities();
-			_clientCount += nbc * facilities[idx]->getTotalDemand();
 			//generate children
 			for (unsigned int i = 0; i < nbc; ++i) {
 				FacilityNode* child = new FacilityNode(_nodeCount,
