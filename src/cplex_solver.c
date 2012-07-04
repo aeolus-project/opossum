@@ -57,15 +57,17 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 			fprintf (stderr, "Failure to turn on screen indicator, error %d.\n", status);
 			exit(-1);
 		}
-
-		if (verbosity >= SEARCH) {
-			/* MIP node log display information */
-			status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 5);
-			if ( status ) {
-				fprintf (stderr, "Failure to turn off presolve, error %d.\n", status);
-				exit(-1);
-			}
+		/* MIP node log display information */
+		int verb = verbosity >= SEARCH ? 5 : verbosity >= VERBOSE ? 2 : 1;
+		status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, verb);
+//		int val = -1;
+//		CPXgetintparam (env, CPX_PARAM_MIPDISPLAY, &val);
+//		cerr <<  val << endl;
+		if ( status ) {
+			fprintf (stderr, "Failure to turn off presolve, error %d.\n", status);
+			exit(-1);
 		}
+
 	}
 
 	/* Create the problem. */
