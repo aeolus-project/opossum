@@ -79,7 +79,6 @@ public:
 	int end_add_constraints(void);
 
 	glp_prob *lp; // internal solver representation
-	//CUDFVersionedPackageList *all_versioned_packages;  // list of all versioned packages
 	int nb_packages; // number of packages
 
 	CUDFcoefficient *lb, *ub;          // arrays of lower and upper bounds

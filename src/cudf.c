@@ -10,12 +10,26 @@
 #include <combiner.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include "abstract_solver.h"
+#include <limits.h>
 #include "graphviz.hpp"
 
-//Remove main
-//#define main toto
 
+#define HIERARCHIC true
+
+PSLProblem* current_problem = NULL;
+PSLProblem* the_problem = NULL;
+
+int verbosity = DEFAULT;
+
+template <typename T>
+T* makeCombiner(CriteriaList* criteria, char* name) {
+	if (criteria->empty()) {
+		fprintf(stderr, "ERROR: -%s option requires a list of criteria.\n", name);
+		exit(-1);
+	}
+	return new T(criteria);
+
+}
 // underlying solver declaration
 // allows using solvers withour having to include the whole solver classes
 
@@ -36,8 +50,6 @@ extern abstract_solver *new_lpsolve_solver();
 extern abstract_solver *new_glpk_solver(bool use_exact);
 #endif
 
-bool criteria_opt_var = false;
-
 // print cudf help
 void print_help() {
 	fprintf(
@@ -47,45 +59,32 @@ void print_help() {
 			"MANCOOSI project, grant agreement n. 214898.\n");
 	fprintf(
 			stderr,
-			"Usual call: mccs -i <input_file> -o <outputfile> <criteria combiner>[<criteria>{, <criteria>}*] <solver option> <other options>?\n");
+			"Usual call: opossum -i <input_file> -o <outputfile> <criteria combiner>[<criteria>{, <criteria>}*] <solver option> <other options>?\n");
 	fprintf(stderr, "file options:\n");
 	fprintf(
 			stderr,
-			" -i <input_file>: set the input file to <input_file> (by default attempt to read on stdin)\n");
+			"\t-i <input_file>: set the input file to <input_file> (by default attempt to read on stdin)\n");
 	fprintf(
 			stderr,
-			" -o <output_file>: set the output file to <output_file> (by default write on stdout)\n");
+			"\t-o <output_file>: set the output file to <output_file> (by default write on stdout)\n");
 	fprintf(stderr, "solver options:\n");
 #ifdef USECPLEX
-	fprintf(stderr, " -cplex: use IBM ILOG Cplex solver\n");
+	fprintf(stderr, "\t-cplex: use IBM ILOG Cplex solver\n");
 #endif
 #ifdef USEGUROBI
-	fprintf(stderr, " -gurobi: use Gurobi solver\n");
+	fprintf(stderr, "\t-gurobi: use Gurobi solver\n");
 #endif
 #ifdef USELPSOLVE
-	fprintf(stderr, " -lpsolve: use lpsolve solver\n");
+	fprintf(stderr, "\t-lpsolve: use lpsolve solver\n");
 #endif
 #ifdef USEGLPK
-	fprintf(stderr, " -glpk: use glpk solver\n");
+	fprintf(stderr, "\t-glpk: use glpk solver\n");
 #endif
 	fprintf(
 			stderr,
-			" -lp <lpsolver>: use lp (cplex format) solver <lpsolver> (tested with scip and cbc)\n");
+			"\t-lp <lpsolver>: use lp (cplex format) solver <lpsolver> (tested with scip and cbc)\n");
 	fprintf(stderr,
-			" -pblib <pbsolver>: use pseudo boolean solver <pbsolver>\n");
-	fprintf(stderr,
-			" -nosolve: do not solve the problem (for debug purpose)\n");
-	fprintf(stderr, "constraint generation options:\n");
-	fprintf(stderr, " -noreduce: do not reduce the initial problem\n");
-	fprintf(
-			stderr,
-			" -only-agregate-constraints: generate only agregate constraints\n");
-	fprintf(
-			stderr,
-			" -only-desagregate-constraints: generate only deagregate constraints (default)\n");
-	fprintf(
-			stderr,
-			" -all-constraints: generate all kind of constraints (insure redundancy)\n");
+			"\t-nosolve: do not solve the problem (for debug purpose)\n");
 	fprintf(stderr, "combining criteria:\n");
 	fprintf(stderr, " -lexicographic[<lccriteria>{,<lccriteria>}*]\n");
 	fprintf(
@@ -175,17 +174,18 @@ void print_help() {
 			" -lexleximin[<ccriteria>{,<ccriteria>}*] equivalent to -lex[<ccriteria>,-leximin[<ccriteria>{,<ccriteria>}*]]\n");
 	fprintf(
 			stderr,
-			"  eg.: -agregate[-removed[100],-notuptodate[50],-nunsat[recommends:,true][10],-new]\n");
+			"  eg.: TODO\n");
 	fprintf(stderr, "other options:\n");
-	fprintf(stderr, " -fo: full solution output\n");
-	fprintf(stderr, " -v<n>: set verbosity level to n\n");
-	fprintf(stderr, " -h: print this help\n");
+	fprintf(stderr, "\t-v<n>: set verbosity level to n\n");
+	fprintf(stderr, "\t-s<n>: set the seed for the problem generator to n\n");
+	fprintf(stderr, "\t-id: print node IDs in graphviz\n");
+	fprintf(stderr, "\t-h|-help|--help: print this help\n");
 
 }
 
 // Basic user defined criteria option handling
 int get_criteria_options(char *crit_descr, unsigned int &pos, vector< pair<unsigned int, unsigned int> *> *opts) {
-
+	//TODO Simplify method (remove opts ?)
 	if (crit_descr[pos] == '[') {
 		int nb_read = 0;
 		unsigned int start = ++pos;
@@ -233,175 +233,64 @@ int get_criteria_options(char *crit_descr, unsigned int &pos, vector< pair<unsig
 	return 0;
 }
 
+
+CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int & start,unsigned int & length, char sign) {
+	CUDFcoefficient lambda = 1;
+	for (unsigned int i = 0; i < length; i++)
+		if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
+			crit_descr[start+i+1] = '\0';
+			fprintf(stderr, "ERROR: criteria options: a lambda value must be an integer int: %s\n", crit_descr);
+			exit(-1);
+
+		}
+
+	if (sscanf(crit_descr+start, CUDFflags, &lambda) != 1) {
+		crit_descr[start+length+1] = '\0';
+		fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
+		exit(-1);
+	}
+	if (sign == '+') lambda *= -1;
+	return lambda;
+}
+
+
 // Get user defined weight for a criteria
 CUDFcoefficient get_criteria_lambda(char *crit_descr, unsigned int &pos, char sign) {
-	CUDFcoefficient lambda = 1;
 	vector< pair<unsigned int, unsigned int> *> opts;
 
 	int n = get_criteria_options(crit_descr, pos, &opts);
 
 	if (n == 1) {
-		unsigned int start = opts[0]->first;
-		unsigned int length = opts[0]->second;
-
-		for (unsigned int i = 0; i < length; i++)
-			if ((crit_descr[start+i] < '0') || (crit_descr[start+i] > '9')) {
-				crit_descr[start+i+1] = '\0';
-				fprintf(stderr, "ERROR: criteria options: a lambda value must be an integer int: %s\n", crit_descr);
-				exit(-1);extern abstract_solver *new_pblib_solver(char *pbsolver);
-
-			}
-
-		if (sscanf(crit_descr+start, CUDFflags, &lambda) != 1) {
-			crit_descr[start+length+1] = '\0';
-			fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
-			exit(-1);
-		}
+		return get_criteria_lambda(crit_descr, opts[0]->first, opts[0]->second, sign);
 	} else if (n > 1) {
 		crit_descr[pos] = '\0';
 		fprintf(stderr, "ERROR: criteria options: a lambda value is espected here: %s\n", crit_descr);
 		exit(-1);
 	}
-
-	if (sign == '+') lambda *= -1;
-
-	return lambda;
+	return sign == '+' ? -1 : +1;
 }
 
-// Get property name from a user defined criteria
-char *get_criteria_property_name(char *crit_descr, unsigned int &pos) {
-	vector< pair<unsigned int, unsigned int> *> opts;
-	char *property = (char *)NULL;
 
-	int n = get_criteria_options(crit_descr, pos, &opts);
-
-	if (n == 1) {
-		unsigned int start = opts[0]->first;
-		unsigned int length = opts[0]->second;
-
-		if (crit_descr[start+length-1] != ':') {
-			crit_descr[start+length] = '\0';
-			fprintf(stderr, "ERROR: criteria options: a property name must end with a ':': %s\n", crit_descr);
+void get_criteria_properties(char *crit_descr, unsigned int &pos,
+		param_range &param1, param_range &param2,
+		int& reliable, CUDFcoefficient& lambda, char sign) {
+	int n = 0;
+	do {
+		vector< pair<unsigned int, unsigned int> *> opts;
+		n = get_criteria_options(crit_descr, pos, &opts); //TODO Simplify method ?
+		if( n > 0 &&
+				! param1.scanf(crit_descr+opts[0]->first) &&
+				! param2.scanf(crit_descr+opts[0]->first) &&
+				sscanf(crit_descr+opts[0]->first, "reliable,%d", &reliable) != 1 &&
+				sscanf(crit_descr+opts[0]->first, CUDFflags, &lambda) != 1
+		) {
+			crit_descr[pos] = '\0';
+			fprintf(stderr, "ERROR: criteria options: invalid format [<property>,<value>]: %s\n", crit_descr+opts[0]->first);
 			exit(-1);
 		}
 
-		if ((property = (char *)malloc((length+1)*sizeof(char))) == (char *)NULL) {
-			fprintf(stderr, "ERROR: criteria options: not enough memory to store property name.\n");
-			exit(-1);
-		}
-
-		strncpy(property, crit_descr+start, length);
-		property[length] = '\0';
-	} else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a property name is required here: %s\n", crit_descr);
-		exit(-1);
-	}
-
-	return property;
-}
-
-// Get unaligned criteria parameters
-int get_unaligned_criteria_params(char *crit_descr, unsigned int &pos) {
-	vector< pair<unsigned int, unsigned int> *> opts;
-	int alignment = 0;
-
-	int n = get_criteria_options(crit_descr, pos, &opts);
-
-	if (n == 1) {
-		unsigned int start = opts[0]->first;
-		unsigned int length = opts[0]->second;
-
-		//		if (strncmp("packages", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_PACKAGES;
-		//		else if (strncmp("pairs", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_PAIRS;
-		//		else if (strncmp("clusters", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_CLUSTERS;
-		//		else if (strncmp("changes", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_CHANGES;
-		//		else if (strncmp("dpackages", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_DISTANCE_PACKAGES;
-		//		else if (strncmp("dpairs", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_DISTANCE_PAIRS;
-		//		else if (strncmp("dclusters", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_DISTANCE_CLUSTERS;
-		//		else if (strncmp("sdpackages", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_SDISTANCE_PACKAGES;
-		//		else if (strncmp("sdpairs", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_SDISTANCE_PAIRS;
-		//		else if (strncmp("sdclusters", crit_descr+start, length) == 0)
-		//			alignment = ALIGNED_SDISTANCE_CLUSTERS;
-		//		else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: unaligned criteria options:  either packages, pairs, changes, clusters,\n"
-				"dpackages, dpairs, dclusters, sdpackages, sdpairs or sdclusters required here: %s\n", crit_descr);
-		exit(-1);
-		//	}
-
-	} else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: unaligned criteria options:  either packages, pairs, changes, clusters,\n"
-				"dpackages, dpairs, dclusters, sdpackages, sdpairs or sdclusters required here: %s\n", crit_descr);
-		exit(-1);
-	}
-
-	return alignment;
-}
-
-// Get name and boolean options from user defined criteria
-char *get_criteria_property_name_and_bool(char *crit_descr, unsigned int &pos, bool &value) {
-	vector< pair<unsigned int, unsigned int> *> opts;
-	char *property = (char *)NULL;
-
-	int n = get_criteria_options(crit_descr, pos, &opts);
-
-	if (n == 2) {
-		unsigned int start = opts[0]->first;
-		unsigned int length = opts[0]->second;
-
-		if (crit_descr[start+length-1] != ':') {
-			crit_descr[start+length] = '\0';
-			fprintf(stderr, "ERROR: criteria options: a property name must end with a ':': %s\n", crit_descr);
-			exit(-1);
-		}
-
-		if ((property = (char *)malloc((length+1)*sizeof(char))) == (char *)NULL) {
-			fprintf(stderr, "ERROR: criteria options: not enough memory to store property name.\n");
-			exit(-1);
-		}
-
-		strncpy(property, crit_descr+start, length);
-		property[length] = '\0';
-
-		start = opts[1]->first;
-		length = opts[1]->second;
-
-		if ((length == 4) &&
-				(crit_descr[start+0] == 't') &&
-				(crit_descr[start+1] == 'r') &&
-				(crit_descr[start+2] == 'u') &&
-				(crit_descr[start+3] == 'e'))
-			value = true;
-		else if ((length == 5) &&
-				(crit_descr[start+0] == 'f') &&
-				(crit_descr[start+1] == 'a') &&
-				(crit_descr[start+2] == 'l') &&
-				(crit_descr[start+3] == 's') &&
-				(crit_descr[start+4] == 'e'))
-			value = false;
-		else {
-			crit_descr[start+length] = '\0';
-			fprintf(stderr, "ERROR: criteria options: a boolean is required here (either 'true' or 'false'): %s\n", crit_descr);
-			exit(-1);
-		}
-	} else {
-		crit_descr[pos] = '\0';
-		fprintf(stderr, "ERROR: criteria options: a property name and a booleen are required here: %s\n", crit_descr);
-		exit(-1);
-	}
-
-	return property;
+	} while(n > 0);
+	if(sign == '+') {lambda *=-1;}
 }
 
 // Process a user defined criteria
@@ -420,8 +309,7 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 				crit_name = pos;
 				break;
 			default:
-				fprintf(stderr, "ERROR: criteria options: a criteria description must begin with a sign which gives its sense (- = min, + = max): %s\n",
-						crit_descr+pos);
+				fprintf(stderr, "ERROR: criteria options: a criteria description must begin with a sign which gives its sense (- = min, + = max): %s\n", crit_descr+pos);
 				exit(-1);
 				break;
 			}
@@ -434,37 +322,31 @@ CriteriaList *process_criteria(char *crit_descr, unsigned int &pos, bool first_l
 			crit_name_length = pos - crit_name;
 
 			// handle criteria
-			if (strncmp(crit_descr+crit_name, "removed", crit_name_length) == 0) {
-				; // criteria->push_back(new removed_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
-			} else if (strncmp(crit_descr+crit_name, "changed", crit_name_length) == 0) {
-				; // criteria->push_back(new changed_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
-			} else if (strncmp(crit_descr+crit_name, "new", crit_name_length) == 0) {
-				criteria->push_back(new new_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
-				; // criteria->push_back(new notuptodate_criteria(get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
-			} else if (strncmp(crit_descr+crit_name, "nunsat", crit_name_length) == 0) {
-				bool with_providers = true;
-				char *property_name = get_criteria_property_name_and_bool(crit_descr, pos, with_providers);
-				if (property_name != (char *)NULL) {
-					; //abstract_criteria *crit = new nunsat_criteria(property_name, with_providers, get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
-					//criteria_with_property->push_back(crit);
-					//criteria->push_back(crit);
-				}
-			} else if (strncmp(crit_descr+crit_name, "count", crit_name_length) == 0) {
-				bool onlynew = false;
-				char *property_name = get_criteria_property_name_and_bool(crit_descr, pos, onlynew);
-				if (property_name != (char *)NULL) {
-					; //abstract_criteria *crit = new count_criteria(property_name, onlynew, get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
-					//criteria_with_property->push_back(crit);
-					//criteria->push_back(crit);
-				}
-			} else if (strncmp(crit_descr+crit_name, "unaligned", crit_name_length) == 0) {
-				int alignment = get_unaligned_criteria_params(crit_descr, pos);
-				if (alignment > 0) {
-					//abstract_criteria *crit = new unaligned_criteria(alignment, (char *)"source:", (char *)"sourceversion:",
-					//		get_criteria_lambda(crit_descr, pos, crit_descr[sign]));
-					//criteria->push_back(crit);
-					//criteria_with_property->push_back(crit);
-				}
+			if (strncmp(crit_descr+crit_name, "pserv", crit_name_length) == 0) {
+				param_range r1("type"), r2("level");
+				int rel = RELIABLE_OR_NOT;
+				CUDFcoefficient lambda = 1;
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]
+				);
+				criteria->push_back(new pserv_criteria(lambda, rel, r1, r2));
+			} else if (strncmp(crit_descr+crit_name, "local", crit_name_length) == 0) {
+				param_range r1("stage"), r2("level");
+				int rel = RELIABLE_OR_NOT;
+				CUDFcoefficient lambda = 1;
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
+				criteria->push_back(new local_criteria(lambda, rel, r1, r2));
+			} else if (strncmp(crit_descr+crit_name, "conn", crit_name_length) == 0) {
+				param_range r1("stage"), r2("length",1);
+				int rel = RELIABLE_OR_NOT;
+				CUDFcoefficient lambda = 1;
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
+				criteria->push_back(new conn_criteria(lambda, rel, r1, r2));
+			} else if (strncmp(crit_descr+crit_name, "bandw", crit_name_length) == 0) {
+				param_range r1("stage"), r2("length",1);
+				int rel = RELIABLE_OR_NOT;
+				CUDFcoefficient lambda = 1;
+				get_criteria_properties(crit_descr, pos, r1, r2, rel, lambda, crit_descr[sign]);
+				criteria->push_back(new bandw_criteria(lambda, rel, r1, r2));
 			} else if (strncmp(crit_descr+crit_name, "agregate", crit_name_length) == 0) {
 				criteria->push_back(new agregate_combiner(process_criteria(crit_descr, pos, false, criteria_with_property),
 						get_criteria_lambda(crit_descr, pos, crit_descr[sign])));
@@ -510,13 +392,15 @@ int main(int argc, char *argv[]) {
 	ofstream output_file;
 	abstract_solver *solver = (abstract_solver *) NULL;
 	abstract_combiner *combiner = (abstract_combiner *) NULL;
+	char* obj_descr;
+	unsigned int* seed = NULL;
 	bool nosolve = false;
 	bool got_input = false;
 	bool got_output = false;
-	bool fulloutput = false;
 	PSLProblem *problem;
-	vector<abstract_criteria *> criteria_with_property;
-	//TODO remove useless options;
+
+	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
+	//TODO Add seed parameter and logging message
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
@@ -549,96 +433,51 @@ int main(int argc, char *argv[]) {
 					}
 					got_output=true;
 				}
-			} else if (strcmp(argv[i], "-fo") == 0) {
-				fulloutput = true;
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
-			} else if (strcmp(argv[i], "-only-agregate-constraints") == 0) {
-				//generate_agregate_constraints = true;
-				//generate_desagregate_constraints = false;
-			} else if (strcmp(argv[i], "-only-desagregate-constraints") == 0) {
-				//generate_agregate_constraints = false;
-				//generate_desagregate_constraints = true;
-			} else if (strcmp(argv[i], "-all-constraints") == 0) {
-				//generate_agregate_constraints = true;
-				//generate_desagregate_constraints = true;
-			} else if (strcmp(argv[i], "-cov") == 0) {
-				criteria_opt_var = true;
-			} else if (strcmp(argv[i], "-noreduce") == 0) {
-				;
+			} else if (strncmp(argv[i], "-s",2) == 0) {
+				unsigned int tmp;
+				sscanf(argv[i]+2, "%u", &tmp);
+				seed = &tmp;
+			} else if (strcmp(argv[i], "-id") == 0) {
+				showID=true;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+4, true, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexicographic_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lex option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexicographic[", 15) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+14, true, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexicographic_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexicographic option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexicographic_combiner>(criteria, C_STR("lexicographic"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-agregate[", 10) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+9, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new agregate_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -agregate option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<agregate_combiner>(criteria, C_STR("agregate"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexagregate[", 13) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+12, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexagregate_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexagregate option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexagregate_combiner>(criteria, C_STR("lexagregate"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexsemiagregate[", 17) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+16, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexsemiagregate_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexsemiagregate option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexsemiagregate_combiner>(criteria, C_STR("lexsemiagregate"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-leximax[", 9) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+8, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new leximax_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -leximax option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<leximax_combiner>(criteria, C_STR("leximax"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-leximin[", 9) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+8, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new leximin_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -leximin option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<leximin_combiner>(criteria, C_STR("leximin"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexleximax[", 12) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexleximax_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexleximax option requires a list of criteria.\n");
-					exit(-1);
-				}
+				combiner = makeCombiner<lexleximax_combiner>(criteria, C_STR("lexleximax"));
+				obj_descr = argv[i];
 			} else if (strncmp(argv[i], "-lexleximin[", 12) == 0) {
 				CriteriaList *criteria = get_criteria(argv[i]+11, false, &criteria_with_property);
-				if (criteria->size() > 0)
-					combiner = new lexleximin_combiner(criteria);
-				else {
-					fprintf(stderr, "ERROR: -lexleximin option requires a list of criteria.\n");
-					exit(-1);
-				}
-			} else if (strcmp(argv[i], "-h") == 0) {
+				combiner = makeCombiner<lexleximin_combiner>(criteria, C_STR("lexleximin"));
+				obj_descr = argv[i];
+			} else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0 ) {
 				print_help();
 				exit(-1);
 			} else if (strcmp(argv[i], "-nosolve") == 0) {
@@ -653,19 +492,6 @@ int main(int argc, char *argv[]) {
 						solver = new_lp_solver(argv[i]);
 				} else {
 					fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver>\n");
-					exit(-1);
-				}
-			} else if (strcmp(argv[i], "-pblib") == 0) {
-				if (++i < argc) {
-					struct stat sts;
-					if (stat(argv[i], &sts) == -1 && errno == ENOENT) {
-						fprintf(stderr, "ERROR: -pblib option require a PB solver: -pblib <pbsolver> and %s does not exist.\n", argv[i]);
-						exit(-1);
-					} else {
-						//solver = new_pblib_solver(argv[i]);
-					}
-				} else {
-					fprintf(stderr, "ERROR: -pblib option require a PB solver: -pblib <pbsolver>\n");
 					exit(-1);
 				}
 #ifdef USECPLEX
@@ -696,19 +522,23 @@ int main(int argc, char *argv[]) {
 		switch (parse_pslp(cin)) {
 		case 0: break;
 		case 1: fprintf(stderr, "ERROR: invalid input in problem.\n"); exit(-1);
-		case 2: fprintf(stderr, "ERROR: parser memory issue.\n"); exit(-1);
+		case 2: fprintf(stderr, "ERROR:range(int min, int max) : min(min), max(max), max_limit(max) {} parser memory issue.\n"); exit(-1);
 		}
 	}
+	//Generate problem instance
+	the_problem->setSeed(*seed);
+	the_problem->generateNetwork(HIERARCHIC);
 
 	ostream& out = got_output ? output_file : cout;
 	// if whished, print out the read problem
-	if (verbosity > 2) {
-		out << "================================================================" << endl;
-		print_problem(out, the_problem);
-		out << "================================================================" << endl;
+	if (verbosity >= VERBOSE) {
+		print_generator_summary(out, the_problem);
+		export_problem(the_problem);
 	}
-	if(verbosity > 3) {
-		inst2dotty(*the_problem);
+	if (verbosity >= DEFAULT) {
+		print_problem(out, the_problem);
+		out << "c " << *seed << " SEED" <<endl;
+		out << "================================================================" << endl;
 	}
 
 
@@ -743,6 +573,7 @@ int main(int argc, char *argv[]) {
 	// combiner initialization
 	combiner->initialize(problem, solver);
 
+
 	// generate the constraints, solve the problem and print out the solutions
 	//if ((problem->all_packages->size() > 0) && (generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
 	if ((generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
@@ -751,27 +582,30 @@ int main(int argc, char *argv[]) {
 		solver->init_solutions();
 
 		double obj = solver->objective_value();
-		if (verbosity > 2) {
-			out << "================================================================" << endl;
-			out << "Objective value: " << obj << endl <<  "Solution: ";
-						for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-				int servers = solver->get_solution(problem->rankX(*i));
-				if(servers > 0) {
-					out << i->getID() << ":" << servers << " ";
+		if(verbosity >= QUIET) {
+			if(verbosity >= DEFAULT) {
+				out << "================================================================" << endl;
+				out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
+			}
+			out << "s OPTIMAL" << endl;
+			out << "o " << obj << endl;
+			if(verbosity >= DEFAULT) {
+				print_solution(out, the_problem, solver);
+				if(verbosity >= VERBOSE) {
+					export_solution(the_problem, solver, obj_descr);
 				}
 			}
-			out << endl << "================================================================" << endl;
 		}
-		if(verbosity > 3) {
-			solution2dotty(*problem, *solver);
-		}
-
-		// print out additional informations
-		if (verbosity > 0) printf(">>>> Objective value = %f.\n", obj);
 	} else {
-		if (verbosity > 0)
-			cout << "No solution found." <<endl ;
-		out << "FAIL" << endl << "No solution found" << endl;
+		if (verbosity >= QUIET) {
+			if(verbosity >= DEFAULT) {
+				out << "================================================================" << endl;
+			}
+			out << "s UNKNOWN" <<endl ;
+		}
+	}
+	if (verbosity >= DEFAULT) {
+		print_messages(out, the_problem, solver);
 	}
 
 	if (got_output) {
@@ -780,26 +614,191 @@ int main(int argc, char *argv[]) {
 	exit(0);
 }
 
-PSLProblem* current_problem = NULL;
-PSLProblem* the_problem = NULL;
-int verbosity = 5;
-
 int parse_pslp(istream& in)
 {
 	if(the_problem) delete the_problem;
 	the_problem = new PSLProblem();
 	in >> *the_problem;
-	//TODO add option for the_problem->setSeed(seed);
-	//TODO add option for hierarchical network
-	bool hierarchic=true;
-	the_problem->generateNetwork(hierarchic);
 	return 0;
 }
 
-void print_problem(ostream& out, PSLProblem *pbs)
+
+void print_problem(ostream& out, PSLProblem *problem)
 {
-	out << *pbs;
+	out << "================================================================" << endl;
+	out << "c " << problem->groupCount() << " GROUPS    "
+			<< problem->facilityTypeCount() << " FTYPES    "
+			<< problem->levelTypeCount() << " LEVELS    "
+			<< endl;
+
+	int clientCount = 0;
+	int pservCount = 0;
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		clientCount += i->getType()->getTotalDemand();
+		pservCount += i->getType()->getTotalCapacity();
+	}
+	out << "c " << problem->nodeCount() <<" FACILITIES    "
+			<< pservCount << " PSERVERS    "
+			<< clientCount << " CLIENTS "
+			<<endl ;
+	if(problem->groupCount() > 1) {
+		int demands[problem->groupCount()];
+		for (int g = 0; g < problem->groupCount(); ++g) {
+			demands[g] = 0;
+		}
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			for (int g = 0; g < problem->groupCount(); ++g) {
+				demands[g] += i->getType()->getDemand(g);
+			}
+		}
+		out << "c ";
+		for (int g = 0; g < problem->groupCount(); ++g) {
+			out << demands[g] << " ";
+		}
+
+		out << "DEMANDS" << endl;
+	}
+	if(problem->serverTypeCount() > 1) {
+		int pserv[problem->serverTypeCount()];
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			pserv[k] = 0;
+		}
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			for (int k = 0; k < problem->serverTypeCount(); ++k) {
+				pserv[k] += i->getType()->getServerCapacity(k);
+			}
+		}
+
+		out << "c ";
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			out << pserv[k] << " ";
+		}
+		out << "PSERVERS" << endl;
+	}
+	if (verbosity >= ALL && problem->getRoot()) {
+		out << endl;
+		problem->getRoot()->print(out);
+	}
 }
+
+extern void export_problem(PSLProblem *problem)
+{
+	inst2dotty(*problem);
+}
+
+
+
+extern void print_generator_summary(ostream & out, PSLProblem *problem)
+{
+	out << "================================================================" << endl;
+	problem->print_generator(out);
+	out << "================================================================" << endl;
+	out << *problem;
+}
+
+
+
+void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
+{
+	int cpt = 0;
+	out << "s ";
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		int servers = solver->get_solution(problem->rankX(*i));
+		if(servers > 0) {
+			//Print #pservers
+			out << i->getID() << "[" << servers;
+			//Print pservers capacity
+			if(servers < i->getType()->getTotalCapacity()) {
+				out << "/" << i->getType()->getTotalCapacity();
+			}
+			out << "]";
+			//Print pservers by type
+			if(problem->serverTypeCount() > 1) {
+				out << "{";
+				for (int k = 0; k < problem->serverTypeCount(); ++k) {
+					if(k > 0) out << ",";
+					out << solver->get_solution(problem->rankX(*i, k));
+				}
+				out << "}";
+			}
+
+			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
+		}
+	}
+	out << endl;
+}
+
+
+
+void export_solution(PSLProblem *problem, abstract_solver *solver,char* objective)
+{
+	solution2dotty(*problem, *solver, objective);
+}
+
+
+
+void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
+{
+
+	out << "d TIME " << solver->timeCount() << endl;
+	out << "d NODES " << solver->nodeCount() << endl;
+	out << "d SOLUTIONS " << solver->solutionCount() << endl;
+	//Compute total pserver capacity
+	double capa = 0;
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			capa += solver->get_solution(problem->rankX(*i, k)) * problem->getServer(k)->getMaxConnections();
+		}
+	}
+	//Display installed pservers.
+	int pserv[problem->serverTypeCount()];
+	int tot_pserv = 0;
+	int tot_rel_pserv = 0;
+	for (int k = 0; k < problem->serverTypeCount(); ++k) {
+		pserv[k]=0;
+	}
+	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+		tot_pserv += solver->get_solution(problem->rankX(*i));
+		if(i->isReliableFromRoot()) {
+			tot_rel_pserv += solver->get_solution(problem->rankX(*i));
+		}
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			pserv[k] += solver->get_solution(problem->rankX(*i, k));
+		}
+	}
+	out << "d PSERVERS " << tot_pserv << endl;
+	if(problem->serverTypeCount() > 1) {
+		out << "d VEC_PSERVERS ";
+		for (int k = 0; k < problem->serverTypeCount(); ++k) {
+			out << pserv[k] << " ";
+		}
+		out <<endl;
+	}
+	out << "d REL_PSERVERS " << tot_rel_pserv << endl;
+	//Display spare capacity.
+	double spare_capa[problem->stageCount()];
+	double avg_spare_capa = 0;
+	for (int s = 1; s < problem->stageCount(); ++s) {
+		double clients = 0;
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+			clients += solver->get_solution(problem->rankY(*i, s));
+		}
+		spare_capa[s] = (capa-clients)/capa;
+		avg_spare_capa +=spare_capa[s];
+	}
+	out.precision(2);
+	avg_spare_capa/= problem->stageCount()-1;
+	out << "d SPARE_CAPA " << fixed << avg_spare_capa <<endl;
+	if(problem->stageCount() > 2) {
+		out << "d VEC_SPARE_CAPA ";
+		for (int s = 1; s < problem->stageCount(); ++s) {
+			out << spare_capa[s] << " ";
+		}
+		out << endl;
+	}
+}
+
+
 
 
 

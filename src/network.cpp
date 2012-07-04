@@ -26,6 +26,8 @@
  */
 #include "network.hpp"
 
+
+bool showID = false;
 //---------------------------------------- 
 //	FacilityNode Implementation
 //----------------------------------------
@@ -55,13 +57,41 @@ LinkIterator FacilityNode::lend() {
 	return LinkIterator(NULL);
 }
 
+//For AncestorIterator
+AncestorIterator FacilityNode::abegin() {
+	return AncestorIterator(this);
+}
+
+AncestorIterator FacilityNode::aend() {
+	return AncestorIterator(NULL);
+}
+
+//For AncestorIterator
+PathIterator FacilityNode::pbegin() {
+	return PathIterator(this);
+}
+
+PathIterator FacilityNode::pend() {
+	return PathIterator(NULL);
+}
+
 
 ostream & FacilityNode::toDotty(ostream & out) {
 	out << getID();
-	out << "[shape=record, label=\"{{" << getID() << "}|{"
-			<< getType()->getTotalDemand() << "|"
-			<< getType()->getTotalCapacity() << "}}\"];" << endl;
-	if (!isRoot()) {
+	out << "[shape=record, label=\"{";
+	if(showID) {
+		out << getID() << "|";
+	}
+	int capa = getType()->getTotalCapacity();
+	if(capa > 0) {
+		out << "{" << getType()->getTotalDemand() << "|"
+				<< getType()->getTotalCapacity() << "}}\"";
+	} else {
+		out << getType()->getTotalDemand() << "}\",style=dashed";
+
+	}
+	out << "];" << endl;
+	if (!isRoot()) { //Draw link
 		toFather()->toDotty(out);
 	}
 	for (size_t i = 0; i < children.size(); ++i) {
@@ -78,7 +108,7 @@ void FacilityNode::print(ostream& out) {
 	string shift = string(2 * type->getLevel(), ' ');
 	string sep = string(15, '-');
 	if (children.size() > 0) {
-		out << shift << children.size() << " " << sep << endl;
+		out << shift << sep << " " << children.size() << endl;
 		for (size_t i = 0; i < children.size(); ++i) {
 			out << shift << *children[i] << endl;
 		}
@@ -190,6 +220,40 @@ istream & FacilityType::read(istream & in, const PSLProblem& problem) {
 //---------------------------------------- 
 //	PSLProblem Implementation
 //----------------------------------------
+
+ostream& PSLProblem::print_generator(ostream& out) {
+	const int n = levelTypeCount();
+	double expNodes[n];
+	double expTreeSize[n];
+	double expClients[n];
+	double expCTreeSize[n];
+	for (int l = 0; l < n; ++l) {
+		expNodes[l]=0;
+		expTreeSize[l]=0;
+		expClients[l]=0;
+		expCTreeSize[l]=0;
+	}
+	for (FacilityTypeListIterator f = facilities.begin(); f != facilities.end(); ++f) {
+		double exp = (*f)->binoP() * ( (double) (*f)->binoN());
+		expNodes[(*f)->getLevel()] += exp;
+		expClients[(*f)->getLevel()] += exp * (*f)->getTotalDemand();
+	}
+	expTreeSize[n-1] = 0;
+	expCTreeSize[n-1] = 0;
+	for (int l = n -2; l >= 0; --l) {
+		expTreeSize[l] =   (expTreeSize[l+1] + 1) * expNodes[l+1];
+		expCTreeSize[l] =  (expCTreeSize[l+1]) * expNodes[l+1] +  expClients[l + 1];
+	}
+
+	out << "Expected:" << endl << "Level: #children - #child-clients - |subtree| - #subtree-clients" << endl;
+	for (int l = 0; l < n-1; ++l) {
+		out << l << ": " << expNodes[l+1] << "\t" << expClients[l+1] << "\t" << expTreeSize[l] << "\t" << expCTreeSize[l] << endl;
+	}
+	out << "Total Facilities: " << (expTreeSize[0]+ expNodes[0]) <<endl;
+	out << "Total Clients: " << (expCTreeSize[0]+ expClients[0]) << endl;
+
+	return out;
+}
 
 FacilityNode* PSLProblem::generateNetwork() {
 	return generateNetwork(true);
@@ -310,12 +374,13 @@ ostream& PSLProblem::toDotty(ostream & out) {
 
 
 ostream& PSLProblem::toRanks(ostream & out) {
-	out << "X=[0," << offsetXk() << "[" << endl;
-	out << "Xk=[" << offsetXk() << "," << offsetYi() << "[" << endl;
-	out << "Yi=[" << offsetYi() << "," << offsetYij() << "[" << endl;
-	out << "Yij=[" << offsetYij() << "," << offsetZ() << "[" << endl;
-	out << "Z=[" << offsetZ() << "," << offsetB() << "[" << endl;
-	out << "B=[" << offsetB() << "," << rankCount() << "[" << endl;
+	out << "X=[0," << endX() << "[" << endl;
+	out << "Xk=[" << endX() << "," << endXk() << "[" << endl;
+	out << "Yi=[" << endXk() << "," << endYi() << "[" << endl;
+	out << "Zi=[" << endYi() << "," << endZi() << "[" << endl;
+	out << "Yij=[" << endZi() << "," << endYij() << "[" << endl;
+	out << "Z=[" << endYij() << "," << endZij() << "[" << endl;
+	out << "B=[" << endZij() << "," << endBij() << "[" << endl;
 	return out;
 }
 
@@ -371,7 +436,7 @@ LinkIterator::LinkIterator(FacilityNode* p) : current(NULL), end(NULL) {
 }
 
 LinkIterator& LinkIterator::operator ++() {
-	queue.push_back((*current)->getDestination());
+	queue.push_back((*current)->getDestination()); //TODO Do not add leaves ?
 	current++;
 	while (current == end && !queue.empty()) {
 		current = queue.front()->cbegin();
@@ -401,6 +466,31 @@ NodeIterator& NodeIterator::operator++() {
 	return (*this);
 }
 
+//----------------------------------------
+//	AncestorIterator Implementation
+//----------------------------------------
+
+AncestorIterator& AncestorIterator::operator++() {
+	node = node == NULL || node->isRoot() ? NULL : node->getFather();
+	return (*this);
+}
+
+//----------------------------------------
+//	PathIterator Implementation
+//----------------------------------------
+
+PathIterator& PathIterator::operator++() {
+	if (cdest != edest) cdest++;
+	while (cdest == edest && cnode != enode) {
+		cnode++;
+		cdest = cnode->nbegin();
+		cdest++;
+		edest = cnode->nend();
+	}
+	return (*this);
+}
+
+
 
 //----------------------------------------
 //	istream methods Implementation
@@ -420,8 +510,8 @@ istream& operator >>(istream & in, PSLProblem & problem) {
 		in >> *stype;
 		problem.servers.push_back(stype);
 	}
-	in >> problem._groupCount;
 	in >> n;
+	in >> problem._groupCount;
 	for (int i = 0; i < n; ++i) {
 		FacilityType* ftype = new FacilityType();
 		ftype->read(in, problem);
@@ -431,7 +521,7 @@ istream& operator >>(istream & in, PSLProblem & problem) {
 }
 
 istream& operator >>(istream & in, ServerType & s) {
-	in >> s.capacity >> s.cost;
+	in >> s.capacity;
 	return in;
 }
 
@@ -443,14 +533,15 @@ ostream& operator <<(ostream & out, const PSLProblem & f) {
 	cout << "Bandwidths: {";
 	copy(f.bandwidths.begin(), f.bandwidths.end(),
 			ostream_iterator<int>(out, " "));
-	cout << "}" << endl;
+	cout << "}" << endl << "Servers: ";
 	transform(f.servers.begin(), f.servers.end(),
-			ostream_iterator<ServerType>(out, "\n"), dereference<ServerType>);
+			ostream_iterator<ServerType>(out, " "), dereference<ServerType>);
+	out << endl << "Facilities:" << endl;
 	transform(f.facilities.begin(), f.facilities.end(),
 			ostream_iterator<FacilityType>(out, "\n"),
 			dereference<FacilityType>);
-	if (f.root)
-		f.root->print(out);
+//	if (f.root)
+//		f.root->print(out);
 	return out;
 }
 
@@ -483,7 +574,7 @@ ostream& operator<<(ostream& out, const FacilityType& f) {
 }
 
 ostream& operator<<(ostream& out, const ServerType& f) {
-	return out << "Capacity:" << f.getMaxConnections() << "\tCost:" << f.getCost();
+	return out << "C:" << f.getMaxConnections();
 }
 
 

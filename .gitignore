@@ -1,5 +1,9 @@
-#MILP Model
-cplexpbs.lp
+#Opossum files
+cplexpb*.lp
+cplexpb*.dot
+sol-cplex.xml
+sol-*.dot
+
 # c++ / cmake
 *.o
 /bin

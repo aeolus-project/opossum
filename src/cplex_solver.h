@@ -72,6 +72,7 @@ public:
 
 	// Write the lp on a file
 	int writelp(char *filename);
+	int writesol(char *filename);
 
 	// Solve the problem
 	int solve();
@@ -79,9 +80,17 @@ public:
 	CUDFcoefficient objective_value();
 	// Init solutions (required before calling get_solution)
 	int init_solutions();
-	// Get the solution for a package
 	// Get the solution for a column
 	CUDFcoefficient get_solution(int k);
+
+	// get the number of solutions found at the end of solving
+	int solutionCount(){return _solutionCount;}
+	// get the number of objectives (or sub-problems).
+	int objectiveCount();
+	// get the number of nodes at the end of solving
+	int nodeCount() {return _nodeCount;}
+	// get the solving time.
+	int timeCount() {return _timeCount;}
 
 	// variables only for internal use (should be private)
 	CPXENVptr env;   // cplex environment
@@ -103,6 +112,12 @@ public:
 	cplex_solver(void) {
 		solution = (double *)NULL;
 	}
+
+private:
+	int _solutionCount;
+	int _nodeCount;
+	double _timeCount;
+
 };
 
 #endif

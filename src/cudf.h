@@ -22,8 +22,9 @@
 
 #include "network.hpp"
 
-
 using namespace std;
+
+#define C_STR( text ) ((char*)std::string( text ).c_str())
 
 // current CUDF problem
 extern PSLProblem *the_problem;
@@ -36,12 +37,30 @@ extern int parse_pslp(istream& in);
 //------------------------------------------------------------------
 // Handling verbosity level
 extern int verbosity;
+//Logging Levels and messages
+#define SILENT -1
+//XCSP Status and Objective
+#define QUIET 0
+//XCSP solution, diagnostics, configurations
+#define DEFAULT 1
+//Print generator and export problems and solutions (graphviz + solver)
+#define VERBOSE 2
+//MIP node log display information
+#define SEARCH 3
+//Print network info
+#define ALL 4
 
-// Print out a CUDF problem
+
+// Print out a PSL problem
 // requires the file descriptor of the targeted file and a pointer to the PSL problem
 extern void print_problem(ostream& out, PSLProblem *pbs);
 
-//extern void print_solution(ostream& out, PSLProblem *problem, abstract_solver* solver);
-//
+// Export the PSL problem as a graphivz file (.dot)
+// requires the file descriptor of the targeted file and a pointer to the PSL problem
+extern void export_problem(PSLProblem *problem);
+
+// Print out a generator (expected children, nodes, clients, raw data ...);
+// requires the file descriptor of the targeted file and a pointer to the PSL problem
+extern void print_generator_summary(ostream& out, PSLProblem *pbs);
 
 #endif
