@@ -14,13 +14,12 @@
 #include "graphviz.hpp"
 
 
-
+#define HIERARCHIC true
 
 PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
 int verbosity = DEFAULT;
-
 
 template <typename T>
 T* makeCombiner(CriteriaList* criteria, char* name) {
@@ -178,6 +177,7 @@ void print_help() {
 			"  eg.: TODO\n");
 	fprintf(stderr, "other options:\n");
 	fprintf(stderr, "\t-v<n>: set verbosity level to n\n");
+	fprintf(stderr, "\t-s<n>: set the seed for the problem generator to n\n");
 	fprintf(stderr, "\t-id: print node IDs in graphviz\n");
 	fprintf(stderr, "\t-h|-help|--help: print this help\n");
 
@@ -281,7 +281,7 @@ void get_criteria_properties(char *crit_descr, unsigned int &pos,
 		if( n > 0 &&
 				! param1.scanf(crit_descr+opts[0]->first) &&
 				! param2.scanf(crit_descr+opts[0]->first) &&
-				sscanf(crit_descr+opts[0]->first, "reliable:,%d", &reliable) != 1 &&
+				sscanf(crit_descr+opts[0]->first, "reliable,%d", &reliable) != 1 &&
 				sscanf(crit_descr+opts[0]->first, CUDFflags, &lambda) != 1
 		) {
 			crit_descr[pos] = '\0';
@@ -392,16 +392,19 @@ int main(int argc, char *argv[]) {
 	ofstream output_file;
 	abstract_solver *solver = (abstract_solver *) NULL;
 	abstract_combiner *combiner = (abstract_combiner *) NULL;
+	char* obj_descr;
+	unsigned int* seed = NULL;
 	bool nosolve = false;
 	bool got_input = false;
 	bool got_output = false;
-	char* obj_descr;
 	PSLProblem *problem;
+
 	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
 	//TODO Add seed parameter and logging message
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
+			cerr << argv[i] << endl;
 			if (strcmp(argv[i], "-i") == 0) {
 				i++;
 				if (i < argc) {
@@ -433,6 +436,10 @@ int main(int argc, char *argv[]) {
 				}
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
+			} else if (strncmp(argv[i], "-s",2) == 0) {
+				unsigned int tmp;
+				sscanf(argv[i]+2, "%u", &tmp);
+				seed = &tmp;
 			} else if (strcmp(argv[i], "-id") == 0) {
 				showID=true;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
@@ -488,19 +495,6 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver>\n");
 					exit(-1);
 				}
-			} else if (strcmp(argv[i], "-pblib") == 0) {
-				if (++i < argc) {
-					struct stat sts;
-					if (stat(argv[i], &sts) == -1 && errno == ENOENT) {
-						fprintf(stderr, "ERROR: -pblib option require a PB solver: -pblib <pbsolver> and %s does not exist.\n", argv[i]);
-						exit(-1);
-					} else {
-						//solver = new_pblib_solver(argv[i]);
-					}
-				} else {
-					fprintf(stderr, "ERROR: -pblib option require a PB solver: -pblib <pbsolver>\n");
-					exit(-1);
-				}
 #ifdef USECPLEX
 			} else if (strcmp(argv[i], "-cplex") == 0) {
 				solver = new_cplex_solver();
@@ -532,9 +526,11 @@ int main(int argc, char *argv[]) {
 		case 2: fprintf(stderr, "ERROR:range(int min, int max) : min(min), max(max), max_limit(max) {} parser memory issue.\n"); exit(-1);
 		}
 	}
+	//Generate problem instance
+	the_problem->setSeed(*seed);
+	the_problem->generateNetwork(HIERARCHIC);
 
 	ostream& out = got_output ? output_file : cout;
-
 	// if whished, print out the read problem
 	if (verbosity >= VERBOSE) {
 		print_generator_summary(out, the_problem);
@@ -542,6 +538,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (verbosity >= DEFAULT) {
 		print_problem(out, the_problem);
+		out << "c " << *seed << " SEED" <<endl;
 		out << "================================================================" << endl;
 	}
 
@@ -623,9 +620,6 @@ int parse_pslp(istream& in)
 	if(the_problem) delete the_problem;
 	the_problem = new PSLProblem();
 	in >> *the_problem;
-	//TODO add option for hierarchical network
-	bool hierarchic=true;
-	the_problem->generateNetwork(hierarchic);
 	return 0;
 }
 
@@ -760,11 +754,15 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 	//Display installed pservers.
 	int pserv[problem->serverTypeCount()];
 	int tot_pserv = 0;
+	int tot_rel_pserv = 0;
 	for (int k = 0; k < problem->serverTypeCount(); ++k) {
 		pserv[k]=0;
 	}
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		tot_pserv += solver->get_solution(problem->rankX(*i));
+		if(i->isReliableFromRoot()) {
+			tot_rel_pserv += solver->get_solution(problem->rankX(*i));
+		}
 		for (int k = 0; k < problem->serverTypeCount(); ++k) {
 			pserv[k] += solver->get_solution(problem->rankX(*i, k));
 		}
@@ -777,6 +775,7 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 		}
 		out <<endl;
 	}
+	out << "d REL_PSERVERS " << tot_rel_pserv << endl;
 	//Display spare capacity.
 	double spare_capa[problem->stageCount()];
 	double avg_spare_capa = 0;
