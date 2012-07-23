@@ -24,7 +24,7 @@
 
 using namespace std;
 
-#define PSL_TILIM 900
+#define PSL_TILIM 1000
 #define C_STR( text ) ((char*)std::string( text ).c_str())
 
 // current CUDF problem
