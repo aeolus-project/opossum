@@ -400,7 +400,6 @@ int main(int argc, char *argv[]) {
 	PSLProblem *problem;
 
 	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
-	//TODO Add seed parameter and logging message
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
@@ -786,7 +785,7 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 		spare_capa[s] = (capa-clients)/capa;
 		avg_spare_capa +=spare_capa[s];
 	}
-	out.precision(2);
+	out.precision(3);
 	avg_spare_capa/= problem->stageCount()-1;
 	out << "d SPARE_CAPA " << fixed << avg_spare_capa <<endl;
 	if(problem->stageCount() > 2) {

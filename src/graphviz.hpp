@@ -38,6 +38,8 @@ using namespace std;
 
 extern void inst2dotty(PSLProblem &problem);
 
+extern void pserv2dotty(PSLProblem &problem, abstract_solver& solver);
+
 extern void flow2dotty(ostream& out, PSLProblem& problem, abstract_solver& solver, unsigned int stage);
 
 extern void path2dotty(ostream& out, PSLProblem &problem, abstract_solver& solver, unsigned int stage);

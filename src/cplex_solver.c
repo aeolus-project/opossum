@@ -35,6 +35,12 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		exit(-1);
 	}
 
+	/* Set the value of the time limit*/
+	status = CPXsetdblparam (env, CPX_PARAM_TILIM, PSL_TILIM);
+	if ( status ) {
+		fprintf (stderr, "Failure to set the time limit, error %d.\n", status);
+		exit(-1);
+	}
 
 	/* Enhance EPGAP to handle big values correctly */
 	status = CPXsetdblparam (env, CPX_PARAM_EPGAP, 0.0);
@@ -60,9 +66,9 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		/* MIP node log display information */
 		int verb = verbosity >= SEARCH ? 5 : verbosity >= VERBOSE ? 2 : 1;
 		status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, verb);
-//		int val = -1;
-//		CPXgetintparam (env, CPX_PARAM_MIPDISPLAY, &val);
-//		cerr <<  val << endl;
+		//		int val = -1;
+		//		CPXgetintparam (env, CPX_PARAM_MIPDISPLAY, &val);
+		//		cerr <<  val << endl;
 		if ( status ) {
 			fprintf (stderr, "Failure to turn off presolve, error %d.\n", status);
 			exit(-1);
