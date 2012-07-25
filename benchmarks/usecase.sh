@@ -31,7 +31,7 @@ EOF
 
 help() {
 cat <<EOF
-$PROG execute a usecase of the criteria combination features of the opossum solver for PSL problems.
+$PROG executes a usecase for the criteria combination features of the opossum solver for PSL problems.
      
 Usage: $PROG [OPTION]...
      
@@ -81,10 +81,11 @@ fi
 	 for OBJ in \
 	     "-lex[-pserv]" \
 	     "-lex[-pserv,$capa_pserv]" \
-	     "-lex[-pserv,-pserv[type,1],+pserv[reliable,1]]" \
 	     "-lex[-pserv,$bad_pserv]" \
+	     "-lex[-pserv,-leximax[$bad_pserv]]" \
 	     "-lex[$cost_pserv]" \
 	     "-lex[$cost_pserv,$bad_pserv]" \
+	     "-lex[$cost_pserv,-leximax[$bad_pserv]]" \
 	     "-lex[$cost_pserv,$sum_bandw]" \
 	     "-lex[$cost_pserv,$dist_pserv]" 
 	 do

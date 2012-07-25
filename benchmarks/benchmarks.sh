@@ -33,7 +33,7 @@ help() {
 cat <<EOF
 $PROG does nothing interesting except serve as an example for help2man.
      
-Usage: $PROG [OPTION]...
+Usage: $PROG [OPTION] FILE... 
      
 Options:
   -a, --option      an option
@@ -55,12 +55,15 @@ EOF
 # Setup Global Variables
 #--------------------------------------------------------------------
 
-N=20
 
+N=20
 EXEC=`readlink -f ../bin/Release/opossum-0.1`
 OBJ_ALIASES="./objectives.sh"
 source $OBJ_ALIASES ;
-OBJECTIVES="-lex[-pserv] -lex[$cost_pserv] -lex[-local]]  -lex[$sum_bandw]"
+CRIT1="-pserv $cost_pserv"
+CRIT2="$sum_bandw $dist_pserv $bad_pserv -leximax[$bad_pserv]"
+
+PRINT=0
 #--------------------------------------------------------------------
 # Test for prerequisites
 #--------------------------------------------------------------------
@@ -71,37 +74,60 @@ if [ $# -eq 0 ] || [ $1 = "--help" ]; then
 elif [ $1 = "--version" ]; then
     version
     exit 0
+elif [ $1 = "--print" ]; then
+    shift
+    PRINT=1
 fi
 
 
 #--------------------------------------------------------------------
 # Do something
 #--------------------------------------------------------------------
-
-
-for GEN in $*; do
-    if [ -r $GEN ]; then
-	GEN=`readlink -f $GEN`
-     O=1
-     dirname=`basename $GEN .dat`
-     mkdir $dirname;
-     echo "Entering in $dirname ..."
-     for OBJ in $OBJECTIVES; do
-	 echo "$OBJECTIVES"
-	 for ((I=1; I <= N ; I++)) # Double parenthèses, et "N" sans "$".
-	 do
-	     name=`printf '%s/%s-%02d-%02d.sh\n'  $dirname $dirname $O $I`
-	     echo "#!/bin/sh" > $name
-	     echo "$EXEC -v1 -s$I  -i $GEN  $OBJ" >> $name
-	     chmod +x $name
-	 done
-	 O=`expr $O + 1` 
-     done
+##Read generator's paths
+for file in $*; do
+    if [ -r $file ]; then
+	GENERATORS="$GENERATORS "`readlink -f $file`
     else
-	echo "$GEN is not a readable file"
+	echo "$file is not a readable file"
 	exit -1;
     fi
 done
+
+##Generate objectives
+for C1 in $CRIT1; do
+    OBJECTIVES=$OBJECTIVES" -lex[$C1]"
+    for C2 in $CRIT2; do
+	OBJECTIVES=$OBJECTIVES" -lex[$C1,$C2]"
+	for C3 in $CRIT2; do
+	    if [ "$C2" != "$C3" ]; then
+		OBJECTIVES=$OBJECTIVES" -lex[$C1,$C2,$C3]"
+	    fi
+	done
+    done
+done
+
+##Generate shell scripts
+I=1
+for O in $OBJECTIVES; do
+    dirname=`printf 'obj-%02d' $I`
+    echo "$dirname | $O"
+    if [ $PRINT -eq 0 ] ; then
+	mkdir $dirname
+	for G in $GENERATORS; do
+	    gname=`basename $G .dat`
+	    for ((J=1; J <= N ; J++)) # Double parenthèses, et "N" sans "$".
+	    do
+		name=`printf '%s/%s-%02d.sh\n'  $dirname $gname $J`
+	    ##echo $name
+		echo "#!/bin/sh" > $name
+		echo "$EXEC -v1 -s$J  -i $G  $O" >> $name
+		chmod +x $name
+	    done
+	done
+    fi
+    I=`expr $I + 1` 
+done    
+
 
 
 
