@@ -749,22 +749,30 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 			capa += solver->get_solution(problem->rankX(*i, k)) * problem->getServer(k)->getMaxConnections();
 		}
 	}
-	//Display installed pservers.
-	int pserv[problem->serverTypeCount()];
-	int tot_pserv = 0;
-	int tot_rel_pserv = 0;
+	//Display pserver messages.
+	CUDFcoefficient tot_facilities=0;
+	CUDFcoefficient tot_pserv = 0;
+	CUDFcoefficient tot_rel_pserv = 0;
+	CUDFcoefficient pserv[problem->serverTypeCount()];
 	for (int k = 0; k < problem->serverTypeCount(); ++k) {
 		pserv[k]=0;
 	}
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-		tot_pserv += solver->get_solution(problem->rankX(*i));
-		if(i->isReliableFromRoot()) {
-			tot_rel_pserv += solver->get_solution(problem->rankX(*i));
-		}
-		for (int k = 0; k < problem->serverTypeCount(); ++k) {
-			pserv[k] += solver->get_solution(problem->rankX(*i, k));
+		CUDFcoefficient _pserv = solver->get_solution(problem->rankX(*i));
+		if(_pserv > 0) {
+			tot_facilities++;
+			tot_pserv += _pserv;
+			if(i->isReliableFromRoot()) {
+				tot_rel_pserv += _pserv;
+			}
+			for (int k = 0; k < problem->serverTypeCount(); ++k) {
+				CUDFcoefficient _pservk = solver->get_solution(problem->rankX(*i, k));
+				capa += _pservk * problem->getServer(k)->getMaxConnections();
+				pserv[k] += _pservk;
+			}
 		}
 	}
+	out << "d FACILITIES " << tot_facilities << endl;
 	out << "d PSERVERS " << tot_pserv << endl;
 	if(problem->serverTypeCount() > 1) {
 		out << "d VEC_PSERVERS ";
