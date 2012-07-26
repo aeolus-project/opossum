@@ -586,8 +586,9 @@ int main(int argc, char *argv[]) {
 				out << "================================================================" << endl;
 				out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
 			}
-			out << "s OPTIMAL" << endl;
+			out << "s OPTIMUM" << endl;
 			out << "o " << obj << endl;
+			out << "d OBJECTIVE " << obj << endl; //For compatibility with grigrid scripts
 			if(verbosity >= DEFAULT) {
 				print_solution(out, the_problem, solver);
 				if(verbosity >= VERBOSE) {
@@ -739,9 +740,9 @@ void export_solution(PSLProblem *problem, abstract_solver *solver,char* objectiv
 void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
 
-	out << "d TIME " << solver->timeCount() << endl;
+	out << "d RUNTIME " << solver->timeCount() << endl;
 	out << "d NODES " << solver->nodeCount() << endl;
-	out << "d SOLUTIONS " << solver->solutionCount() << endl;
+	out << "d NBSOLS " << solver->solutionCount() << endl;
 	//Compute total pserver capacity
 	double capa = 0;
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
