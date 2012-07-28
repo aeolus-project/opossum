@@ -24,6 +24,18 @@
 
 using namespace std;
 
+// Handling the time limit per subproblem
+extern double time_limit;
+;
+//Solver status
+#define ERROR 0
+#define UNKNOWN 1
+#define UNSAT 2
+#define SAT 3
+#define OPTIMUM 4
+
+
+
 #define C_STR( text ) ((char*)std::string( text ).c_str())
 
 // current CUDF problem

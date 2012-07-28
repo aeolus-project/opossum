@@ -35,6 +35,12 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		exit(-1);
 	}
 
+	/* Set the value of the time limit*/
+	status = CPXsetdblparam (env, CPX_PARAM_TILIM, time_limit);
+	if ( status ) {
+		fprintf (stderr, "Failure to set the time limit, error %d.\n", status);
+		exit(-1);
+	}
 
 	/* Enhance EPGAP to handle big values correctly */
 	status = CPXsetdblparam (env, CPX_PARAM_EPGAP, 0.0);
@@ -60,9 +66,9 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 		/* MIP node log display information */
 		int verb = verbosity >= SEARCH ? 5 : verbosity >= VERBOSE ? 2 : 1;
 		status = CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, verb);
-//		int val = -1;
-//		CPXgetintparam (env, CPX_PARAM_MIPDISPLAY, &val);
-//		cerr <<  val << endl;
+		//		int val = -1;
+		//		CPXgetintparam (env, CPX_PARAM_MIPDISPLAY, &val);
+		//		cerr <<  val << endl;
 		if ( status ) {
 			fprintf (stderr, "Failure to turn off presolve, error %d.\n", status);
 			exit(-1);
@@ -179,20 +185,21 @@ int cplex_solver::solve() {
 	int mipstat, status;
 
 	// Presolving the problem
+	time_t ptime = time(NULL);
 	if (CPXpresolve(env, lp, CPX_ALG_NONE)) return 0;
-
+	time_t ctime = time(NULL);
+	_timeCount += difftime(ctime, ptime);
 	// Solve the objectives in a lexical order
 	for (int i = first_objective; i < nb_objectives; i++) {
+		ptime = ctime;
 		// Solve the mip problem
-		//CPXsetintparam(env, CPX_PARAM_SOLNPOOLCAPACITY,1);
-		time_t stime = - time(NULL);
-		if (CPXmipopt (env, lp)) return 0;
-		stime += time(NULL);
+		if (CPXmipopt (env, lp)) return ERROR;
+		ctime = time(NULL);
+		_solutionCount += CPXgetsolnpoolnumsolns(env, lp) + CPXgetsolnpoolnumreplaced(env, lp);
+		_timeCount += difftime(ctime, ptime);
+		_nodeCount += CPXgetnodecnt(env, lp);
 		// Get solution status
 		if ((mipstat = CPXgetstat(env, lp)) == CPXMIP_OPTIMAL) {
-			_solutionCount += CPXgetsolnpoolnumsolns(env, lp) + CPXgetsolnpoolnumreplaced(env, lp);
-			_timeCount += stime;
-			_nodeCount += CPXgetnodecnt(env, lp);
 			if (i < nb_objectives - 1) {
 				// Get next non empty objective
 				// (must be done here to avoid conflicting method calls
@@ -251,13 +258,16 @@ int cplex_solver::solve() {
 						writelp(buffer);
 					}
 				} else
-					return 1;
+					return OPTIMUM;
 			} else
-				return 1;
+				return OPTIMUM;
+		} else if( mipstat == CPXMIP_TIME_LIM_INFEAS ||
+				mipstat == CPXMIP_TIME_LIM_FEAS) {
+				return _solutionCount > 0 ? SAT : UNKNOWN;
 		} else {
 			if (verbosity >= DEFAULT)
 				fprintf(stderr, "CPLEX solution status = %d\n", mipstat);
-			return 0;
+			return ERROR;
 		}
 	}
 

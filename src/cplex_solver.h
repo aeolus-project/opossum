@@ -90,7 +90,7 @@ public:
 	// get the number of nodes at the end of solving
 	int nodeCount() {return _nodeCount;}
 	// get the solving time.
-	int timeCount() {return _timeCount;}
+	double timeCount() {return _timeCount;}
 
 	// variables only for internal use (should be private)
 	CPXENVptr env;   // cplex environment

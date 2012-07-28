@@ -20,6 +20,7 @@ PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
 int verbosity = DEFAULT;
+double time_limit = 600; // 10 mn per subproblem
 
 template <typename T>
 T* makeCombiner(CriteriaList* criteria, char* name) {
@@ -176,6 +177,7 @@ void print_help() {
 			stderr,
 			"  eg.: TODO\n");
 	fprintf(stderr, "other options:\n");
+	fprintf(stderr, "\t-t<n>: set the time limit per subproblem in seconds\n");
 	fprintf(stderr, "\t-v<n>: set verbosity level to n\n");
 	fprintf(stderr, "\t-s<n>: set the seed for the problem generator to n\n");
 	fprintf(stderr, "\t-id: print node IDs in graphviz\n");
@@ -400,7 +402,6 @@ int main(int argc, char *argv[]) {
 	PSLProblem *problem;
 
 	vector<abstract_criteria *> criteria_with_property; //TODO Remove useless list ?
-	//TODO Add seed parameter and logging message
 	// parameter handling
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
@@ -433,12 +434,15 @@ int main(int argc, char *argv[]) {
 					}
 					got_output=true;
 				}
+			} else if (strncmp(argv[i], "-t", 2) == 0) {
+				sscanf(argv[i]+2, "%lf", &time_limit);
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
 			} else if (strncmp(argv[i], "-s",2) == 0) {
 				unsigned int tmp;
 				sscanf(argv[i]+2, "%u", &tmp);
 				seed = &tmp;
+				sscanf(argv[i]+2, "%u", &(*seed));
 			} else if (strcmp(argv[i], "-id") == 0) {
 				showID=true;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
@@ -576,41 +580,68 @@ int main(int argc, char *argv[]) {
 
 	// generate the constraints, solve the problem and print out the solutions
 	//if ((problem->all_packages->size() > 0) && (generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
-	if ((generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
+
+	if(verbosity >= DEFAULT) {
+		out << "================================================================" << endl;
+		out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
+	}
+
+	int status = ERROR;
+	if(generate_constraints(problem, *solver, *combiner) == 0) {
+		if(nosolve) status = UNKNOWN;
+		else status = solver->solve();
+	}
 
 
+	if(verbosity >= QUIET) {
+		switch (status) {
+		case UNKNOWN:
+			out << "s UNKNOWN" << endl;
+			break;
+		case UNSAT:
+			out << "s UNSAT" << endl;
+			break;
+		case SAT:
+			out << "s SAT" << endl;
+			break;
+		case OPTIMUM:
+			out << "s OPTIMUM_FOUND" << endl;
+			break;
+		default:
+			out << "s ERROR" << endl;
+			break;
+		}
+	}
+
+
+	if(status == OPTIMUM || status == SAT) {
 		solver->init_solutions();
-
 		double obj = solver->objective_value();
 		if(verbosity >= QUIET) {
-			if(verbosity >= DEFAULT) {
-				out << "================================================================" << endl;
-				out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
-			}
-			out << "s OPTIMAL" << endl;
-			out << "o " << obj << endl;
-			if(verbosity >= DEFAULT) {
-				print_solution(out, the_problem, solver);
-				if(verbosity >= VERBOSE) {
-					export_solution(the_problem, solver, obj_descr);
-				}
-			}
-		}
-	} else {
-		if (verbosity >= QUIET) {
-			if(verbosity >= DEFAULT) {
-				out << "================================================================" << endl;
-			}
-			out << "s UNKNOWN" <<endl ;
+			out << "o " << solver->objective_value() << endl;
+
 		}
 	}
-	if (verbosity >= DEFAULT) {
-		print_messages(out, the_problem, solver);
+
+	if(verbosity >= DEFAULT) {
+		out << "d RUNTIME " << solver->timeCount() << endl;
+		out << "d NODES " << solver->nodeCount() << endl;
+		out << "d NBSOLS " << solver->solutionCount() << endl;
+		if(status == OPTIMUM || status == SAT) {
+			out << "d OBJECTIVE " << solver->objective_value() << endl; //For compatibility with grigrid scripts
+			print_solution(out, the_problem, solver);
+			print_messages(out, the_problem, solver);
+			if(verbosity >= VERBOSE) {
+				export_solution(the_problem, solver, obj_descr);
+			}
+		}
 	}
+
 
 	if (got_output) {
 		output_file.close();
 	}
+	out << "OK" << endl;
 	exit(0);
 }
 
@@ -701,10 +732,11 @@ extern void print_generator_summary(ostream & out, PSLProblem *problem)
 void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
 	int cpt = 0;
-	out << "s ";
+	out << "s";
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		int servers = solver->get_solution(problem->rankX(*i));
 		if(servers > 0) {
+			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
 			//Print #pservers
 			out << i->getID() << "[" << servers;
 			//Print pservers capacity
@@ -721,8 +753,6 @@ void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 				}
 				out << "}";
 			}
-
-			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
 		}
 	}
 	out << endl;
@@ -740,9 +770,6 @@ void export_solution(PSLProblem *problem, abstract_solver *solver,char* objectiv
 void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
 
-	out << "d TIME " << solver->timeCount() << endl;
-	out << "d NODES " << solver->nodeCount() << endl;
-	out << "d SOLUTIONS " << solver->solutionCount() << endl;
 	//Compute total pserver capacity
 	double capa = 0;
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
@@ -750,22 +777,30 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 			capa += solver->get_solution(problem->rankX(*i, k)) * problem->getServer(k)->getMaxConnections();
 		}
 	}
-	//Display installed pservers.
-	int pserv[problem->serverTypeCount()];
-	int tot_pserv = 0;
-	int tot_rel_pserv = 0;
+	//Display pserver messages.
+	CUDFcoefficient tot_facilities=0;
+	CUDFcoefficient tot_pserv = 0;
+	CUDFcoefficient tot_rel_pserv = 0;
+	CUDFcoefficient pserv[problem->serverTypeCount()];
 	for (int k = 0; k < problem->serverTypeCount(); ++k) {
 		pserv[k]=0;
 	}
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-		tot_pserv += solver->get_solution(problem->rankX(*i));
-		if(i->isReliableFromRoot()) {
-			tot_rel_pserv += solver->get_solution(problem->rankX(*i));
-		}
-		for (int k = 0; k < problem->serverTypeCount(); ++k) {
-			pserv[k] += solver->get_solution(problem->rankX(*i, k));
+		CUDFcoefficient _pserv = solver->get_solution(problem->rankX(*i));
+		if(_pserv > 0) {
+			tot_facilities++;
+			tot_pserv += _pserv;
+			if(i->isReliableFromRoot()) {
+				tot_rel_pserv += _pserv;
+			}
+			for (int k = 0; k < problem->serverTypeCount(); ++k) {
+				CUDFcoefficient _pservk = solver->get_solution(problem->rankX(*i, k));
+				capa += _pservk * problem->getServer(k)->getMaxConnections();
+				pserv[k] += _pservk;
+			}
 		}
 	}
+	out << "d FACILITIES " << tot_facilities << endl;
 	out << "d PSERVERS " << tot_pserv << endl;
 	if(problem->serverTypeCount() > 1) {
 		out << "d VEC_PSERVERS ";
@@ -786,7 +821,7 @@ void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 		spare_capa[s] = (capa-clients)/capa;
 		avg_spare_capa +=spare_capa[s];
 	}
-	out.precision(2);
+	out.precision(3);
 	avg_spare_capa/= problem->stageCount()-1;
 	out << "d SPARE_CAPA " << fixed << avg_spare_capa <<endl;
 	if(problem->stageCount() > 2) {
