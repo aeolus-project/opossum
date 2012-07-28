@@ -651,7 +651,7 @@ public:
 	friend istream& operator>>(istream& in, PSLProblem& problem);
 
 	//----------------------------------------
-	//	Rank Mapper (associates each variable to an uniue index)
+	//	Rank Mapper (associates each variable to an unique index)
 	//----------------------------------------
 	int rankX(FacilityNode *node) const {
 		return node->getID();

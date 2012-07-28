@@ -32,6 +32,7 @@
 
 
 #define INST "cplexpb"
+#define PSERV "sol-pserv"
 #define FLOW "sol-flow-"
 #define PATH "sol-path-"
 #define DOT ".dot"
@@ -65,6 +66,56 @@ void stylePServers(ostream & out, const int servers) {
 	}
 }
 
+bool pserv2dotty(ostream & out,PSLProblem & problem, abstract_solver & solver, FacilityNode* i) {
+	bool display = false;
+	for(LinkListIterator l = i->cbegin() ; l!=  i->cend() ; l++) {
+		display |= pserv2dotty(out, problem, solver, (*l)->getDestination());
+	}
+	CUDFcoefficient servers = solver.get_solution(problem.rankX(i));
+	if(servers > 0) {
+		out << i->getID() << "[shape=record, label=\"{{" << i->getID() << "|" << servers << "}|";
+		if(problem.serverTypeCount() > 1) {
+			out << "{" << solver.get_solution(problem.rankX(i, 0));
+			for (int k = 1; k < problem.serverTypeCount(); ++k) {
+				out << "|" << solver.get_solution(problem.rankX(i, k));
+			}
+			out << "}";
+		}
+		out << "}\"";
+		stylePServers(out, servers);
+		out << "];" << endl;
+		if (! i->isRoot()) {
+			i->toFather()->toDotty(out);
+		}
+	} else if(display) {
+		out << i->getID() << "[shape=box];" << endl;
+		if (! i->isRoot()) {
+			i->toFather()->toDotty(out);
+		}
+	}
+
+
+
+
+	return servers > 0;
+}
+
+
+void pserv2dotty(PSLProblem &problem, abstract_solver& solver, char* title) {
+	ofstream myfile;
+	stringstream ss (stringstream::in | stringstream::out);
+	ss << PSERV << DOT;
+	//cout << "## " << ss.str() << endl;
+	myfile.open(ss.str().c_str());
+	myfile << "digraph P" << "{" <<endl;
+	gtitle(myfile, title, 0);
+	pserv2dotty(myfile, problem, solver, problem.getRoot());
+	myfile << endl << "}" << endl;
+	myfile.close();
+
+}
+
+
 void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_solver & solver, unsigned int stage) {
 	CUDFcoefficient demand = stage == 0 ?
 			solver.get_solution(problem.rankX(i)) : i->getType()->getDemand(stage-1);
@@ -73,11 +124,11 @@ void node2dotty(ostream & out, FacilityNode* i,PSLProblem & problem, abstract_so
 	out << i->getID();
 	out << "[shape=record, label=\"{";
 	if(showID) {
-			out << "{" << i->getID() << "|" << demand <<"}";
+		out << "{" << i->getID() << "|" << demand <<"}";
 	} else {
 		out << demand ;
 	}
-			if(stage> 0 && servers > 0 ) {
+	if(stage> 0 && servers > 0 ) {
 		out << "|{"<< servers << "|" << connections << "}";
 	}
 	out << "}\"";
@@ -223,6 +274,7 @@ void path2dotty(PSLProblem & problem, abstract_solver & solver, char* title)
 
 
 void solution2dotty(PSLProblem &problem, abstract_solver& solver, char* title) {
+	pserv2dotty(problem, solver, title);
 	flow2dotty(problem, solver, title);
 	path2dotty(problem, solver, title);
 }
