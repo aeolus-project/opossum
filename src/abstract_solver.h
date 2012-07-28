@@ -117,7 +117,7 @@ public:
 	virtual int nodeCount() { return 0; };
 
 	// get the solving time.
-	virtual int timeCount() { return 0; };
+	virtual double timeCount() { return 0; };
 
 
 	// ******************************************************************

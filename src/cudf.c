@@ -575,42 +575,68 @@ int main(int argc, char *argv[]) {
 
 	// generate the constraints, solve the problem and print out the solutions
 	//if ((problem->all_packages->size() > 0) && (generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
-	if ((generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
+
+	if(verbosity >= DEFAULT) {
+		out << "================================================================" << endl;
+		out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
+	}
+
+	int status = ERROR;
+	if(generate_constraints(problem, *solver, *combiner) == 0) {
+		if(nosolve) status = UNKNOWN;
+		else status = solver->solve();
+	}
 
 
+	if(verbosity >= QUIET) {
+		switch (status) {
+		case UNKNOWN:
+			out << "s UNKNOWN" << endl;
+			break;
+		case UNSAT:
+			out << "s UNSAT" << endl;
+			break;
+		case SAT:
+			out << "s SAT" << endl;
+			break;
+		case OPTIMUM:
+			out << "s OPTIMUM_FOUND" << endl;
+			break;
+		default:
+			out << "s ERROR" << endl;
+			break;
+		}
+	}
+
+
+	if(status == OPTIMUM || status == SAT) {
 		solver->init_solutions();
-
 		double obj = solver->objective_value();
 		if(verbosity >= QUIET) {
-			if(verbosity >= DEFAULT) {
-				out << "================================================================" << endl;
-				out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
-			}
-			out << "s OPTIMUM" << endl;
-			out << "o " << obj << endl;
-			out << "d OBJECTIVE " << obj << endl; //For compatibility with grigrid scripts
-			if(verbosity >= DEFAULT) {
-				print_solution(out, the_problem, solver);
-				if(verbosity >= VERBOSE) {
-					export_solution(the_problem, solver, obj_descr);
-				}
-			}
-		}
-	} else {
-		if (verbosity >= QUIET) {
-			if(verbosity >= DEFAULT) {
-				out << "================================================================" << endl;
-			}
-			out << "s UNKNOWN" <<endl ;
+			out << "o " << solver->objective_value() << endl;
+
 		}
 	}
-	if (verbosity >= DEFAULT) {
-		print_messages(out, the_problem, solver);
+
+	if(verbosity >= DEFAULT) {
+		out << "d RUNTIME " << solver->timeCount() << endl;
+		out << "d NODES " << solver->nodeCount() << endl;
+		out << "d NBSOLS " << solver->solutionCount() << endl;
+		if(status == OPTIMUM || status == SAT) {
+			out << "d OBJECTIVE " << solver->objective_value() << endl; //For compatibility with grigrid scripts
+			print_solution(out, the_problem, solver);
+			print_messages(out, the_problem, solver);
+			if(verbosity >= VERBOSE) {
+				export_solution(the_problem, solver, obj_descr);
+			}
+		}
 	}
+
 
 	if (got_output) {
 		output_file.close();
 	}
+	out << "OK" << endl;
 	exit(0);
 }
 
@@ -701,10 +727,11 @@ extern void print_generator_summary(ostream & out, PSLProblem *problem)
 void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
 	int cpt = 0;
-	out << "s ";
+	out << "s";
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		int servers = solver->get_solution(problem->rankX(*i));
 		if(servers > 0) {
+			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
 			//Print #pservers
 			out << i->getID() << "[" << servers;
 			//Print pservers capacity
@@ -721,8 +748,6 @@ void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 				}
 				out << "}";
 			}
-
-			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
 		}
 	}
 	out << endl;
@@ -740,9 +765,6 @@ void export_solution(PSLProblem *problem, abstract_solver *solver,char* objectiv
 void print_messages(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
 
-	out << "d RUNTIME " << solver->timeCount() << endl;
-	out << "d NODES " << solver->nodeCount() << endl;
-	out << "d NBSOLS " << solver->solutionCount() << endl;
 	//Compute total pserver capacity
 	double capa = 0;
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {

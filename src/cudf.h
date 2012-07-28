@@ -24,7 +24,16 @@
 
 using namespace std;
 
-#define PSL_TILIM 1000
+//Solver status
+#define ERROR 0
+#define UNKNOWN 1
+#define UNSAT 2
+#define SAT 3
+#define OPTIMUM 4
+
+
+
+#define PSL_TILIM 5
 #define C_STR( text ) ((char*)std::string( text ).c_str())
 
 // current CUDF problem
