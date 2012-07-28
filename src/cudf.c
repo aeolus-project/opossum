@@ -581,10 +581,7 @@ int main(int argc, char *argv[]) {
 	// generate the constraints, solve the problem and print out the solutions
 	//if ((problem->all_packages->size() > 0) && (generate_constraints(problem, *solver, *combiner) == 0) && (! nosolve) && (solver->solve())) {
 
-	if(verbosity >= DEFAULT) {
-		out << "================================================================" << endl;
-		out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
-	}
+
 
 	int status = ERROR;
 	if(generate_constraints(problem, *solver, *combiner) == 0) {
@@ -592,6 +589,10 @@ int main(int argc, char *argv[]) {
 		else status = solver->solve();
 	}
 
+	if(verbosity >= DEFAULT) {
+		out << "================================================================" << endl;
+		out << "c " << solver->objectiveCount() << " OBJECTIVES " << obj_descr << endl;
+	}
 
 	if(verbosity >= QUIET) {
 		switch (status) {
@@ -641,8 +642,10 @@ int main(int argc, char *argv[]) {
 	if (got_output) {
 		output_file.close();
 	}
-	out << "OK" << endl;
-	exit(0);
+	if(verbosity >= DEFAULT) {
+		out << "================================================================" << endl << endl;
+	}
+	exit( status == ERROR ? 1 : 0);
 }
 
 int parse_pslp(istream& in)
