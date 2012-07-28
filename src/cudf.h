@@ -24,6 +24,9 @@
 
 using namespace std;
 
+// Handling the time limit per subproblem
+extern double time_limit;
+;
 //Solver status
 #define ERROR 0
 #define UNKNOWN 1
@@ -33,7 +36,6 @@ using namespace std;
 
 
 
-#define PSL_TILIM 5
 #define C_STR( text ) ((char*)std::string( text ).c_str())
 
 // current CUDF problem

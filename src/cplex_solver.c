@@ -36,7 +36,7 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	}
 
 	/* Set the value of the time limit*/
-	status = CPXsetdblparam (env, CPX_PARAM_TILIM, PSL_TILIM);
+	status = CPXsetdblparam (env, CPX_PARAM_TILIM, time_limit);
 	if ( status ) {
 		fprintf (stderr, "Failure to set the time limit, error %d.\n", status);
 		exit(-1);

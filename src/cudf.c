@@ -20,6 +20,7 @@ PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
 int verbosity = DEFAULT;
+double time_limit = 600; // 10 mn per subproblem
 
 template <typename T>
 T* makeCombiner(CriteriaList* criteria, char* name) {
@@ -176,6 +177,7 @@ void print_help() {
 			stderr,
 			"  eg.: TODO\n");
 	fprintf(stderr, "other options:\n");
+	fprintf(stderr, "\t-t<n>: set the time limit per subproblem in seconds\n");
 	fprintf(stderr, "\t-v<n>: set verbosity level to n\n");
 	fprintf(stderr, "\t-s<n>: set the seed for the problem generator to n\n");
 	fprintf(stderr, "\t-id: print node IDs in graphviz\n");
@@ -432,12 +434,15 @@ int main(int argc, char *argv[]) {
 					}
 					got_output=true;
 				}
+			} else if (strncmp(argv[i], "-t", 2) == 0) {
+				sscanf(argv[i]+2, "%lf", &time_limit);
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
 			} else if (strncmp(argv[i], "-s",2) == 0) {
 				unsigned int tmp;
 				sscanf(argv[i]+2, "%u", &tmp);
 				seed = &tmp;
+				sscanf(argv[i]+2, "%u", &(*seed));
 			} else if (strcmp(argv[i], "-id") == 0) {
 				showID=true;
 			} else if (strncmp(argv[i], "-lex[", 5) == 0) {
