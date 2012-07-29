@@ -6,7 +6,7 @@ This software is distributed under a Modified BSD License (see LICENSE file).
 ################################################################
 
 oPoSSuM is a c++ library for solving the multiobjective package location server problem with a mathematical programming solver (CPLEX).
-oPoSSum was partially supported by the "Agence National de la Recherche (Aeolus project -- ANR-2010-SEGI-013-01).
+oPoSSum was partially supported by the Agence National de la Recherche (Aeolus project -- ANR-2010-SEGI-013-01).
 
 == README ==
 

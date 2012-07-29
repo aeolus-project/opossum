@@ -56,17 +56,16 @@ void print_help() {
 	fprintf(
 			stderr,
 			"This software is distributed under a modified BSD licence (see LICENCE file) and was\n"
-			"partially supported by the European Community's 7th Framework Programme (FP7/2007-2013),\n"
-			"MANCOOSI project, grant agreement n. 214898.\n");
+			"oPoSSuM is a c++ library for solving the multiobjective package location server problem with a mathematical programming solver.\n"
+			"oPoSSum was partially supported by the Agence National de la Recherche (Aeolus project -- ANR-2010-SEGI-013-01).\n"
+	);
 	fprintf(
 			stderr,
 			"Usual call: opossum -i <input_file> -o <outputfile> <criteria combiner>[<criteria>{, <criteria>}*] <solver option> <other options>?\n");
 	fprintf(stderr, "file options:\n");
 	fprintf(
 			stderr,
-			"\t-i <input_file>: set the input file to <input_file> (by default attempt to read on stdin)\n");
-	fprintf(
-			stderr,
+			"\t-i <input_file>: set the input file to <input_file> (by default attempt to read on stdin)\n"
 			"\t-o <output_file>: set the output file to <output_file> (by default write on stdout)\n");
 	fprintf(stderr, "solver options:\n");
 #ifdef USECPLEX
@@ -88,96 +87,77 @@ void print_help() {
 			"\t-nosolve: do not solve the problem (for debug purpose)\n");
 	fprintf(stderr, "combining criteria:\n");
 	fprintf(stderr, " -lexicographic[<lccriteria>{,<lccriteria>}*]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			"   with <lccriteria> ::= {+,-}leximax[<ccriteria>{,<ccriteria>}*] |\n");
 	fprintf(
 			stderr,"                         {+,-}leximin[<ccriteria>{,<ccriteria>}*] |\n");
 	fprintf(stderr, "                         <ccriteria>\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			"   with  <ccriteria> ::= {+,-}agregate[<ccriteria>{,<ccriteria>}*]{[lambda]}? |\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			"                         {+,-}lexagregate[<ccriteria>{,<cccriteria>}*]{[lambda]}? |\n");
 	fprintf(stderr, "                         <criteria>\n");
-	fprintf(
-			stderr,
-			"   with   <criteria> ::= {+,-}removed{[lambda]}? |                             # number of removed packages \n");
-	fprintf(
-			stderr,
-			"                         {+,-}changed{[lambda]}? |                             # number of package with a modified version\n");
-	fprintf(
-			stderr,
-			"                         {+,-}notuptodate{[lambda]}? |                         # number of no uptodate packages\n");
-	fprintf(
-			stderr,
-			"                         {+,-}new{[lambda]}? |                                 # number of newly installed packages\n");
-	fprintf(
-			stderr,
-			"                         {+,-}nunsat[<property:>,<withproviders>]{[lambda]}? | # number of unsatisfied dijunct in property (must be a vpkgformula)\n");
-	fprintf(
-			stderr,
-			"                                where <property:> is a property name of type vpkgformula\n");
-	fprintf(
-			stderr,
-			"                                  and <withproviders> is a boolean (true or false) telling whether providers have to be taken into account\n");
-	fprintf(
-			stderr,
-			"                         {+,-}count[<property:>,<onlynew>]{[lambda]}?          # count the property quantity (must be an int, posint or nat) \n");
-	fprintf(
-			stderr,
-			"                                where <property:> is a property name of type int, nat or posint\n");
-	fprintf(
-			stderr,
-			"                                  and <onlynew> is a boolean (true or false) telling whether count applies only on newly installed packages\n");
-	fprintf(
-			stderr,
-			"                         {+,-}unaligned[<alignment>]{[lambda]}?                # count the number of unaligned packages \n");
-	fprintf(
-			stderr,
-			"                                where <alignment> is either packages, pairs, clusters or changes\n");
-	fprintf(
-			stderr,
-			"  eg.: -lexicographic[-removed,-notuptodate,-nunsat[recommends:,true],-new]\n");
-	fprintf(
-			stderr,
-			"  eg.: -lexicographic[-lexagregate[-removed,-notuptodate],-lexagregate[-nunsat[recommends:,true],-new]]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
+			"   with   <criteria> ::= {+,-}pserv[<property:>,<value>]{[lambda]}? | # number of package servers \n");
+	fprintf(stderr,
+			"                                where [<level>,<range>] restricts to facilities located at given levels\n");
+	fprintf(stderr,
+			"                                      [<reliable>,<bool>] restricts to facilities for which the path from the central facility are (non-)reliable.\n");
+	fprintf(stderr,
+			"                                      [<type>,<range>] restricts to pservers with given types.\n");
+	fprintf(stderr,
+			"                                      where an integer value or an (unbounded) interval is specified by the regular expression: <range>::=int(-|-int)?.\n");
+	fprintf(stderr,
+			"                         {+,-}local[<property:>,<value>]{[lambda]}? | # number of local connections \n");
+	fprintf(stderr,
+			"                                with the same properties than pserv minus the type of pservers\n");
+	fprintf(stderr,
+			"                                      [<reliable>,<bool>] restricts to facilities for which the path from the central facility are (non-)reliable\n");
+	fprintf(stderr,
+			"                                      [<type>,<range>] restricts to pservers with given types\n");
+	fprintf(stderr,
+			"                                      where an integer value or an (unbounded) interval is specified by the regular expression: <range>::=int(-|-int)?.\n");
+	fprintf(stderr,
+			"                         {+,-}conn[<property:>,<value>]{[lambda]}? | # number of connections between facilities \n");
+	fprintf(stderr,
+			"                                where [<stage>,<range>] restricts to given stages of the broadcast\n");
+	fprintf(stderr,
+			"                                      [<length>,<range>] restricts to connections relying on path with given lengths\n");
+	fprintf(stderr,
+			"                                      [<reliable>,<bool>] restricts to connections relying on (non-)reliable paths\n");
+	fprintf(stderr,
+			"                         {+,-}bandw[<property:>,<value>]{[lambda]}? | # bandwidth allocated to connections \n");
+	fprintf(stderr,
+			"                                with the same properties than conn\n");
+	fprintf(stderr,
+			"  eg.: -lexicographic[-pserv,+local,+bandw]\n");
+	fprintf(stderr,
+			"  eg.: -lexicographic[-lexagregate[-agregate[-pserv[type,0][10],-pserv[type,1][18],-pserv[type,2][6]]\n");
+	fprintf(stderr,
 			"  WARNING: spaces can not be used within a criteria combination.\n");
 	fprintf(stderr, "criteria combination shortcuts:\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -lex[<lccriteria>{,<lccriteria>}*] equivalent to -lexicographic[<lccriteria>{,<lccriteria>}*]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -lexagregate[<ccriteria>{,<ccriteria>}*] equivalent to -lex[-lexagregate[<ccriteria>{,<ccriteria>}*]]\n");
 	fprintf(stderr,
 			" -lexsemiagregate[<ccriteria>{,<ccriteria>}*] equivalent to \n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			"                        -lex[-lexagregate[<ccriteria>,<ccriteria>],-lexagregate[<ccriteria>,<ccriteria>],...]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -agregate[<ccriteria>{,<ccriteria>}*] equivalent to -lex[-agregate[<ccriteria>{,<ccriteria>}*]]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -leximax[<ccriteria>{,<ccriteria>}*] equivalent to -lex[-leximax[<ccriteria>{,<ccriteria>}*]]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -leximin[<ccriteria>{,<ccriteria>}*] equivalent to -lex[-lexmin[<ccriteria>{,<ccriteria>}*]]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -lexleximax[<ccriteria>{,<ccriteria>}*] equivalent to -lex[<ccriteria>,-leximax[<ccriteria>{,<ccriteria>}*]]\n");
-	fprintf(
-			stderr,
+	fprintf(stderr,
 			" -lexleximin[<ccriteria>{,<ccriteria>}*] equivalent to -lex[<ccriteria>,-leximin[<ccriteria>{,<ccriteria>}*]]\n");
-	fprintf(
-			stderr,
-			"  eg.: TODO\n");
+	fprintf(stderr,
+			"  eg.: -lex[-pserv,-leximax[-pserv[reliable,0],-pserv[type,1]]]\n");
 	fprintf(stderr, "other options:\n");
-	fprintf(stderr, "\t-t<n>: set the time limit per subproblem in seconds\n");
+	fprintf(stderr, "\t-t<n>: set the time limit per subproblem to n seconds\n");
 	fprintf(stderr, "\t-v<n>: set verbosity level to n\n");
 	fprintf(stderr, "\t-s<n>: set the seed for the problem generator to n\n");
 	fprintf(stderr, "\t-id: print node IDs in graphviz\n");
