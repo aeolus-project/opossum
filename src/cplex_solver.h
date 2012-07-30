@@ -25,9 +25,6 @@ public:
 
 	// Allocate some columns for integer variables
 	int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
-
-	//set variable type to int and its range to [lower, upper] (must be used before end_objectives)
-	int set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 	// set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
 	int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper);
 	// set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)

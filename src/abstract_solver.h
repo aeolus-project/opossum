@@ -28,8 +28,6 @@ public:
 
 	// set variable type to int and its range to [lower, upper] (must be used before end_objectives)
 	virtual int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { return 0; }
-	// set variable type to int and its range to [lower, upper] (must be used before end_objectives)
-	virtual int set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { return 0; }
 
 	// set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
 	virtual int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) { return 0; }

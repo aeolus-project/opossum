@@ -122,13 +122,6 @@ int cplex_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoeffici
 	return 0;
 };
 
-int cplex_solver::set_realvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) {
-	lb[rank] = lower;
-	ub[rank] = upper;
-	vartype[rank] = CPX_CONTINUOUS;
-	return 0;
-}
-
 // set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
 int cplex_solver::set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
 	varname[rank] = name;
@@ -138,10 +131,14 @@ int cplex_solver::set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFco
 // set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
 int cplex_solver::set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
 	varname[rank] = name;
-	return set_realvar_range(rank, lower, upper);
+	lb[rank] = lower;
+	ub[rank] = upper;
+	vartype[rank] = CPX_CONTINUOUS;
+	return 0;
 }
+
 // set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
-int cplex_solver::set_intvar(int rank, char* name){
+int cplex_solver::set_intvar(int rank, char* name) {
 	varname[rank] = name;
 	lb[rank] = 0;
 	ub[rank] = CPX_INFBOUND;
@@ -263,7 +260,7 @@ int cplex_solver::solve() {
 				return OPTIMUM;
 		} else if( mipstat == CPXMIP_TIME_LIM_INFEAS ||
 				mipstat == CPXMIP_TIME_LIM_FEAS) {
-				return _solutionCount > 0 ? SAT : UNKNOWN;
+			return _solutionCount > 0 ? SAT : UNKNOWN;
 		} else {
 			if (verbosity >= DEFAULT)
 				fprintf(stderr, "CPLEX solution status = %d\n", mipstat);
