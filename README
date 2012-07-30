@@ -1,32 +1,12 @@
-################################################################################
-# Copyright (c) 2012, Arnaud Malapert and Mohamed Rezgui         	       #
-# All rights reserved.                                                         #
-# Redistribution and use in source and binary forms, with or without           #
-# modification, are permitted provided that the following conditions are met:  #
-#                                                                              #
-#     * Redistributions of source code must retain the above copyright         #
-#       notice, this list of conditions and the following disclaimer.          #
-#     * Redistributions in binary form must reproduce the above copyright      #
-#       notice, this list of conditions and the following disclaimer in the    #
-#       documentation and/or other materials provided with the distribution.   #
-#     * Neither the name of Arnaud Malapert nor the			       #
-#       names of its contributors may be used to endorse or promote products   #
-#       derived from this software without specific prior written permission.  #
-#                                                                              #
-# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY  #
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED    #
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE       #
-# DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY #
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES   #
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; #
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND  #
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT   #
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS#
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                 #
-################################################################################
+Copyright (c) 2012, Arnaud Malapert, I3S (UNS-CNRS)
+This software is distributed under a Modified BSD License (see LICENSE file).    
 
+#################################################################
  oPoSSuM : Package Server Solver for Multiobjective optimization
- oPoSSuM is a c++ library for solving the multiobjective package server problem with the mathematical programming solver CPLEX.
+################################################################
+
+oPoSSuM is a c++ library for solving the multiobjective package location server problem with a mathematical programming solver (CPLEX).
+oPoSSum was partially supported by the Agence National de la Recherche (Aeolus project -- ANR-2010-SEGI-013-01).
 
 == README ==
 
@@ -43,50 +23,26 @@
  This project requires:
  
   * Cross-platform Make (CMake) v2.6.2+
-  	> Fedora :
-	  	yum install cmake
-  	> Ubuntu :
- 		apt-get install cmake
-  	
   * GNU Make or equivalent.
-  	> Fedora :
-  		yum install make
-  	> Ubuntu :
- 		apt-get install make	
-  	
   * GCC or an alternative, reasonably conformant C++ compiler.
-  	> Fedora :
-  		yum groupinstall "Development Tools"
-  	> Ubuntu :
- 		apt-get install build-essential	
-  	  
   * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES]
- 	> Fedora :
- 		yum install boost-devel
-  	> Ubuntu :
- 		apt-get install libboost-dev
-  	
   * XML2 Library v2.0+
-  	> Fedora :
-  		yum install libxml2-devel
-  	> Ubuntu :
- 		apt-get install libxml2-dev
-  
   * GLPK Library
-  	> Fedora :
-  		yum install glpk-devel
-  	> Ubuntu :
- 		apt-get install libglpk-dev
-
   * LPSOLVE Library v5.5+
+  
   	> Fedora :
-  		yum install suitesparse-devel
+	  	yum install make cmake 
+	  	yum groupinstall "Development Tools"
+	  	yum install boost-devel libxml2-devel glpk-devel suitesparse-devel 
+  	
   	> Ubuntu :
- 		apt-get install liblpsolve55-dev
-
-   * CPLEX [HEADERS and LIBRARIES] with licence
-   
-== 2. BUILDING ==
+ 		apt-get install make cmake build-essential libxml2-dev libglpk-dev liblpsolve55-dev
+ 		 
+  * CPLEX [HEADERS and LIBRARIES] with licence : 
+   		http://www-01.ibm.com/software/integration/optimization/cplex-optimization-studio/
+  	
+  	
+ == 2. BUILDING ==
  
  This project uses the Cross-platform Make (CMake) build system. However, we
  have conveniently provided a wrapper configure script and Makefile so that
@@ -116,6 +72,6 @@
 
 == 7. CONTRIBUTING ==
 
- Arnaud Malapert : Research Engineer of CNRS in I3S Lab
- Mohamed REZGUI  : PHD Student of Doctoral School STIC based on I3S Lab
+ Arnaud Malapert : Assistant professor, I3S (UNS-CNRS).
+ Mohamed REZGUI  : PhD Student, I3S (UNS-CNRS).
 
