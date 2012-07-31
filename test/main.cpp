@@ -13,10 +13,7 @@
 #include <algorithm>
 
 #include "../src/network.hpp"
-#include "../src/GexfGen.hpp"
-
 #include "../src/network.cpp"
-#include "../src/GexfGen.cpp"
 
 
 //TODO Add test void forEachPath(FuncType functor) const;
