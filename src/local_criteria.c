@@ -1,19 +1,7 @@
 /*******************************************************/
-/* CUDF solver: local_criteria.h                       */
+/* oPoSSuM solver: local_criteria.h                    */
 /* Implementation of the local criteria                */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
-/*******************************************************/
-
-
-#include <local_criteria.h>
-
-
-
-
-/*******************************************************/
-/* CUDF solver: local_criteria.h                         */
-/* Implementation the stage criteria                   */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 

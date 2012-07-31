@@ -139,10 +139,8 @@ int cplex_solver::set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFc
 
 // set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
 int cplex_solver::set_intvar(int rank, char* name) {
-	varname[rank] = name;
-	lb[rank] = 0;
+	set_intvar(rank, name, 0, 1);
 	ub[rank] = CPX_INFBOUND;
-	vartype[rank] = CPX_INTEGER;
 	return 0;
 }
 

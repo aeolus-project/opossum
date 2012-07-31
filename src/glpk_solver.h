@@ -26,15 +26,19 @@ public:
 	// Allocate some columns for integer variables
 	int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 	// set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
-	int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
+	int set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper);
 	// set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
-	int set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper); //TODO
+	int set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper);
 	// set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
 	int set_intvar(int rank, char* name);
 	// set variable type to real and its range to [0, +inf[ and its name to name (must be used before end_objectives)
 	int set_realvar(int rank, char* name);
 	// set variable type to bool and its name to name (must be used before end_objectives)
-	int set_boolvar(int rank, char* name); //TODO
+	int set_boolvar(int rank, char* name);
+
+	// set the GLPK variables using internal informations
+	int make_var(int rank);
+
 	// Write the lp on a file
 	int writelp(char *filename);
 
@@ -77,9 +81,10 @@ public:
 	int end_add_constraints(void);
 
 	glp_prob *lp; // internal solver representation
-	int nb_packages; //FIXME Remove number of packages
 
 	CUDFcoefficient *lb, *ub;          // arrays of lower and upper bounds
+	int *vartype;       // array of variable types
+	char **varname;      // array of variable names
 
 	// solver creation
 	glpk_solver(bool use_exact) {

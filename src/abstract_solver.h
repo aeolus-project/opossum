@@ -138,7 +138,6 @@ protected:
 				set_intvar(problem->rankZ(*i, s), sprint_var("z%d'%d", i->getID(), s));
 			}
 		}
-
 		///////////////////////
 		//for each link ...
 		for(LinkIterator i = problem->lbegin() ; i!=  problem->lend() ; i++) {
@@ -164,7 +163,7 @@ protected:
 
 		// Set additional variable names
 		for (int i = problem->rankCount(); i < nb_vars; i++) {
-			set_intvar(i, sprint_var("X%d", i - problem->rankCount())); // Default Binary Variable
+			set_intvar(i, sprint_var("X%d", i - problem->rankCount()));
 		}
 		return 0;
 	}
@@ -177,7 +176,7 @@ protected:
 		va_end(args);
 		char *name;
 		if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-			fprintf(stderr, "CUDF error: can not alloc memory for variable name in cplex_solver::end_objective.\n");
+			fprintf(stderr, "CUDF error: can not alloc memory for variable name in abstract_solver::end_objective.\n");
 			exit(-1);
 		}
 		strcpy(name, buffer);

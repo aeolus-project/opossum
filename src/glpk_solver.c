@@ -17,27 +17,27 @@ abstract_solver *new_glpk_solver(bool use_exact) { return new glpk_solver(use_ex
 
 // solver initialisation
 int glpk_solver::init_solver(PSLProblem* problem, int other_vars) {
-  nb_packages = 0;//all_versioned_packages->size();
+	// Coefficient initialization
+	initialize_coeffs(problem->rankCount()+ other_vars);
 
-  // Coefficient initialization
-  initialize_coeffs(nb_packages + other_vars);
+	lp = glp_create_prob();
+	glp_add_cols(lp, nb_vars);
 
-  lp = glp_create_prob();
-  glp_add_cols(lp, nb_vars);
+	lb = (CUDFcoefficient *)malloc((nb_vars+1)*sizeof(CUDFcoefficient));
+	ub = (CUDFcoefficient *)malloc((nb_vars+1)*sizeof(CUDFcoefficient));
+	vartype = (int *)malloc((nb_vars+1)*sizeof(int));
+	varname = (char **)malloc((nb_vars+1)*sizeof(char *));
 
-  if ((lb = (CUDFcoefficient *)malloc((nb_vars+1)*sizeof(CUDFcoefficient))) == (CUDFcoefficient *)NULL) {
-    fprintf(stderr, "glpk_solver: init_solver: not enough memory for lb.\n");
-    exit(-1);
-  }
+	if ((lb  == (CUDFcoefficient *)NULL) ||
+			(ub  == (CUDFcoefficient *)NULL) ||
+			(vartype  == (int *)NULL) ||
+			(varname  == (char **)NULL)) {
+		fprintf(stderr, "glpk_solver: initialization: not enough memory.\n");
+		exit(-1);
+	}
 
-  if ((ub = (CUDFcoefficient *)malloc((nb_vars+1)*sizeof(CUDFcoefficient))) == (CUDFcoefficient *)NULL) {
-    fprintf(stderr, "glpk_solver: init_solver: not enough memory for ub.\n");
-    exit(-1);
-  }
-
-  for (int i = 0; i <= nb_vars; i++) { lb[i] = 0; ub[i] = 1; }
-
-  return 0;
+	init_vars(problem, nb_vars);
+	return 0;
 }
 
 // Does the solver provides integer variables
@@ -45,33 +45,43 @@ bool glpk_solver::has_intvars() { return true; }
 
 // Set range of an integer variable
 int glpk_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 
-  lb[rank+1] = lower;
-  ub[rank+1] = upper;
-  return 0; 
+	lb[rank+1] = lower;
+	ub[rank+1] = upper;
+	vartype[rank+1]= GLP_IV;
+	return 0;
 }
 
 
 // set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)
 int glpk_solver::set_intvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
-	return 0;
+	varname[rank+1]=name;
+	return set_intvar_range(rank, lower, upper);
 }
 
 // set variable type to real and its range to [lower, upper] and its name to name (must be used before end_objectives)
 int glpk_solver::set_realvar(int rank, char* name, CUDFcoefficient lower, CUDFcoefficient upper) {
+	varname[rank+1]=name;
+	lb[rank+1] = lower;
+	ub[rank+1] = upper;
+	vartype[rank+1] = GLP_CV;
 	return 0;
 }
 
 // set variable type to int and its range to [0, +inf[ and its name to name (must be used before end_objectives)
 int glpk_solver::set_intvar(int rank, char* name){
-	return 0;
+	return set_intvar(rank, name, 0, 0);
 }
 // set variable type to real and its range to [0, +inf[ and its name to name (must be used before end_objectives)
 int glpk_solver::set_realvar(int rank, char* name) {
-	return 0;
+	return set_realvar(rank, name, 0, 0);
 }
 
 // set variable type to bool and its name to name (must be used before end_objectives)
 int glpk_solver::set_boolvar(int rank, char* name) {
+	varname[rank+1]=name;
+	lb[rank+1] = 0;
+	ub[rank+1] = 1;
+	vartype[rank+1]= GLP_BV;
 	return 0;
 }
 
@@ -81,46 +91,46 @@ int glpk_solver::writelp(char *filename) { glp_write_lp(lp, NULL, filename); ret
 
 // solve the current lp problem
 int glpk_solver::solve() {
-  int status = 0, nb_objectives = objectives.size();
-  glp_iocp mip_params;
-    
-  glp_init_iocp(&mip_params);
-  mip_params.gmi_cuts = GLP_ON;
-  mip_params.mir_cuts = GLP_ON;
-  mip_params.cov_cuts = GLP_ON;
-  mip_params.clq_cuts = GLP_ON;
-  mip_params.presolve = GLP_ON;
-  mip_params.binarize = GLP_ON;
+	int status = 0, nb_objectives = objectives.size();
+	glp_iocp mip_params;
 
-  for (int k = 0; k < nb_objectives; k++) {
-    
-    glp_cpx_basis(lp);
-  
-    if (status == 0) status = glp_intopt(lp, &mip_params);
+	glp_init_iocp(&mip_params);
+	mip_params.gmi_cuts = GLP_ON;
+	mip_params.mir_cuts = GLP_ON;
+	mip_params.cov_cuts = GLP_ON;
+	mip_params.clq_cuts = GLP_ON;
+	mip_params.presolve = GLP_ON;
+	mip_params.binarize = GLP_ON;
 
-    if (k + 1 < nb_objectives) {
-      // Get objective value
-      CUDFcoefficient objval = objective_value();
+	for (int k = 0; k < nb_objectives; k++) {
 
-      if (verbosity > 0) printf(">>> Objective %d value : "CUDFflags"\n", k, objval);
+		glp_cpx_basis(lp);
 
-      // Reset objective i coefficients
-      for (int i = 1; i < objectives[k]->nb_coeffs + 1; i++) 
-	glp_set_obj_coef(lp, objectives[k]->sindex[i], 0);
+		if (status == 0) status = glp_intopt(lp, &mip_params);
 
-      // Set objective i+1 as the actual objective function
-      for (int i = 1; i < objectives[k+1]->nb_coeffs + 1; i++) 
-	glp_set_obj_coef(lp, objectives[k+1]->sindex[i], objectives[k+1]->coefficients[i]);
+		if (k + 1 < nb_objectives) {
+			// Get objective value
+			CUDFcoefficient objval = objective_value();
 
-      // Add objective i = objval constraint
-      int irow = glp_add_rows(lp, 1);
-      glp_set_row_bnds(lp, irow, GLP_FX, objval, objval);
-      glp_set_mat_row(lp, irow, objectives[k]->nb_coeffs, objectives[k]->sindex, objectives[k]->coefficients);    
+			if (verbosity > 0) printf(">>> Objective %d value : "CUDFflags"\n", k, objval);
 
-      if (OUTPUT_MODEL) glp_write_lp(lp, NULL, "glpkpbs1.lp");
-    }
-  }
-  if (status == 0)  return 1; else return 0;
+			// Reset objective i coefficients
+			for (int i = 1; i < objectives[k]->nb_coeffs + 1; i++)
+				glp_set_obj_coef(lp, objectives[k]->sindex[i], 0);
+
+			// Set objective i+1 as the actual objective function
+			for (int i = 1; i < objectives[k+1]->nb_coeffs + 1; i++)
+				glp_set_obj_coef(lp, objectives[k+1]->sindex[i], objectives[k+1]->coefficients[i]);
+
+			// Add objective i = objval constraint
+			int irow = glp_add_rows(lp, 1);
+			glp_set_row_bnds(lp, irow, GLP_FX, objval, objval);
+			glp_set_mat_row(lp, irow, objectives[k]->nb_coeffs, objectives[k]->sindex, objectives[k]->coefficients);
+
+			if (OUTPUT_MODEL) glp_write_lp(lp, NULL, "glpkpbs1.lp");
+		}
+	}
+	if (status == 0)  return 1; else return 0;
 }
 
 // get objective function value
@@ -134,8 +144,8 @@ int glpk_solver::init_solutions() { return 0; }
 
 // initialize objective function
 int glpk_solver::begin_objectives(void) { 
-  glp_set_obj_dir(lp, GLP_MIN);  // Problem is minimization
-  return 0; 
+	glp_set_obj_dir(lp, GLP_MIN);  // Problem is minimization
+	return 0;
 }
 
 // return the package coefficient of the objective function 
@@ -146,51 +156,39 @@ int glpk_solver::set_obj_coeff(int rank, CUDFcoefficient value) { set_coeff(rank
 
 // initialize an additional objective function 
 int glpk_solver::new_objective(void) {
-  reset_coeffs();
-  return 0;
+	reset_coeffs();
+	return 0;
 }
 
 // add an additional objective function
 int glpk_solver::add_objective(void) { 
-  push_obj(); 
-  return 0;
+	push_obj();
+	return 0;
 }
 
+int glpk_solver::make_var(int rank) {
+	cout << rank << " " <<varname[rank] << " [" << lb[rank] <<  "," << ub[rank] << "] -> " << vartype[rank] <<endl;
+	glp_set_col_name(lp, rank, varname[rank]); // Set the colunm name
+	int vtype = vartype[rank];
+	int btype = GLP_DB;
+	if(lb[rank]== 0 && ub[rank]== 0) btype = GLP_LO;
+	if(vartype[rank] ==GLP_IV &&
+			lb[rank]== 0 && ub[rank]== 1) vtype = GLP_BV;
+	glp_set_col_bnds(lp, rank, btype, lb[rank], ub[rank]);
+	glp_set_col_kind(lp, rank, vtype);
+	return 0;
+}
 // finalize the objective function
 int glpk_solver::end_objectives(void) {
-  int i = 1;
-//  for (CUDFVersionedPackageListIterator ipkg = all_versioned_packages->begin(); ipkg != all_versioned_packages->end(); ipkg++) {
-//    glp_set_col_bnds(lp, i, GLP_DB, 0, 1);  // Set bounds to [0, 1]
-//    glp_set_col_name(lp, i, (*ipkg)->versioned_name); // Set the colunm name
-//    glp_set_col_kind(lp, i, GLP_BV); // It is a binary variable ...
-//    i++;
-//  }
-  for (i = nb_packages+1; i <= nb_vars; i++) {
-    char *name;
-    char buffer[20];
 
-    sprintf(buffer, "x%d", i);
-    if ((name = (char *)malloc(strlen(buffer)+1)) == (char *)NULL) {
-      fprintf(stderr, "CUDF error: can not alloc memory for variable name in glpk_solver::end_objective.\n");
-      exit(-1);
-    }
-    strcpy(name, buffer);
+	for (int i = 1; i <= nb_vars; i++) {
+		make_var(i);
+	}
 
-    if ((lb[i] == 0) && (ub[i] == 1)) {
-      glp_set_col_bnds(lp, i, GLP_DB, 0, 1);  // Set bounds to [0, 1]
-      glp_set_col_name(lp, i, name); // Set the colunm name
-      glp_set_col_kind(lp, i, GLP_BV); // It is a binary variable ...
-    } else {
-      glp_set_col_bnds(lp, i, GLP_DB, lb[i], ub[i]);  // Set bounds to [0, 1]
-      glp_set_col_name(lp, i, name); // Set the colunm name
-      glp_set_col_kind(lp, i, GLP_IV); // It is an integer variable ...
-    }
-  }
+	// Set objective 0 as the actual objective function
+	for (int k = 1; k < objectives[0]->nb_coeffs + 1; k++) glp_set_obj_coef(lp, objectives[0]->sindex[k], objectives[0]->coefficients[k]);
 
-  // Set objective 0 as the actual objective function
-  for (int k = 1; k < objectives[0]->nb_coeffs + 1; k++) glp_set_obj_coef(lp, objectives[0]->sindex[k], objectives[0]->coefficients[k]);
-
-  return 0;
+	return 0;
 }
 
 // initialize constraints
@@ -213,44 +211,44 @@ CUDFcoefficient glpk_solver::get_constraint_coeff(int rank) { return (CUDFcoeffi
 
 // set column coefficient of the current constraint
 int glpk_solver::set_constraint_coeff(int rank, CUDFcoefficient value) { 
-  set_coeff(rank, value);
-  return 0;
+	set_coeff(rank, value);
+	return 0;
 }
 
 // add current constraint as a greater or equal constraint
 int glpk_solver::add_constraint_geq(CUDFcoefficient bound) {
-  if (nb_coeffs > 0 ) {
-    int irow = glp_add_rows(lp, 1);
-    glp_set_row_bnds(lp, irow, GLP_LO, bound, 0);
-    glp_set_mat_row(lp, irow, nb_coeffs, sindex, coefficients);
-  }
-  return 0;
+	if (nb_coeffs > 0 ) {
+		int irow = glp_add_rows(lp, 1);
+		glp_set_row_bnds(lp, irow, GLP_LO, bound, 0);
+		glp_set_mat_row(lp, irow, nb_coeffs, sindex, coefficients);
+	}
+	return 0;
 }
 
 // add current constraint as a less or equal constraint
 int glpk_solver::add_constraint_leq(CUDFcoefficient bound) {
-  if (nb_coeffs > 0 ) {
-    int irow = glp_add_rows(lp, 1);
-    glp_set_row_bnds(lp, irow, GLP_UP, 0, bound);
-    glp_set_mat_row(lp, irow, nb_coeffs, sindex, coefficients);
-  }
-  return 0;
+	if (nb_coeffs > 0 ) {
+		int irow = glp_add_rows(lp, 1);
+		glp_set_row_bnds(lp, irow, GLP_UP, 0, bound);
+		glp_set_mat_row(lp, irow, nb_coeffs, sindex, coefficients);
+	}
+	return 0;
 }
 
 // add current constraint as an equality constraint
 int glpk_solver::add_constraint_eq(CUDFcoefficient bound) {
-  if (nb_coeffs > 0 ) {
-    int irow = glp_add_rows(lp, 1);
-    glp_set_row_bnds(lp, irow, GLP_FX, bound, bound);
-    glp_set_mat_row(lp, irow, nb_coeffs, sindex, coefficients);
-  }
-  return 0;
+	if (nb_coeffs > 0 ) {
+		int irow = glp_add_rows(lp, 1);
+		glp_set_row_bnds(lp, irow, GLP_FX, bound, bound);
+		glp_set_mat_row(lp, irow, nb_coeffs, sindex, coefficients);
+	}
+	return 0;
 }
 
 // finalize constraints
 int glpk_solver::end_add_constraints(void) { 
-  if (OUTPUT_MODEL) glp_write_lp(lp, NULL, "glpkpbs.lp"); 
-  return 0; 
+	if (verbosity >= VERBOSE) glp_write_lp(lp, NULL, "glpkpb.lp");
+	return 0;
 }
 
 #endif
