@@ -17,6 +17,10 @@ abstract_solver *new_glpk_solver(bool use_exact) { return new glpk_solver(use_ex
 
 // solver initialisation
 int glpk_solver::init_solver(PSLProblem* problem, int other_vars) {
+	_solutionCount = 0;
+	_nodeCount = 0;
+	_timeCount = 0;
+
 	// Coefficient initialization
 	initialize_coeffs(problem->rankCount()+ other_vars);
 
@@ -100,19 +104,30 @@ int glpk_solver::solve() {
 	mip_params.cov_cuts = GLP_ON;
 	mip_params.clq_cuts = GLP_ON;
 	mip_params.presolve = GLP_ON;
-	mip_params.binarize = GLP_ON;
+	mip_params.binarize = GLP_OFF;
+	/* MIP time limit */
+	mip_params.tm_lim = time_limit * 1000;
+	/* MIP node log display information */
+	mip_params.msg_lev = verbosity >= SEARCH ? GLP_MSG_ALL : verbosity >= VERBOSE ? GLP_MSG_ON : GLP_MSG_OFF;
 
+	time_t ptime = time(NULL);
+	time_t ctime = ptime;
+	_nodeCount = -1;
+	_solutionCount = -1;
 	for (int k = 0; k < nb_objectives; k++) {
 
 		glp_cpx_basis(lp);
+		ptime=ctime;
 
 		if (status == 0) status = glp_intopt(lp, &mip_params);
+		ctime= time(NULL);
+		_timeCount += difftime(ctime, ptime);
 
 		if (k + 1 < nb_objectives) {
 			// Get objective value
 			CUDFcoefficient objval = objective_value();
 
-			if (verbosity > 0) printf(">>> Objective %d value : "CUDFflags"\n", k, objval);
+			if (verbosity >= DEFAULT) printf(">>> Objective %d value : "CUDFflags"\n", k, objval);
 
 			// Reset objective i coefficients
 			for (int i = 1; i < objectives[k]->nb_coeffs + 1; i++)
@@ -127,7 +142,12 @@ int glpk_solver::solve() {
 			glp_set_row_bnds(lp, irow, GLP_FX, objval, objval);
 			glp_set_mat_row(lp, irow, objectives[k]->nb_coeffs, objectives[k]->sindex, objectives[k]->coefficients);
 
-			if (OUTPUT_MODEL) glp_write_lp(lp, NULL, "glpkpbs1.lp");
+			// Output model to file (when requested)
+			if (verbosity >= VERBOSE) {
+				char buffer[1024];
+				sprintf(buffer, "cplexpb-%d.lp", k);
+				writelp(buffer);
+			}
 		}
 	}
 	if (status == 0)  return 1; else return 0;
@@ -138,9 +158,6 @@ CUDFcoefficient glpk_solver::objective_value() { return (CUDFcoefficient)nearbyi
 
 // solution initialisation
 int glpk_solver::init_solutions() { return 0; }
-
-// return the status of a package within the final configuration
-//CUDFcoefficient glpk_solver::get_solution(CUDFVersionedPackage *package) { return (CUDFcoefficient)nearbyint(glp_mip_col_val(lp, package->rank+1)); }
 
 // initialize objective function
 int glpk_solver::begin_objectives(void) { 
@@ -167,7 +184,7 @@ int glpk_solver::add_objective(void) {
 }
 
 int glpk_solver::make_var(int rank) {
-	cout << rank << " " <<varname[rank] << " [" << lb[rank] <<  "," << ub[rank] << "] -> " << vartype[rank] <<endl;
+	//cout << rank << " " <<varname[rank] << " [" << lb[rank] <<  "," << ub[rank] << "] -> " << vartype[rank] <<endl;
 	glp_set_col_name(lp, rank, varname[rank]); // Set the colunm name
 	int vtype = vartype[rank];
 	int btype = GLP_DB;
@@ -184,7 +201,6 @@ int glpk_solver::end_objectives(void) {
 	for (int i = 1; i <= nb_vars; i++) {
 		make_var(i);
 	}
-
 	// Set objective 0 as the actual objective function
 	for (int k = 1; k < objectives[0]->nb_coeffs + 1; k++) glp_set_obj_coef(lp, objectives[0]->sindex[k], objectives[0]->coefficients[k]);
 
@@ -198,16 +214,7 @@ int glpk_solver::begin_add_constraints(void) { return 0; }
 int glpk_solver::new_constraint(void) { reset_coeffs(); return 0; }
 
 // get the package coefficient of the current constraint
-//CUDFcoefficient glpk_solver::get_constraint_coeff(CUDFVersionedPackage *package) { return (CUDFcoefficient)get_coeff(package); }
-
-// get the package coefficient of the current constraint
 CUDFcoefficient glpk_solver::get_constraint_coeff(int rank) { return (CUDFcoefficient)get_coeff(rank); }
-
-// set package coefficient of the current constraint
-//int glpk_solver::set_constraint_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) {
-//  set_coeff(package, value);
-//  return 0;
-//}
 
 // set column coefficient of the current constraint
 int glpk_solver::set_constraint_coeff(int rank, CUDFcoefficient value) { 
@@ -247,8 +254,12 @@ int glpk_solver::add_constraint_eq(CUDFcoefficient bound) {
 
 // finalize constraints
 int glpk_solver::end_add_constraints(void) { 
-	if (verbosity >= VERBOSE) glp_write_lp(lp, NULL, "glpkpb.lp");
+	if (verbosity >= VERBOSE) writelp(C_STR("glpkpb.lp"));
 	return 0;
 }
 
+int glpk_solver::objectiveCount()
+{
+	return objectives.size();
+}
 #endif

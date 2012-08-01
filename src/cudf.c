@@ -20,7 +20,7 @@ PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
 int verbosity = DEFAULT;
-double time_limit = 600; // 10 mn per subproblem
+int time_limit = 1200; // 20 mn per subproblem
 
 template <typename T>
 T* makeCombiner(CriteriaList* criteria, char* name) {

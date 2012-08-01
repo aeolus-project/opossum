@@ -1,5 +1,6 @@
 #Opossum files
 cplexpb*.lp
+glpkpb*.lp
 cplexpb*.dot
 sol-cplex.xml
 sol-*.dot

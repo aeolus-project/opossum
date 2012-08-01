@@ -36,11 +36,12 @@ public:
 	// set variable type to bool and its name to name (must be used before end_objectives)
 	int set_boolvar(int rank, char* name);
 
-	// set the GLPK variables using internal informations
-	int make_var(int rank);
 
 	// Write the lp on a file
 	int writelp(char *filename);
+
+	// get the number of objectives (or sub-problems).
+	int objectiveCount();
 
 	// Solve the problem
 	int solve();
@@ -92,6 +93,12 @@ public:
 		//all_versioned_packages = (CUDFVersionedPackageList *)NULL;
 		lb = ub = (CUDFcoefficient *)NULL;
 	}
+
+private:
+
+	// set the GLPK variables using internal informations
+	int make_var(int rank);
+
 };
 
 #endif

@@ -106,23 +106,23 @@ public:
 	virtual CUDFcoefficient get_solution(int k) { return 0; };
 
 	// get the number of solutions found at the end of solving
-	virtual int solutionCount() { return 0; };
-
+	int solutionCount(){return _solutionCount;}
 	// get the number of objectives (or sub-problems).
-	virtual int objectiveCount() { return 0; };
-
+	virtual int objectiveCount() {return 0;}
 	// get the number of nodes at the end of solving
-	virtual int nodeCount() { return 0; };
-
+	int nodeCount() {return _nodeCount;}
 	// get the solving time.
-	virtual double timeCount() { return 0; };
-
+	double timeCount() {return _timeCount;}
 
 	// ******************************************************************
 	// abstract solver destructor
 	virtual ~abstract_solver() {};
 
 protected:
+
+	int _solutionCount;
+	int _nodeCount;
+	double _timeCount;
 
 	virtual int init_vars(PSLProblem *problem, int nb_vars) {
 		///////////////////////
@@ -182,6 +182,9 @@ protected:
 		strcpy(name, buffer);
 		return name;
 	}
+
+
+
 };
 
 //// Print out a solution
