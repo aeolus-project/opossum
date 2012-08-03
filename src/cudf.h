@@ -25,7 +25,7 @@
 using namespace std;
 
 // Handling the time limit per subproblem
-extern int time_limit;
+extern unsigned int time_limit;
 ;
 //Solver status
 #define ERROR 0

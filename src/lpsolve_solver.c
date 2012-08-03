@@ -218,16 +218,8 @@ int lpsolve_solver::begin_add_constraints(void) {
 int lpsolve_solver::new_constraint(void) { reset_coeffs(); return 0; }
 
 // get package coefficient of the constraint under construction
-//CUDFcoefficient lpsolve_solver::get_constraint_coeff(CUDFVersionedPackage *package) { return (CUDFcoefficient)get_coeff(package); }
-
-// get package coefficient of the constraint under construction
 CUDFcoefficient lpsolve_solver::get_constraint_coeff(int rank) { return (CUDFcoefficient)get_coeff(rank); }
 
-// set package coefficient of the constraint under construction
-//int lpsolve_solver::set_constraint_coeff(CUDFVersionedPackage *package, CUDFcoefficient value) {
-//  set_coeff(package, value);
-//  return 0;
-//}
 
 // set package coefficient of the constraint under construction
 int lpsolve_solver::set_constraint_coeff(int rank, CUDFcoefficient value) { 

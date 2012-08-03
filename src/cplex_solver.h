@@ -102,6 +102,7 @@ public:
 	// solver creation
 	cplex_solver(void) {
 		solution = (double *)NULL;
+		lb = ub = (CUDFcoefficient *)NULL;
 	}
 
 };

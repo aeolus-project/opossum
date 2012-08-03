@@ -20,7 +20,7 @@ PSLProblem* current_problem = NULL;
 PSLProblem* the_problem = NULL;
 
 int verbosity = DEFAULT;
-int time_limit = 1200; // 20 mn per subproblem
+unsigned int time_limit = 1200; // 20 mn per subproblem
 
 template <typename T>
 T* makeCombiner(CriteriaList* criteria, char* name) {
@@ -415,7 +415,7 @@ int main(int argc, char *argv[]) {
 					got_output=true;
 				}
 			} else if (strncmp(argv[i], "-t", 2) == 0) {
-				sscanf(argv[i]+2, "%lf", &time_limit);
+				sscanf(argv[i]+2, "%u", &time_limit);
 			} else if (strncmp(argv[i], "-v", 2) == 0) {
 				sscanf(argv[i]+2, "%u", &verbosity);
 			} else if (strncmp(argv[i], "-s",2) == 0) {
@@ -597,10 +597,11 @@ int main(int argc, char *argv[]) {
 
 	if(status == OPTIMUM || status == SAT) {
 		solver->init_solutions();
-		double obj = solver->objective_value();
 		if(verbosity >= QUIET) {
 			out << "o " << solver->objective_value() << endl;
-
+			if(verbosity >= DEFAULT) {
+				print_solution(out, the_problem, solver);
+			}
 		}
 	}
 
@@ -610,7 +611,7 @@ int main(int argc, char *argv[]) {
 		out << "d NBSOLS " << solver->solutionCount() << endl;
 		if(status == OPTIMUM || status == SAT) {
 			out << "d OBJECTIVE " << solver->objective_value() << endl; //For compatibility with grigrid scripts
-			print_solution(out, the_problem, solver);
+			//print_solution(out, the_problem, solver);
 			print_messages(out, the_problem, solver);
 			if(verbosity >= VERBOSE) {
 				export_solution(the_problem, solver, obj_descr);
@@ -715,11 +716,11 @@ extern void print_generator_summary(ostream & out, PSLProblem *problem)
 void print_solution(ostream & out, PSLProblem *problem, abstract_solver *solver)
 {
 	int cpt = 0;
-	out << "s";
+	out << "v";
 	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
 		int servers = solver->get_solution(problem->rankX(*i));
 		if(servers > 0) {
-			out << ( ++cpt % 10 == 0 ? "\ns " : " ");
+			out << ( ++cpt % 10 == 0 ? "\nv " : " ");
 			//Print #pservers
 			out << i->getID() << "[" << servers;
 			//Print pservers capacity

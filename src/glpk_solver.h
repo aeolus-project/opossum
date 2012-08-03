@@ -39,17 +39,22 @@ public:
 
 	// Write the lp on a file
 	int writelp(char *filename);
+	int writesol(char *filename);
 
 	// get the number of objectives (or sub-problems).
 	int objectiveCount();
 
+	// the callback function just figures out what object called glpk and forwards the call.
+	static void callback(glp_tree *tree, void *info);
 	// Solve the problem
 	int solve();
+
 	// Get the objective value (final one)
 	CUDFcoefficient objective_value();
 	// Init solutions (required before calling get_solution)
 	int init_solutions();
-
+	// Get the solution for a column
+	CUDFcoefficient get_solution(int k);
 
 	// Init the objective function definitions
 	int begin_objectives(void);
@@ -87,6 +92,9 @@ public:
 	int *vartype;       // array of variable types
 	char **varname;      // array of variable names
 
+	// Store the solutions
+	double *solution;
+
 	// solver creation
 	glpk_solver(bool use_exact) {
 		lp = (glp_prob *)NULL;
@@ -95,7 +103,7 @@ public:
 	}
 
 private:
-
+	int _subNodeCount;
 	// set the GLPK variables using internal informations
 	int make_var(int rank);
 

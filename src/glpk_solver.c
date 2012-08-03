@@ -93,6 +93,24 @@ int glpk_solver::set_boolvar(int rank, char* name) {
 // write the problem into a file
 int glpk_solver::writelp(char *filename) { glp_write_lp(lp, NULL, filename); return 0; }
 
+void glpk_solver::callback(glp_tree *tree, void *info){
+	glpk_solver* obj=(glpk_solver*) info;
+	assert(obj);
+	switch (glp_ios_reason(tree)) {
+	// The best bound and the number of nodes change only when GLPK
+	// branches, generates cuts or finds an integer solution.
+	case GLP_IBINGO:
+		obj->_solutionCount++;
+		break;
+	case GLP_ISELECT:
+		// Get total number of nodes
+		glp_ios_tree_size(tree, NULL, NULL, &(obj->_subNodeCount));
+		break;
+	//case GLP_IROWGEN:
+
+	}
+}
+
 // solve the current lp problem
 int glpk_solver::solve() {
 	int status = 0, nb_objectives = objectives.size();
@@ -109,19 +127,35 @@ int glpk_solver::solve() {
 	mip_params.tm_lim = time_limit * 1000;
 	/* MIP node log display information */
 	mip_params.msg_lev = verbosity >= SEARCH ? GLP_MSG_ALL : verbosity >= VERBOSE ? GLP_MSG_ON : GLP_MSG_OFF;
+	/* we pass the address of the current object into glpk along with the callback function */
+	mip_params.cb_func=glpk_solver::callback;
+	mip_params.cb_info=this;
 
 	time_t ptime = time(NULL);
 	time_t ctime = ptime;
-	_nodeCount = -1;
-	_solutionCount = -1;
 	for (int k = 0; k < nb_objectives; k++) {
 
 		glp_cpx_basis(lp);
 		ptime=ctime;
-
-		if (status == 0) status = glp_intopt(lp, &mip_params);
+		status = glp_intopt(lp, &mip_params);
 		ctime= time(NULL);
 		_timeCount += difftime(ctime, ptime);
+		_nodeCount += _subNodeCount;
+		switch (status) {
+		case 0: {
+			switch (glp_mip_status(lp)) {
+			case GLP_UNDEF:return _solutionCount > 0 ? SAT : UNKNOWN;
+			case GLP_OPT:break;
+			case GLP_FEAS:return SAT;
+			case GLP_NOFEAS: return _solutionCount > 0 ? SAT : UNSAT;
+			default:return ERROR;
+			}
+			break;
+		}
+		case GLP_ETMLIM: return _solutionCount > 0 ? SAT : UNKNOWN;
+		default:
+			return ERROR;
+		}
 
 		if (k + 1 < nb_objectives) {
 			// Get objective value
@@ -150,37 +184,61 @@ int glpk_solver::solve() {
 			}
 		}
 	}
-	if (status == 0)  return 1; else return 0;
+	return OPTIMUM;
 }
 
 // get objective function value
 CUDFcoefficient glpk_solver::objective_value() { return (CUDFcoefficient)nearbyint(glp_mip_obj_val(lp)); }
 
 // solution initialisation
-int glpk_solver::init_solutions() { return 0; }
+int glpk_solver::init_solutions() {
+	int cur_numcols = glp_get_num_cols(lp);
+
+	if (solution != (double *)NULL) free(solution);
+
+	if ((solution = (double *)malloc((nb_vars+1)*sizeof(double))) == (double *)NULL) {
+		fprintf (stderr, "glpk_solver: init_solutions: cannot get enough memory to store solutions.\n");
+		exit(-1);
+	}
+	for (int k = 1; k < cur_numcols; ++k) {
+		solution[k] = glp_mip_col_val(lp,k );
+	}
+	if (verbosity >= VERBOSE) {
+		// Output model to file (when requested)
+		writesol(C_STR("sol-glpk.txt"));
+	}
+	return 0;
+}
+
+CUDFcoefficient glpk_solver::get_solution(int k) {  return (CUDFcoefficient)nearbyint(solution[k+1]); }
 
 // initialize objective function
-int glpk_solver::begin_objectives(void) { 
+int glpk_solver::begin_objectives(void) {
 	glp_set_obj_dir(lp, GLP_MIN);  // Problem is minimization
 	return 0;
 }
 
-// return the package coefficient of the objective function 
+// return the package coefficient of the objective function
 CUDFcoefficient glpk_solver::get_obj_coeff(int rank) { return (CUDFcoefficient)get_coeff(rank); }
 
 // set column coefficient to a value
 int glpk_solver::set_obj_coeff(int rank, CUDFcoefficient value) { set_coeff(rank, value); return 0; }
 
-// initialize an additional objective function 
+// initialize an additional objective function
 int glpk_solver::new_objective(void) {
 	reset_coeffs();
 	return 0;
 }
 
 // add an additional objective function
-int glpk_solver::add_objective(void) { 
+int glpk_solver::add_objective(void) {
 	push_obj();
 	return 0;
+}
+
+int glpk_solver::writesol(char *filename)
+{
+	return glp_print_mip(lp, filename);
 }
 
 int glpk_solver::make_var(int rank) {
@@ -217,7 +275,7 @@ int glpk_solver::new_constraint(void) { reset_coeffs(); return 0; }
 CUDFcoefficient glpk_solver::get_constraint_coeff(int rank) { return (CUDFcoefficient)get_coeff(rank); }
 
 // set column coefficient of the current constraint
-int glpk_solver::set_constraint_coeff(int rank, CUDFcoefficient value) { 
+int glpk_solver::set_constraint_coeff(int rank, CUDFcoefficient value) {
 	set_coeff(rank, value);
 	return 0;
 }
@@ -253,7 +311,7 @@ int glpk_solver::add_constraint_eq(CUDFcoefficient bound) {
 }
 
 // finalize constraints
-int glpk_solver::end_add_constraints(void) { 
+int glpk_solver::end_add_constraints(void) {
 	if (verbosity >= VERBOSE) writelp(C_STR("glpkpb.lp"));
 	return 0;
 }
