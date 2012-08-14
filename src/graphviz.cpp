@@ -226,7 +226,7 @@ void path2dotty(ostream& out, PSLProblem & problem, abstract_solver & solver, un
 			while(j !=  i->nend()) {
 				CUDFcoefficient connections = solver.get_solution(problem.rankZ(*i,*j, stage));
 				if(connections > 0) {
-					double bandwidth = solver.get_solution(problem.rankB(*i,*j, stage));
+					double bandwidth = solver.get_real_solution(problem.rankB(*i,*j, stage));
 					//	cout << ">>>>>" << bandwidth << endl;
 					bandwidth/=connections;
 					out.precision(1);

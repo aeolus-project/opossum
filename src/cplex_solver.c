@@ -311,6 +311,7 @@ int cplex_solver::init_solutions() {
 
 
 CUDFcoefficient cplex_solver::get_solution(int k) {  return (CUDFcoefficient)nearbyint(solution[k]); }
+double cplex_solver::get_real_solution(int k) {  return solution[k]; }
 
 // initialize the objective function
 int cplex_solver::begin_objectives(void) { 

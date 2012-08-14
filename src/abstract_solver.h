@@ -106,6 +106,8 @@ public:
 
 	// get the status of a rank in the final configuration
 	virtual CUDFcoefficient get_solution(int k) { return 0; };
+	// get the status of a rank in the final configuration
+	virtual double get_real_solution(int k) { return 0; };
 
 	// get the number of solutions found at the end of solving
 	virtual int solutionCount() { return 0; };

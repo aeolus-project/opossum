@@ -1,4 +1,3 @@
-
 /*******************************************************/
 /* CUDF solver: glpk_solver.c                          */
 /* Interface to the GLPK solver                        */

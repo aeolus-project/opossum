@@ -82,7 +82,8 @@ public:
 	int init_solutions();
 	// Get the solution for a column
 	CUDFcoefficient get_solution(int k);
-
+	// get the real solution for a column
+	double get_real_solution(int k);
 	// get the number of solutions found at the end of solving
 	int solutionCount(){return _solutionCount;}
 	// get the number of objectives (or sub-problems).
