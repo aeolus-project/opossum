@@ -20,8 +20,6 @@ public:
 	// Solver initialization
 	int init_solver(PSLProblem* problem, int other_vars);
 
-	// Does the solver use integer variables
-	bool has_intvars();
 	// Allocate some columns for integer variables
 	int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 	//set variable type to int and its range to [lower, upper] (must be used before end_objectives)

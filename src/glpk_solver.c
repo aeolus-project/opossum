@@ -39,9 +39,6 @@ int glpk_solver::init_solver(PSLProblem* problem, int other_vars) {
   return 0;
 }
 
-// Does the solver provides integer variables
-bool glpk_solver::has_intvars() { return true; }
-
 // Set range of an integer variable
 int glpk_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 
   lb[rank+1] = lower;

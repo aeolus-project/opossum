@@ -109,10 +109,6 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	return 0;
 }
 
-
-// cplex can handle integer variables
-bool cplex_solver::has_intvars() { return true; }
-
 // set integer variable range (must be used before end_objective)
 int cplex_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 
 	lb[rank] = lower;

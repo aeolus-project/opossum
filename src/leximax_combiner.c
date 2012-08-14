@@ -100,10 +100,10 @@ int leximax_combiner::constraint_generation() {
 
 // Combiner initialization
 void leximax_combiner::initialize(PSLProblem *problem, abstract_solver *solver) {
-  if (! solver->has_intvars()) {
-    fprintf(stderr, "leximax_combiner: initialize: leximax combiner requires integer variables.\n");
-    exit(-1);
-  }
+//  if (! solver->has_intvars()) {
+//    fprintf(stderr, "leximax_combiner: initialize: leximax combiner requires integer variables.\n");
+//    exit(-1);
+//  }
   this->solver = solver;
   for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) (*crit)->initialize(problem, solver);
 }

@@ -22,8 +22,6 @@ public:
 	virtual int init_solver(PSLProblem *problem, int other_vars) { return 0; };
 
 	// ******************************************************************
-	// does the solver has the capability to handle integer variables
-	virtual bool has_intvars() { return false; };
 
 	// set variable type to int and its range to [lower, upper] (must be used before end_objectives)
 	virtual int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { return 0; }

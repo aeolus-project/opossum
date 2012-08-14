@@ -230,9 +230,6 @@ CUDFcoefficient lp_solver::objective_value() { return objval; }
 // solution initialisation
 int lp_solver::init_solutions() { return 0; }
 
-// lp solvers have integer variables
-bool lp_solver::has_intvars() { return true; }
-
 // set integer variable range (must be used before end_objective)
 int lp_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 
 	lb[rank] = lower;
