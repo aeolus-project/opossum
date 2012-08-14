@@ -1,4 +1,3 @@
-
 /*******************************************************/
 /* CUDF solver: criteria.h                             */
 /* gather all criteria related include files           */

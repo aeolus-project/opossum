@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: lpsolve_solver.c                       */
+/* oPoSSuM solver: lpsolve_solver.c                    */
 /* Interface to the LPSOLVE solver                     */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 #ifdef USELPSOLVE

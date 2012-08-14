@@ -1,3 +1,8 @@
+/*******************************************************/
+/* oPoSSuM solver: constraint_generation.c             */
+/* constraint generation for PSL problems              */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
+/*******************************************************/
 
 // translate a PSL problem in a MILP problem
 

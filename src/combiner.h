@@ -1,4 +1,3 @@
-
 /*******************************************************/
 /* CUDF solver: combiner.h                             */
 /* gather all combiner related include files           */

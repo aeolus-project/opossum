@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: lpsolve_solver.h                       */
+/* oPoSSum solver: lpsolve_solver.h                    */
 /* Concrete class for the Lpsolve solver               */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 // concrete class which implements an interface to lpsolve

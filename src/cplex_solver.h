@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: cplex_solver.h                         */
+/* oPoSSuM solver: cplex_solver.h                      */
 /* Concrete class for the cplex solver                 */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 

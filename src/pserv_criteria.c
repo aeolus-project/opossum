@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: pserv_criteria.h                         */
+/* oPoSSum solver: pserv_criteria.h                    */
 /* Implementation the pserv criteria                   */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 

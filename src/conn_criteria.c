@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: conn_criteria.c                       */
+/* oPoSSuM solver: conn_criteria.c                     */
 /* Implementation of the conn criteria                 */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 

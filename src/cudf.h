@@ -1,12 +1,11 @@
-
 /*******************************************************/
-/* CUDF solver: cudf.h                                 */
-/* Handling of CUDF problem files                      */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* oPoSSuM solver: cudf.h                              */
+/* Handling of PSL problem files                       */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 
-// main CUDF include file
+// main include file
 
 #ifndef _CUDF_H
 #define _CUDF_H

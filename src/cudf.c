@@ -1,7 +1,7 @@
 /*******************************************************/
-/* CUDF solver: cudf.c                                 */
-/* main of the cudf solver                             */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* oPoSSuM solver: cudf.c                              */
+/* Main for PSL problems                               */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 #include <cudf.h>

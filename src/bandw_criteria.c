@@ -1,7 +1,7 @@
 /*******************************************************/
-/* CUDF solver: bandw_criteria.h                       */
+/* oPoSSuM solver: bandw_criteria.c                    */
 /* Implementation of the bandw criteria                */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 #include <bandw_criteria.h>

@@ -1,7 +1,7 @@
 /*******************************************************/
-/* CUDF solver: glpk_solver.c                          */
+/* oPoSSuM solver: glpk_solver.c                       */
 /* Interface to the GLPK solver                        */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 #ifdef USEGLPK

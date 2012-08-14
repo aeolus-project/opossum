@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: lp_solver.h                            */
+/* oPoSSuM solver: lp_solver.h                         */
 /* Concrete class for lp format based solvers          */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 // concrete class which implements an interface to a lp (cplex format) compliant solver

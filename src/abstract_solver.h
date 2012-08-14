@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: abstract_solver.h                      */
+/* oPoSSuM solver: abstract_solver.h                   */
 /* Abstract class for solvers                          */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 // Solver abstraction
