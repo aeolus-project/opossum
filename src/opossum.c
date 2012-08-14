@@ -4,7 +4,7 @@
 /* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
-#include <cudf.h>
+#include <opossum.h>
 #include <constraint_generation.h>
 #include <criteria.h>
 #include <combiner.h>

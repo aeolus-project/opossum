@@ -10,7 +10,7 @@
 #ifndef _ABSTRACT_SOLVER_H
 #define _ABSTRACT_SOLVER_H
 
-#include <cudf.h>
+#include <opossum.h>
 #include <stdarg.h>
 
 
