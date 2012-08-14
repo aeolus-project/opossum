@@ -9,7 +9,7 @@ FOREACH (SRC_FILE ${test_SRCS})
 ENDFOREACH (SRC_FILE ${test_SRCS})
 
 #ADD boost_unit_test_framework because it is not set on ${Boost_LIBRARIES}
-SET (test_LIBS boost_unit_test_framework ${Boost_LIBRARIES} ${XML2_LIBRARY_DIRS} ilocplex cplex concert m pthread) #boost_random gexf xml2
+SET (test_LIBS boost_unit_test_framework ${Boost_LIBRARIES} ${GLPK_LIBRARIES} ${LPSOLVE_LIBRARIES} ${CPLEX_LIBRARIES})
 #SET (test_LIBS boost_unit_test_framework boost_random gexf xml2)
 SET (test_BIN ${PROJECT_NAME}-tests)
 

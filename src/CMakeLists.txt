@@ -10,7 +10,7 @@ FOREACH (SRC_FILE ${project_SRCS})
 	set_source_files_properties(${SRC_FILE} PROPERTIES LANGUAGE CXX)
 ENDFOREACH (SRC_FILE ${project_SRCS})
 
-SET (project_LIBS ${Boost_LIBRARIES} ${GLPK_LIBRARIES} ${LPSOLVE_LIBRARIES}  ilocplex cplex concert pthread m)
+SET (project_LIBS ${Boost_LIBRARIES} ${GLPK_LIBRARIES} ${LPSOLVE_LIBRARIES} ${CPLEX_LIBRARIES})
 SET (project_BIN ${PROJECT_NAME})
 
 #QT4_WRAP_CPP(project_MOC_SRCS_GENERATED ${project_MOC_HEADERS})

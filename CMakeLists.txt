@@ -81,7 +81,8 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 ################ CPLEX Lib Check ####################
-
+FIND_PACKAGE(CPLEX)
+INCLUDE_DIRECTORIES(${CPLEX_INCLUDE_DIRS})
 
 ################ GLPK Lib Check ####################
 FIND_PACKAGE(GLPK)
@@ -108,17 +109,17 @@ INCLUDE_DIRECTORIES(${CMAKE_INCLUDE_PATH})
 LINK_DIRECTORIES(${CMAKE_LINKER_PATH})
 
 #################### CPLEX #################### 
-SET(CPLEX_ROOT_DIR "/opt/ibm/ILOG/CPLEX_Studio_Academic123")
-message(STATUS "CPLEX_ROOT_DIR: ${CPLEX_ROOT_DIR}" )
-
-INCLUDE_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/include ${CPLEX_ROOT_DIR}/concert/include)
-
+#SET(CPLEX_ROOT_DIR "/opt/ibm/ILOG/CPLEX_Studio_Academic123")
+#message(STATUS "CPLEX_ROOT_DIR: ${CPLEX_ROOT_DIR}" )
+#
+#INCLUDE_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/include ${CPLEX_ROOT_DIR}/concert/include)
+#
 #Link with the good cplex library
-IF(${ARCH_SYSTEM} MATCHES "64" AND NOT FORCE_32)
-    LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86-64_sles10_4.1/static_pic ${CPLEX_ROOT_DIR}/concert/lib/x86-64_sles10_4.1/static_pic)
-ELSE()
-    LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86_sles10_4.1/static_pic ${CPLEX_ROOT_DIR}/concert/lib/x86_sles10_4.1/static_pic)
-ENDIF()
+#IF(${ARCH_SYSTEM} MATCHES "64" AND NOT FORCE_32)
+#    LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86-64_sles10_4.1/static_pic ${CPLEX_ROOT_DIR}/concert/lib/x86-64_sles10_4.1/static_pic)
+#ELSE()
+#    LINK_DIRECTORIES(${CPLEX_ROOT_DIR}/cplex/lib/x86_sles10_4.1/static_pic ${CPLEX_ROOT_DIR}/concert/lib/x86_sles10_4.1/static_pic)
+#ENDIF()
 
 #################### COMPILER FLAGS #################### 
 #Set environment variables to use solvers

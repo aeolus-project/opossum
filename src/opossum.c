@@ -34,15 +34,11 @@ T* makeCombiner(CriteriaList* criteria, char* name) {
 // underlying solver declaration
 // allows using solvers withour having to include the whole solver classes
 
-#ifdef USECPLEX
+
 extern abstract_solver *new_lp_solver(char *lpsolver);
-#endif
-//extern abstract_solver *new_ampl_solver(char *amplsolver);
+
 #ifdef USECPLEX 
 extern abstract_solver *new_cplex_solver();
-#endif
-#ifdef USEGUROBI
-extern abstract_solver *new_gurobi_solver();
 #endif
 #ifdef USELPSOLVE 
 extern abstract_solver *new_lpsolve_solver();
@@ -70,9 +66,6 @@ void print_help() {
 	fprintf(stderr, "solver options:\n");
 #ifdef USECPLEX
 	fprintf(stderr, "\t-cplex: use IBM ILOG Cplex solver\n");
-#endif
-#ifdef USEGUROBI
-	fprintf(stderr, "\t-gurobi: use Gurobi solver\n");
 #endif
 #ifdef USELPSOLVE
 	fprintf(stderr, "\t-lpsolve: use lpsolve solver\n");
@@ -481,10 +474,6 @@ int main(int argc, char *argv[]) {
 #ifdef USECPLEX
 			} else if (strcmp(argv[i], "-cplex") == 0) {
 				solver = new_cplex_solver();
-#endif
-#ifdef USEGUROBI
-			} else if (strcmp(argv[i], "-gurobi") == 0) {
-				solver = new_gurobi_solver();
 #endif
 #ifdef USELPSOLVE
 			} else if (strcmp(argv[i], "-lpsolve") == 0) {
