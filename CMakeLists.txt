@@ -80,10 +80,8 @@ FIND_PACKAGE (Boost REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
-################ XML2 Lib Check ####################
-FIND_PACKAGE(XML2 REQUIRED)
-INCLUDE_DIRECTORIES(${XML2_INCLUDE_DIRS})
-LINK_DIRECTORIES(${XML2_LIBRARY_DIRS})
+################ CPLEX Lib Check ####################
+
 
 ################ GLPK Lib Check ####################
 FIND_PACKAGE(GLPK)
