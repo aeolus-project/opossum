@@ -30,9 +30,6 @@ class lexleximax_combiner: public abstract_combiner {
   // Combiner constraint generation
   int constraint_generation();
 
-  // Does the combiner allows problem reduction
-  bool can_reduce();
-
   // Initialization
   void initialize(PSLProblem *problem, abstract_solver *solver);
 

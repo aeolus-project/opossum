@@ -35,9 +35,6 @@ public:
 	// Gives the lower bound of the criteria objective
 	virtual CUDFcoefficient lower_bound() { return 0; };
 
-	// Does this criteria allows problem reduction ?
-	virtual bool can_reduce(CUDFcoefficient lambda) { return true; }
-
 	// Method called to let the criteria initializes itself
 	virtual void initialize(PSLProblem *problem, abstract_solver *solver) { };
 	// Method called to initialize criteria variables

@@ -113,13 +113,4 @@ void lexleximin_combiner::initialize(PSLProblem *problem, abstract_solver *solve
   for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) (*crit)->initialize(problem, solver);
 }
 
-// Does the combiner allows problem reduction
-bool lexleximin_combiner::can_reduce() { 
-  bool result = true;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(+1);
-  return result;
-}
-
 

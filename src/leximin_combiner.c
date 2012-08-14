@@ -192,23 +192,4 @@ CUDFcoefficient leximin_combiner::lower_bound() {
   return lb;
 }
 
-// Does the combiner/criteria allows problem reduction
-bool leximin_combiner::can_reduce() { 
-  bool result = true;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(lambda_crit);
-  return result;
-}
-
-// Does the combiner/criteria allows problem reduction (taking into account lambda multiplier)
-bool leximin_combiner::can_reduce(CUDFcoefficient lambda) {
-  bool result = true;
-  CUDFcoefficient l = lambda * lambda_crit;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(l);
-  return result;
-}
-
 

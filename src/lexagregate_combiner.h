@@ -41,9 +41,6 @@ class lexagregate_combiner: public abstract_combiner, public abstract_criteria {
   CUDFcoefficient upper_bound();
   CUDFcoefficient lower_bound();
 
-  // does this combiner/criteria allows problem reduction
-  bool can_reduce();
-  bool can_reduce(CUDFcoefficient lambda);
 
   // initialization
   void initialize(PSLProblem *problem, abstract_solver *solver);

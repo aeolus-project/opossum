@@ -36,13 +36,6 @@ int lexicographic_combiner::constraint_generation() {
   return 0;
 }
 
-// Does the combiner/criteria allows problem reduction
-bool lexicographic_combiner::can_reduce() {
-  bool result = true;
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++)
-    result = result && (*crit)->can_reduce(+1);
-  return result;
-}
 
 // Combiner initialization
 void lexicographic_combiner::initialize(PSLProblem *problem, abstract_solver *solver) {

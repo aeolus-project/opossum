@@ -27,9 +27,6 @@ class lexsemiagregate_combiner: public abstract_combiner {
 
   int constraint_generation();
 
-  // does this combiner allows problem reduction
-  bool can_reduce();
-
   // lexsemiagregate initialization
   void initialize(PSLProblem *problem, abstract_solver *solver);
 
