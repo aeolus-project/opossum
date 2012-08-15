@@ -51,7 +51,7 @@ extern abstract_solver *new_glpk_solver(bool use_exact);
 void print_help() {
 	fprintf(
 			stderr,
-			"This software is distributed under a modified BSD licence (see LICENCE file) and was\n"
+			"This software is distributed under a modified BSD licence (see LICENCE file).\n"
 			"oPoSSuM is a c++ library for solving the multiobjective package location server problem with a mathematical programming solver.\n"
 			"oPoSSum was partially supported by the Agence National de la Recherche (Aeolus project -- ANR-2010-SEGI-013-01).\n"
 	);
