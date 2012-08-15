@@ -10,20 +10,22 @@
 
 // Criteria initialization
 void pserv_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
-	pslp_criteria::initialize(problem, solver);
 	pserv_range.set_min_limit(0);
 	pserv_range.set_max_limit(problem->serverTypeCount()-1);
 	level_range.set_min_limit(0);
-	_upper_bound = 0;
-	for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
-			if(isRLSelected(*i)) {
-				for (int k = pserv_range.min(); k <= pserv_range.max(); ++k) {
-					_upper_bound += i->getType()->getServerCapacity(k);
-				}
-			}
-		}
+	pslp_criteria::initialize(problem, solver);
 }
 
+void pserv_criteria::initialize_upper_bound(PSLProblem *problem) {
+	_upper_bound = 0;
+		for(NodeIterator i = problem->nbegin() ; i!=  problem->nend() ; i++) {
+				if(isRLSelected(*i)) {
+					for (int k = pserv_range.min(); k <= pserv_range.max(); ++k) {
+						_upper_bound += i->getType()->getServerCapacity(k);
+					}
+				}
+			}
+}
 // Computing the number of columns required to handle the criteria
 int pserv_criteria::set_variable_range(int first_free_var) {
 	return first_free_var;

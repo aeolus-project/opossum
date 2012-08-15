@@ -466,7 +466,7 @@ int main(int argc, char *argv[]) {
 						exit(-1);
 					} else
 						fprintf(stderr, "ERROR: -lp option is not yet implemented\n");
-						exit(-1);
+					exit(-1);
 					//solver = new_lp_solver(argv[i]);
 				} else {
 					fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver>\n");
@@ -495,6 +495,11 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	// if no objective, abort
+	if(! combiner) {
+		fprintf(stderr, "ERROR: missing objective specification.\n");
+		exit(-1);
+	}
 	// if no input file defined, then use stdin
 	if (! got_input) {
 		switch (parse_pslp(cin)) {
