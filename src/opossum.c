@@ -36,7 +36,6 @@ T* makeCombiner(CriteriaList* criteria, char* name) {
 
 
 extern abstract_solver *new_lp_solver(char *lpsolver);
-
 #ifdef USECPLEX 
 extern abstract_solver *new_cplex_solver();
 #endif
@@ -466,7 +465,9 @@ int main(int argc, char *argv[]) {
 						fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver> and %s does not exist.\n", argv[i]);
 						exit(-1);
 					} else
-						solver = new_lp_solver(argv[i]);
+						fprintf(stderr, "ERROR: -lp option is not yet implemented\n");
+						exit(-1);
+					//solver = new_lp_solver(argv[i]);
 				} else {
 					fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver>\n");
 					exit(-1);
@@ -477,11 +478,15 @@ int main(int argc, char *argv[]) {
 #endif
 #ifdef USELPSOLVE
 			} else if (strcmp(argv[i], "-lpsolve") == 0) {
-				solver = new_lpsolve_solver();
+				fprintf(stderr, "ERROR: -lpsolve option is not yet implemented\n");
+				exit(-1);
+				//solver = new_lpsolve_solver();
 #endif
 #ifdef USEGLPK
 			} else if (strcmp(argv[i], "-glpk") == 0) {
-				solver = new_glpk_solver(false);
+				fprintf(stderr, "ERROR: -glpk option is not yet implemented\n");
+				exit(-1);
+				//solver = new_glpk_solver(false);
 #endif
 			} else {
 				fprintf(stderr, "ERROR: unrecognized option %s\n", argv[i]);
@@ -499,7 +504,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	//Generate problem instance
-	the_problem->setSeed(*seed);
+	if(seed) the_problem->setSeed(*seed);
 	the_problem->generateNetwork(HIERARCHIC);
 
 	ostream& out = got_output ? output_file : cout;
@@ -510,7 +515,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (verbosity >= DEFAULT) {
 		print_problem(out, the_problem);
-		out << "c " << *seed << " SEED" <<endl;
+		if(seed) out << "c " << *seed << " SEED" <<endl;
 		out << "================================================================" << endl;
 	}
 

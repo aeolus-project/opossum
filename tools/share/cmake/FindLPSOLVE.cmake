@@ -1,5 +1,5 @@
-## Detect lpsolve
 INCLUDE(CheckCXXSourceCompiles)
+INCLUDE(FindPackageHandleStandardArgs)
 
 SET(LPSOLVE_INCLUDE_DIRS "" CACHE STRING "Full path to the lpsolve headers")
 MARK_AS_ADVANCED(LPSOLVE_INCLUDE_DIRS)
@@ -30,10 +30,11 @@ IF (LPSOLVE_INCLUDE_PATH)
 
     FIND_LIBRARY(TMP_LPSOLVE_LIBRARY_DIRS lpsolve55 ${LPSOLVE_LIBRARY_DIRS} ${LPSOLVE_LIB_TRIALPATH})
     SET(LPSOLVE_LIBRARY_DIRS ${TMP_LPSOLVE_LIBRARY_DIRS} CACHE STRING "Full path to the lpsolve55 library (including the library)" FORCE)
+ENDIF()
 
-    INCLUDE(FindPackageHandleStandardArgs)
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS(LPSOLVE DEFAULT_MSG LPSOLVE_LIBRARY_DIRS LPSOLVE_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LPSOLVE DEFAULT_MSG LPSOLVE_LIBRARY_DIRS LPSOLVE_INCLUDE_DIRS)
 
+IF(LPSOLVE_FOUND)
     ## Try to find out if lpsolve can link standalone
     SET(LPSOLVE_TRY_CODE "#include <lpsolve/lp_lib.h>
         int main(int /*argc*/, char** /*argv*/)
@@ -63,7 +64,5 @@ IF (LPSOLVE_INCLUDE_PATH)
             MESSAGE(FATAL_ERROR "Could not link against lpsolve55!")
         ENDIF()
     ENDIF()
-ENDIF()
 SET(LPSOLVE_LIBRARIES ${LPSOLVE_LIBRARY_DIRS})
-
-
+ENDIF()

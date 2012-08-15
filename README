@@ -25,8 +25,8 @@ oPoSSum was partially supported by the Agence National de la Recherche (Aeolus p
   * Cross-platform Make (CMake) v2.6.2+
   * GNU Make or equivalent.
   * GCC or an alternative, reasonably conformant C++ compiler.
-  * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES]
-  * GLPK Library
+  * Boost C++ Libraries v1.47+ [HEADERS and LIBRARIES]
+  * GLPK Library v4.45+
   * LPSOLVE Library v5.5+
   
   	> Fedora :
@@ -35,7 +35,7 @@ oPoSSum was partially supported by the Agence National de la Recherche (Aeolus p
 	  	yum install boost-devel glpk-devel suitesparse-devel 
   	
   	> Ubuntu :
- 		apt-get install make cmake build-essential libglpk-dev liblpsolve55-dev
+ 		apt-get install make cmake build-essential libboost-dev libboost-test-dev libglpk-dev liblpsolve55-dev
  		 
   * CPLEX [HEADERS and LIBRARIES] with licence : 
    		http://www-01.ibm.com/software/integration/optimization/cplex-optimization-studio/
