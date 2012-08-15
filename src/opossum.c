@@ -34,15 +34,10 @@ T* makeCombiner(CriteriaList* criteria, char* name) {
 // underlying solver declaration
 // allows using solvers withour having to include the whole solver classes
 
-#ifdef USECPLEX
+
 extern abstract_solver *new_lp_solver(char *lpsolver);
-#endif
-//extern abstract_solver *new_ampl_solver(char *amplsolver);
 #ifdef USECPLEX 
 extern abstract_solver *new_cplex_solver();
-#endif
-#ifdef USEGUROBI
-extern abstract_solver *new_gurobi_solver();
 #endif
 #ifdef USELPSOLVE 
 extern abstract_solver *new_lpsolve_solver();
@@ -55,7 +50,7 @@ extern abstract_solver *new_glpk_solver(bool use_exact);
 void print_help() {
 	fprintf(
 			stderr,
-			"This software is distributed under a modified BSD licence (see LICENCE file) and was\n"
+			"This software is distributed under a modified BSD licence (see LICENCE file).\n"
 			"oPoSSuM is a c++ library for solving the multiobjective package location server problem with a mathematical programming solver.\n"
 			"oPoSSum was partially supported by the Agence National de la Recherche (Aeolus project -- ANR-2010-SEGI-013-01).\n"
 	);
@@ -70,9 +65,6 @@ void print_help() {
 	fprintf(stderr, "solver options:\n");
 #ifdef USECPLEX
 	fprintf(stderr, "\t-cplex: use IBM ILOG Cplex solver\n");
-#endif
-#ifdef USEGUROBI
-	fprintf(stderr, "\t-gurobi: use Gurobi solver\n");
 #endif
 #ifdef USELPSOLVE
 	fprintf(stderr, "\t-lpsolve: use lpsolve solver\n");
@@ -473,7 +465,9 @@ int main(int argc, char *argv[]) {
 						fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver> and %s does not exist.\n", argv[i]);
 						exit(-1);
 					} else
-						solver = new_lp_solver(argv[i]);
+						fprintf(stderr, "ERROR: -lp option is not yet implemented\n");
+						exit(-1);
+					//solver = new_lp_solver(argv[i]);
 				} else {
 					fprintf(stderr, "ERROR: -lp option require a lp solver: -lp <lpsolver>\n");
 					exit(-1);
@@ -482,17 +476,17 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "-cplex") == 0) {
 				solver = new_cplex_solver();
 #endif
-#ifdef USEGUROBI
-			} else if (strcmp(argv[i], "-gurobi") == 0) {
-				solver = new_gurobi_solver();
-#endif
 #ifdef USELPSOLVE
 			} else if (strcmp(argv[i], "-lpsolve") == 0) {
-				solver = new_lpsolve_solver();
+				fprintf(stderr, "ERROR: -lpsolve option is not yet implemented\n");
+				exit(-1);
+				//solver = new_lpsolve_solver();
 #endif
 #ifdef USEGLPK
 			} else if (strcmp(argv[i], "-glpk") == 0) {
-				solver = new_glpk_solver(false);
+				fprintf(stderr, "ERROR: -glpk option is not yet implemented\n");
+				exit(-1);
+				//solver = new_glpk_solver(false);
 #endif
 			} else {
 				fprintf(stderr, "ERROR: unrecognized option %s\n", argv[i]);
@@ -510,7 +504,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	//Generate problem instance
-	the_problem->setSeed(*seed);
+	if(seed) the_problem->setSeed(*seed);
 	the_problem->generateNetwork(HIERARCHIC);
 
 	ostream& out = got_output ? output_file : cout;
@@ -521,7 +515,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (verbosity >= DEFAULT) {
 		print_problem(out, the_problem);
-		out << "c " << *seed << " SEED" <<endl;
+		if(seed) out << "c " << *seed << " SEED" <<endl;
 		out << "================================================================" << endl;
 	}
 
