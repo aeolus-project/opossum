@@ -10,11 +10,10 @@
 
 // Criteria initialization
 void conn_criteria::initialize(PSLProblem *problem, abstract_solver *solver) {
-	pslp_criteria::initialize(problem, solver);
 	stage_range.set_min_limit(0);
 	stage_range.set_max_limit(problem->stageCount() - 1);
 	length_range.set_min_limit(1); //Ignore local connections
-	initialize_upper_bound(problem);
+	pslp_criteria::initialize(problem, solver);
 }
 
 // Criteria initialization

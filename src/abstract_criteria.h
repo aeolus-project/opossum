@@ -52,9 +52,6 @@ public:
 typedef vector<abstract_criteria *> CriteriaList;
 typedef CriteriaList::iterator CriteriaListIterator;
 
-// Shall we optimize variable usage or not
-extern bool criteria_opt_var;
-
 inline bool isInRange(unsigned int val, pair<unsigned int, unsigned int> &range) {
 	return val >= range.first && val <= range.second;
 }
@@ -70,13 +67,17 @@ public:
 	// lambda multiplier for the criteria
 	CUDFcoefficient lambda_crit ;
 
-	// upper bound of the criteria
+	// lower and upper bounds of the criteria
+	int _lower_bound;
 	int _upper_bound;
+
 
 	virtual void initialize(PSLProblem *problem, abstract_solver *solver) {
 		this->problem = problem;
 		this->solver = solver;
-		_upper_bound = 0;
+		initialize_lower_bound(problem);
+		initialize_upper_bound(problem);
+		check_criteria();
 	}
 
 	// Compute the criteria range, upper and lower bounds
@@ -87,7 +88,7 @@ public:
 		return _upper_bound;
 	}
 	virtual CUDFcoefficient lower_bound() {
-		return 0;
+		return _lower_bound;
 	}
 
 	pslp_criteria(CUDFcoefficient lambda_crit, int reliable) : lambda_crit(lambda_crit), reliable(reliable)  {};
@@ -97,6 +98,20 @@ public:
 
 protected :
 
+	virtual void initialize_lower_bound(PSLProblem *problem) {
+		_lower_bound = 0;
+	}
+
+	virtual void initialize_upper_bound(PSLProblem *problem) {
+		_upper_bound = 0;
+	}
+
+	virtual void check_criteria() {
+		if(upper_bound() == 0) {
+			fprintf(stderr, "ERROR: a criteria is emtpy because of [property,value]");
+			exit(-1);
+		}
+	}
 	inline void set_constraint_coeff(int rank, CUDFcoefficient value) {
 		solver->set_constraint_coeff(rank, lambda_crit * value);
 	}

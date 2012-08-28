@@ -24,7 +24,6 @@ public:
 
 	// Criteria initialization
 	void initialize(PSLProblem *problem, abstract_solver *solver);
-
 	// Allocate some columns for the criteria
 	int set_variable_range(int first_free_var);
 	// Add the criteria to the objective
@@ -34,6 +33,7 @@ public:
 	// Add constraints required by the criteria
 	int add_constraints();
 
+protected :
 	virtual void initialize_upper_bound(PSLProblem *problem);
 	virtual int rank(pair<FacilityNode*, FacilityNode*> const &path, const unsigned int stage);
 
