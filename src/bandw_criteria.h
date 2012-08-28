@@ -17,6 +17,7 @@ public:
 	bandw_criteria(CUDFcoefficient lambda_crit, int reliable, param_range stage_range, param_range length_range) : conn_criteria(lambda_crit, reliable, stage_range, length_range) {};
 	virtual ~bandw_criteria() {}
 
+protected :
 	void initialize_upper_bound(PSLProblem *problem);
 	int rank(pair<FacilityNode*, FacilityNode*> const &path, const unsigned int stage);
 

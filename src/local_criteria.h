@@ -34,6 +34,8 @@ public:
 	local_criteria(CUDFcoefficient lambda_crit, int reliable, param_range stage_range, param_range level_range) : pslp_criteria(lambda_crit, reliable), stage_range(stage_range), level_range(level_range) {}
 	virtual ~local_criteria() {}
 
+protected :
+	void initialize_upper_bound(PSLProblem *problem);
 private :
 
 	inline bool isRLSelected(FacilityNode* node) {
