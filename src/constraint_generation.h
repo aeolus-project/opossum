@@ -1,11 +1,10 @@
-
 /*******************************************************/
-/* CUDF solver: constraint_generation.h                */
-/* constraint generation for cudf problems             */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* oPoSSuM solver: constraint_generation.h             */
+/* constraint generation for PSL problems              */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
-// 
+
 
 #ifndef _CONSTRAINT_GENERATION_H_
 #define _CONSTRAINT_GENERATION_H_

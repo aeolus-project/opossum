@@ -98,25 +98,6 @@ CUDFcoefficient agregate_combiner::lower_bound() {
   return lb;
 }
 
-// Does the combiner/criteria allows problem reduction
-bool agregate_combiner::can_reduce() { 
-  bool result = true;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(lambda_crit);
-  return result;
-}
-
-// Does the combiner/criteria allows problem reduction (taking into account lambda multiplier)
-bool agregate_combiner::can_reduce(CUDFcoefficient lambda) { 
-  bool result = true;
-  CUDFcoefficient l = lambda * lambda_crit;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(l);
-  return result;
-}
-
 // Initialize integer variables (from criteria set)
 void agregate_combiner::initialize_intvars() { 
   for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 

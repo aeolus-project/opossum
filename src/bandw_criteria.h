@@ -1,9 +1,8 @@
 /*******************************************************/
-/* CUDF solver: bandw_criteria.h                       */
+/* oPoSSuM solver: bandw_criteria.h                    */
 /* Concrete class for the bandw criteria               */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
-
 
 #ifndef _BANDW_CRITERIA_H_
 #define _BANDW_CRITERIA_H_
@@ -18,6 +17,7 @@ public:
 	bandw_criteria(CUDFcoefficient lambda_crit, int reliable, param_range stage_range, param_range length_range) : conn_criteria(lambda_crit, reliable, stage_range, length_range) {};
 	virtual ~bandw_criteria() {}
 
+protected :
 	void initialize_upper_bound(PSLProblem *problem);
 	int rank(pair<FacilityNode*, FacilityNode*> const &path, const unsigned int stage);
 

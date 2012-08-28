@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: abstract_solver.h                      */
+/* oPoSSuM solver: abstract_solver.h                   */
 /* Abstract class for solvers                          */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 // Solver abstraction
@@ -11,7 +10,7 @@
 #ifndef _ABSTRACT_SOLVER_H
 #define _ABSTRACT_SOLVER_H
 
-#include <cudf.h>
+#include <opossum.h>
 #include <stdarg.h>
 
 
@@ -23,8 +22,6 @@ public:
 	virtual int init_solver(PSLProblem *problem, int other_vars) { return 0; };
 
 	// ******************************************************************
-	// does the solver has the capability to handle integer variables
-	virtual bool has_intvars() { return false; };
 
 	// set variable type to int and its range to [lower, upper] (must be used before end_objectives)
 	virtual int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { return 0; }
@@ -104,6 +101,8 @@ public:
 
 	// get the status of a rank in the final configuration
 	virtual CUDFcoefficient get_solution(int k) { return 0; };
+	// get the status of a rank in the final configuration
+	virtual double get_real_solution(int k) { return 0; };
 
 	// get the number of solutions found at the end of solving
 	int solutionCount(){return _solutionCount;}

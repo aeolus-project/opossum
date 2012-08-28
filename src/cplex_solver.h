@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: cplex_solver.h                         */
+/* oPoSSuM solver: cplex_solver.h                      */
 /* Concrete class for the cplex solver                 */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 
@@ -19,9 +18,6 @@ class cplex_solver: public abstract_solver, public scoeff_solver<double, 0, 0> {
 public:
 	// Solver initialization
 	int init_solver(PSLProblem* problem, int other_vars);
-
-	// Does the solver use integer variables
-	bool has_intvars();
 
 	// Allocate some columns for integer variables
 	int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
@@ -79,7 +75,10 @@ public:
 	int init_solutions();
 	// Get the solution for a column
 	CUDFcoefficient get_solution(int k);
-
+	// get the real solution for a column
+	double get_real_solution(int k);
+	// get the number of solutions found at the end of solving
+	int solutionCount(){return _solutionCount;}
 	// get the number of objectives (or sub-problems).
 	int objectiveCount();
 
@@ -102,7 +101,7 @@ public:
 	// solver creation
 	cplex_solver(void) {
 		solution = (double *)NULL;
-		lb = ub = (CUDFcoefficient *)NULL;
+		lb = ub = (double *)NULL;
 	}
 
 };

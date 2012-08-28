@@ -8,7 +8,7 @@
 #ifndef __COMBINER_H
 #define __COMBINER_H
 
-#include <cudf.h>
+#include <opossum.h>
 #include <abstract_criteria.h>
 #include <abstract_combiner.h>
 

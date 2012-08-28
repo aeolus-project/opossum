@@ -1,4 +1,3 @@
-
 /*******************************************************/
 /* CUDF solver: criteria.h                             */
 /* gather all criteria related include files           */
@@ -10,7 +9,7 @@
 #ifndef _CRITERIA_H_
 #define _CRITERIA_H_
 
-#include <cudf.h>
+#include <opossum.h>
 #include <abstract_solver.h>
 #include <abstract_criteria.h>
 

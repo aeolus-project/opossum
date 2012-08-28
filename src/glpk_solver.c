@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: glpk_solver.c                          */
+/* oPoSSuM solver: glpk_solver.c                       */
 /* Interface to the GLPK solver                        */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 #ifdef USEGLPK
@@ -43,9 +42,6 @@ int glpk_solver::init_solver(PSLProblem* problem, int other_vars) {
 	init_vars(problem, nb_vars);
 	return 0;
 }
-
-// Does the solver provides integer variables
-bool glpk_solver::has_intvars() { return true; }
 
 // Set range of an integer variable
 int glpk_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 

@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: lpsolve_solver.h                       */
+/* oPoSSum solver: lpsolve_solver.h                    */
 /* Concrete class for the Lpsolve solver               */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 // concrete class which implements an interface to lpsolve
@@ -19,8 +18,6 @@ class lpsolve_solver: public abstract_solver, public scoeff_solver<double, 1, 0>
   // Solver initialization
   int init_solver(PSLProblem *problem, int other_vars);
 
-  // Does the solver use integer variables
-  bool has_intvars();
   // Allocate some columns for integer variables
   int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 

@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: pserv_criteria.h                       */
+/* oPoSSuM solver: pserv_criteria.h                    */
 /* Concrete class for the pserv criteria               */
-/* (c) Arnaud Malapert I3S (UNSA-CNRS) 2012            */
+/* (c) Arnaud Malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 
@@ -37,6 +36,8 @@ public:
 	pserv_criteria(CUDFcoefficient lambda_crit, int reliable, param_range pserv_range, param_range level_range) : pslp_criteria(lambda_crit, reliable), pserv_range(pserv_range), level_range(level_range) {}
 	virtual ~pserv_criteria() {}
 
+protected :
+	void initialize_upper_bound(PSLProblem *problem);
 private :
 
 	inline bool isRLSelected(FacilityNode* node) {

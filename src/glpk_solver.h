@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: glpk_solver.h                          */
+/* oPoSSuM solver: glpk_solver.h                       */
 /* Concrete class for the GLPK solver                  */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 // concrete class which implements an interface to GLPK solver
@@ -21,8 +20,6 @@ public:
 	// Solver initialization
 	int init_solver(PSLProblem* problem, int other_vars);
 
-	// Does the solver use integer variables
-	bool has_intvars();
 	// Allocate some columns for integer variables
 	int set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper);
 	// set variable type to int and its range to [lower, upper] and its name to name (must be used before end_objectives)

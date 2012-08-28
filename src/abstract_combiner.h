@@ -23,9 +23,6 @@ class abstract_combiner {
   // Method in charge of the combiner constraint generation
   virtual int constraint_generation() { return 0; }
 
-  // Tells whether this combiner allows problem reductions or not
-  virtual bool can_reduce() { return true; }
-
   // Called to let the combiner initializes itself
   virtual void initialize(PSLProblem *problem, abstract_solver *solver) { };
 

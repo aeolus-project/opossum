@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: lpsolve_solver.c                       */
+/* oPoSSuM solver: lpsolve_solver.c                    */
 /* Interface to the LPSOLVE solver                     */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 #ifdef USELPSOLVE
@@ -45,9 +44,6 @@ int lpsolve_solver::init_solver(PSLProblem *problem, int other_vars) {
 
   return 0;
 }
-
-// Does the solver provide integer variables
-bool lpsolve_solver::has_intvars() { return true; }
 
 // Set the range of an integer variable
 int lpsolve_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 

@@ -100,10 +100,10 @@ int leximax_combiner::constraint_generation() {
 
 // Combiner initialization
 void leximax_combiner::initialize(PSLProblem *problem, abstract_solver *solver) {
-  if (! solver->has_intvars()) {
-    fprintf(stderr, "leximax_combiner: initialize: leximax combiner requires integer variables.\n");
-    exit(-1);
-  }
+//  if (! solver->has_intvars()) {
+//    fprintf(stderr, "leximax_combiner: initialize: leximax combiner requires integer variables.\n");
+//    exit(-1);
+//  }
   this->solver = solver;
   for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) (*crit)->initialize(problem, solver);
 }
@@ -190,25 +190,6 @@ CUDFcoefficient leximax_combiner::lower_bound() {
     else
       lb += lambda_crit * (*crit)->upper_bound();
   return lb;
-}
-
-// Does the combiner/criteria allows problem reduction
-bool leximax_combiner::can_reduce() { 
-  bool result = true;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(lambda_crit);
-  return result;
-}
-
-// Does the combiner/criteria allows problem reduction (taking into account lambda multiplier)
-bool leximax_combiner::can_reduce(CUDFcoefficient lambda) { 
-  bool result = true;
-  CUDFcoefficient l = lambda * lambda_crit;
-
-  for (CriteriaListIterator crit = criteria->begin(); crit != criteria->end(); crit++) 
-    result = result && (*crit)->can_reduce(l);
-  return result;
 }
 
 

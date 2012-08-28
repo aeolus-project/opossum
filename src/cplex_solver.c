@@ -1,8 +1,7 @@
-
 /*******************************************************/
-/* CUDF solver: cplex_solver.c                         */
+/* oPoSSuM solver: cplex_solver.c                      */
 /* Interface to the CPLEX solver                       */
-/* (c) Claude Michel I3S (UNSA-CNRS) 2009,2010,2011    */
+/* (c) Arnaud malapert I3S (UNS-CNRS) 2012             */
 /*******************************************************/
 
 
@@ -109,10 +108,6 @@ int cplex_solver::init_solver(PSLProblem *problem, int other_vars) {
 	init_vars(problem, nb_vars);
 	return 0;
 }
-
-
-// cplex can handle integer variables
-bool cplex_solver::has_intvars() { return true; }
 
 // set integer variable range (must be used before end_objective)
 int cplex_solver::set_intvar_range(int rank, CUDFcoefficient lower, CUDFcoefficient upper) { 
@@ -306,6 +301,7 @@ int cplex_solver::init_solutions() {
 
 
 CUDFcoefficient cplex_solver::get_solution(int k) {  return (CUDFcoefficient)nearbyint(solution[k]); }
+double cplex_solver::get_real_solution(int k) {  return solution[k]; }
 
 // initialize the objective function
 int cplex_solver::begin_objectives(void) { 
