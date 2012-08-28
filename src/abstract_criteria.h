@@ -52,9 +52,6 @@ public:
 typedef vector<abstract_criteria *> CriteriaList;
 typedef CriteriaList::iterator CriteriaListIterator;
 
-// Shall we optimize variable usage or not
-extern bool criteria_opt_var;
-
 inline bool isInRange(unsigned int val, pair<unsigned int, unsigned int> &range) {
 	return val >= range.first && val <= range.second;
 }
